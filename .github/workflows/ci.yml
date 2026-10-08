@@ -145,11 +145,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Start the stack
-        run: |
-          docker compose up -d --build
-          for _ in $(seq 1 90); do curl -sf -o /dev/null http://localhost:3000/login && exit 0; sleep 2; done
-          docker compose logs; exit 1
+      # Install host-side dependencies BEFORE starting the stack: the frontend
+      # container (root) would otherwise create a root-owned frontend/node_modules
+      # mount point that the runner's `npm ci` cannot replace (EACCES, exit 243).
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: frontend/.nvmrc
@@ -160,6 +158,11 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Start the stack
+        run: |
+          docker compose up -d --build
+          for _ in $(seq 1 90); do curl -sf -o /dev/null http://localhost:3000/login && exit 0; sleep 2; done
+          docker compose logs; exit 1
       - name: Run end-to-end tests
         working-directory: frontend
         env:
