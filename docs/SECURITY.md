@@ -32,18 +32,19 @@ Attackers considered: an external unauthenticated attacker; an authenticated use
 
 | Token | Form | Lifetime | Storage (web) | Storage (Android) |
 |---|---|---|---|---|
-| Access | JWT (HS256, `kid` header for key rotation). Claims: `sub`, `sid`, `org`, `iat`, `exp`, `jti`. **No permissions in the token.** | 10 min | `__Host-sf_at` cookie: HttpOnly, Secure, SameSite=Lax, Path=/ | Memory, plus Keystore-wrapped encrypted storage |
-| Refresh | 256-bit opaque random value; the server stores only its SHA-256 hash in `auth_session` | 14 days idle / 30 days absolute (web); 30 days idle (mobile, device-bound) | `__Secure-sf_rt` cookie: HttpOnly, Secure, SameSite=Strict, Path=`/api/v1/auth/` | Keystore-wrapped encrypted storage |
+| Access | JWT (HS256, `kid` header for key rotation; `iss`/`aud`/`typ` verified). Claims: `sub`, `sid`, `iat`, `exp`, `jti` (`org` added in 1.6). **No permissions or personal data in the token.** | 10 min | `__Host-sf_at` cookie: HttpOnly, Secure, SameSite=Lax, Path=/ | Memory, plus Keystore-wrapped encrypted storage |
+| Refresh | 256-bit opaque random value; the server stores only its SHA-256 hash (`accounts_refreshtoken`) | 14 days idle / 30 days absolute (web); 30 days idle / 90 days absolute (mobile) | `__Secure-sf_rt` cookie: HttpOnly, Secure, SameSite=Strict, Path=`/api/v1/auth/` | Keystore-wrapped encrypted storage |
 
 - **Rotation:** every refresh issues a new refresh token and invalidates the old one.
-- **Reuse detection:** presenting an already-rotated refresh token revokes the **whole token family**, logs a security event and alerts the user. That pattern means the token was stolen.
-- **Revocation:** every request checks `sid` against the session table (Redis-cached ≤ 30 s). Logout, logout-all, password change, membership suspension and device revocation therefore take effect within 30 seconds, not at access-token expiry.
+- **Reuse detection:** presenting an already-rotated refresh token more than 20 seconds after its rotation revokes the **whole session** (every token in the chain) and logs `auth.refresh_token_reuse_detected`. That pattern means the token was copied. Within 20 seconds it is treated as a benign race, such as two browser tabs refreshing together: the response is `409 REFRESH_IN_PROGRESS` and nothing is revoked. Refreshes of one token are serialized with a row lock, so concurrent refreshes yield exactly one new token (covered by a threaded test). Emailing the user about reuse arrives with email delivery in 1.9.
+- **Revocation:** every request checks the token's session (`sid`), cached for at most 30 s. Revoking a session deletes its cache entry immediately and again after commit, so logout, logout-all and session revocation take effect **on the next request**. The cache TTL only bounds staleness if a cache delete is lost. Deactivated users are rejected on the next request too.
 - **Permissions** are resolved per request from the membership (cached and invalidated on change). Role changes apply right away without reissuing tokens.
-- **Org-scoped sessions:** a session belongs to one organization. Switching org creates a new session after verifying membership. Clients never send an org ID to "choose" a tenant on ordinary requests.
+- **Org-scoped sessions** (1.6): a session belongs to one organization. Switching org creates a new session after verifying membership. Clients never send an org ID to "choose" a tenant on ordinary requests.
 
 ### 2.3 Web: CSRF and CORS
 - The web app and API share one origin (`/api/*` is proxied), so cookies are first-party and **CORS is disabled** for the web app.
 - Cookie-authenticated unsafe requests (POST/PUT/PATCH/DELETE) must pass Django CSRF checks (the `X-CSRFToken` header must match the `csrftoken` cookie). `SameSite` is defence in depth, not the only control.
+- Login and refresh with `client: "web"` are CSRF-checked too: they set cookies, so login CSRF must be prevented. Clients get the token from `GET /auth/csrf/`. CSRF failures return `403 CSRF_FAILED` as JSON.
 - Bearer-authenticated requests (mobile) are not CSRF-checked, because browsers never attach such headers automatically.
 - `CORS_ALLOWED_ORIGINS` stays empty unless a separate origin is ever needed. In that case it gets an explicit allowlist and never `*` with credentials.
 
@@ -56,10 +57,10 @@ Attackers considered: an external unauthenticated attacker; an authenticated use
 - **Email verification:** single-use token (stored hashed), 24 h expiry.
 - **Password reset:** single-use token (stored hashed), 30 min expiry. The response is always `202` (no enumeration). A successful reset revokes all sessions.
 - **Brute force:**
-  - per-account and per-IP throttles (§6);
-  - progressive delay after 5 failures;
-  - temporary lock after 10 failures in 15 min, with an email notification;
-  - every failed attempt is logged as a security event (no password in the log).
+  - per-email (5/min) and per-IP (20/min) throttles (§6);
+  - temporary lock after 10 failures in 15 min, lasting 15 min. The lock is per email address and applies to unknown addresses too, so lockout never reveals whether an account exists;
+  - wrong password, unknown email and inactive account all return the identical `401 INVALID_CREDENTIALS`, and Django runs the password hasher for unknown users to equalise timing;
+  - every failed attempt is logged as `auth.login_failed` with a hashed email fingerprint, never the email or password. Email notification of a lock arrives in 1.9.
 
 ### 2.6 Mobile device binding
 - On first login the device registers (`sync_device`) and the session is bound to it.
@@ -178,10 +179,11 @@ Manager is an addition to the two roles in the spec. It is a common need and cos
 
 | Scope | Limit (initial, tunable) |
 |---|---|
-| `POST /auth/login/` | 5/min per IP+email, 20/min per IP |
+| `POST /auth/login/` | 5/min per email, 20/min per IP |
+| `POST /auth/refresh/` | 60/min per IP |
 | `POST /auth/password/reset/` | 3/hour per email, 10/hour per IP |
 | `POST /auth/mfa/verify/` | 5 per `mfa_token` |
-| Authenticated API, general | 600/min per user |
+| Authenticated API, general | 600/min per user (anonymous: 120/min per IP) |
 | `GET …/products/lookup/` | 1200/min per user (scanners are fast) |
 | `/sync/push/` | 60/min per device, max 50 ops / 1 MB per batch |
 | Report exports | 10/hour per user |

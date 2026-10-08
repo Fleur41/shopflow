@@ -40,6 +40,7 @@ class ApplicationError(Exception):
         status_code: int | None = None,
         title: str | None = None,
         errors: list[dict[str, Any]] | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(detail)
         self.detail = detail
@@ -50,6 +51,7 @@ class ApplicationError(Exception):
         if title is not None:
             self.title = title
         self.errors = errors or []
+        self.headers = headers or {}
 
 
 # DRF exception class → (code, title). Looked up along the MRO, most specific first.
@@ -114,7 +116,9 @@ def exception_handler(exc: Exception, context: Mapping[str, Any]) -> Response | 
             request_id=request_id,
             errors=exc.errors,
         )
-        return Response(body, status=exc.status_code, content_type=PROBLEM_CONTENT_TYPE)
+        return Response(
+            body, status=exc.status_code, headers=exc.headers, content_type=PROBLEM_CONTENT_TYPE
+        )
 
     if not isinstance(exc, exceptions.APIException):
         return None
@@ -149,10 +153,19 @@ def exception_handler(exc: Exception, context: Mapping[str, Any]) -> Response | 
 
 
 def _lookup_drf_error(exc: exceptions.APIException) -> tuple[str, str]:
-    for cls in type(exc).__mro__:
-        if cls in _DRF_ERRORS:
-            return _DRF_ERRORS[cls]
-    return str(exc.default_code).upper(), "Request failed"
+    code, title = str(exc.default_code).upper(), "Request failed"
+    generic_code = exc.default_code
+    # The mapped classes are all direct APIException subclasses, so at most one matches.
+    for cls, (mapped_code, mapped_title) in _DRF_ERRORS.items():
+        if isinstance(exc, cls):
+            code, title, generic_code = mapped_code, mapped_title, cls.default_code
+            break
+    # A specific code (a subclass such as TokenExpired, or code="..." passed
+    # when raising) is more useful to clients than the generic one.
+    specific = getattr(exc.detail, "code", None)
+    if isinstance(specific, str) and specific != generic_code:
+        code = specific.upper()
+    return code, title
 
 
 def flatten_validation_errors(detail: Any, pointer: str = "") -> list[dict[str, Any]]:

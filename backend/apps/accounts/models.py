@@ -6,6 +6,7 @@ from django.db.models.functions import Lower
 from django.utils import timezone
 
 from apps.common.ids import uuid7
+from apps.common.models import BaseModel
 
 
 def normalize_email_address(email: str) -> str:
@@ -78,3 +79,78 @@ class User(AbstractBaseUser, PermissionsMixin):
     def clean(self) -> None:
         super().clean()
         self.email = normalize_email_address(self.email)
+
+
+class AuthSession(BaseModel):
+    """One signed-in client (a browser or a mobile device).
+
+    Every access token names its session (``sid``), so revoking a session
+    invalidates its access tokens immediately, not when they expire. A
+    session's refresh tokens form a rotation chain (:class:`RefreshToken`).
+    """
+
+    class ClientType(models.TextChoices):
+        WEB = "WEB", "Web browser"
+        MOBILE = "MOBILE", "Mobile app"
+
+    class RevokeReason(models.TextChoices):
+        LOGOUT = "LOGOUT", "Signed out"
+        LOGOUT_ALL = "LOGOUT_ALL", "Signed out everywhere"
+        REVOKED_BY_USER = "REVOKED_BY_USER", "Revoked from session list"
+        TOKEN_REUSE = "TOKEN_REUSE", "Refresh token reuse detected"
+        PASSWORD_CHANGED = "PASSWORD_CHANGED", "Password changed"
+        ADMIN = "ADMIN", "Revoked by an administrator"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_sessions")
+    client_type = models.CharField(max_length=10, choices=ClientType.choices)
+    device_name = models.CharField(max_length=100, blank=True)
+    user_agent = models.CharField(max_length=256, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    last_used_at = models.DateTimeField()
+    expires_at = models.DateTimeField(help_text="Absolute end of the session.")
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoke_reason = models.CharField(max_length=20, choices=RevokeReason.choices, blank=True)
+
+    class Meta:
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(
+                fields=["user"],
+                condition=models.Q(revoked_at__isnull=True),
+                name="accounts_session_active_user",
+            ),
+        ]
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.CheckConstraint(
+                condition=models.Q(client_type__in=["WEB", "MOBILE"]),
+                name="accounts_session_client_type_valid",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(revoked_at__isnull=True, revoke_reason="")
+                    | (models.Q(revoked_at__isnull=False) & ~models.Q(revoke_reason=""))
+                ),
+                name="accounts_session_revoke_reason_iff_revoked",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.client_type} session {self.pk} for {self.user_id}"
+
+
+class RefreshToken(BaseModel):
+    """A refresh token in a session's rotation chain (hash only, never the token).
+
+    Each refresh marks the presented token ``rotated_at`` and issues a new one.
+    Presenting an already-rotated token later means it was copied, so the whole
+    session is revoked (docs/SECURITY.md §2.2).
+    """
+
+    session = models.ForeignKey(
+        AuthSession, on_delete=models.CASCADE, related_name="refresh_tokens"
+    )
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField(help_text="Idle expiry of this token.")
+    rotated_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self) -> str:
+        return f"refresh token {self.pk} of session {self.session_id}"

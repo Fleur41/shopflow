@@ -45,6 +45,7 @@ erDiagram
     USER ||--o{ AUTH_SESSION : has
     SYNC_DEVICE |o--o{ AUTH_SESSION : "bound to"
     USER ||--o| MFA_TOTP : has
+    AUTH_SESSION ||--o{ REFRESH_TOKEN : "rotation chain"
 
     ORGANIZATION {
         uuid id PK
@@ -108,10 +109,19 @@ erDiagram
         uuid user_id FK
         uuid organization_id FK
         uuid device_id FK
-        bytea refresh_token_hash
-        uuid family_id
+        text client_type
+        text device_name
+        timestamptz last_used_at
         timestamptz expires_at
         timestamptz revoked_at
+        text revoke_reason
+    }
+    REFRESH_TOKEN {
+        uuid id PK
+        uuid session_id FK
+        char token_hash UK
+        timestamptz expires_at
+        timestamptz rotated_at
     }
     MFA_TOTP {
         uuid user_id PK
@@ -572,7 +582,8 @@ Only non-obvious constraints are listed. Every tenant table also has `organizati
 | `membership_store` | PK `(membership_id, store_id)`. Service ensures the store belongs to the membership's org. |
 | `role` | `UNIQUE(organization_id, name)`. System roles (`is_system`) cannot be deleted. |
 | `permission` | Code-defined catalog, synced by a data migration; not editable at runtime |
-| `auth_session` | `UNIQUE(refresh_token_hash)`. Index `(user_id) WHERE revoked_at IS NULL`. Index `(family_id)`. |
+| `auth_session` | One row per signed-in client (the "token family"). Partial index `(user_id) WHERE revoked_at IS NULL`. `CHECK(client_type IN ('WEB','MOBILE'))`. `CHECK` that `revoke_reason` is set exactly when `revoked_at` is. `organization_id` (1.6) and `device_id` (Phase 6) are added later. |
+| `refresh_token` | **`UNIQUE(token_hash)`** (SHA-256 hex; the token itself is never stored). `rotated_at` marks a used token for reuse detection. Rows of ended sessions are purged by a scheduled job (2.6). |
 
 ### Catalog
 

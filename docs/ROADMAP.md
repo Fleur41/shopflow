@@ -22,13 +22,19 @@ Status: 1.1–1.4 done (2026-10-08), with these adjustments:
 - `TenantModel` moves to 1.6. It needs `Organization`; the tenant-independent `BaseModel` (UUIDv7, timestamps) is in place.
 - Branch protection on `main` (require CI + one review) must be enabled in the GitHub repository settings by the repo owner.
 
+1.5 done (2026-10-08). Deferred, by dependency:
+- Org-scoped sessions (`org` claim, switch-organization) → 1.6, which introduces organizations.
+- Emails for lockout and token-reuse alerts → 1.9, which adds email delivery.
+- Purging rows of ended sessions → 2.6, which adds Celery beat.
+- "Progressive delay" was replaced by the per-email throttle plus lockout, which together bound guessing at 5/min and 10 per 15 min.
+
 | # | Milestone | Acceptance criteria |
 |---|---|---|
 | 1.1 ✅ | Repo skeleton | Monorepo layout. `.gitignore`, `.editorconfig`, pre-commit (ruff, gitleaks), `.env.example`, CONTRIBUTING.md, PR template, CODEOWNERS. |
 | 1.2 ✅ | Local environment | `docker compose up` starts PostgreSQL 17, Redis, Django and Next.js with hot reload. `make test` works. README local setup verified from a clean clone. |
 | 1.3 ✅ | CI baseline | GitHub Actions: lint (ruff, eslint), types (mypy/django-stubs, `tsc --strict`), tests with PostgreSQL service, coverage report, pip-audit/npm audit, gitleaks, Trivy, Docker build. Branch protection on `main`. |
 | 1.4 ✅ | Django core | Split settings, `common` app (`TenantModel`, UUIDv7, money/quantity fields, problem-details error handler, cursor pagination, request-ID middleware, structlog JSON logging with redaction, `/healthz` `/readyz`), Sentry wiring, `check --deploy` clean |
-| 1.5 | Accounts and auth | Custom `User` (email login, Argon2id). Login, refresh with rotation and reuse detection, logout, logout-all, session list and revoke. Cookie transport + CSRF for web, bearer for mobile. Throttles and lockout. Full test coverage of token flows. |
+| 1.5 ✅ | Accounts and auth | Custom `User` (email login, Argon2id). Login, refresh with rotation and reuse detection, logout, logout-all, session list and revoke. Cookie transport + CSRF for web, bearer for mobile. Throttles and lockout. Full test coverage of token flows. |
 | 1.6 | Organizations and RBAC | Organization, Store, Membership, MembershipStore, Role, Permission catalog, role templates. Tenant context resolution. Scoped managers. Permission-declaration test. **Cross-tenant BOLA test harness** (parametrized over all routes). Org signup flow creates org, owner and default store. |
 | 1.7 | Audit and idempotency frameworks | `audit_log` (append-only trigger + grants). `record_audit()` service API. Idempotency claim/replay utility with concurrency tests. Two DB roles (migrator/app) in compose and CI. |
 | 1.8 | Web shell | Next.js App Router, TS strict, design system (accessible primitives, e.g. Radix/shadcn), login, org/store switcher, protected layout, API client generated from OpenAPI, error/loading/empty state patterns, Playwright + axe smoke test |

@@ -50,12 +50,12 @@ Core error codes:
 | HTTP | code | Meaning |
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Field-level validation failed (`errors[]`) |
-| 401 | `NOT_AUTHENTICATED`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `DEVICE_REVOKED`, `MFA_REQUIRED` | |
-| 403 | `PERMISSION_DENIED` | Caller can see the resource but lacks the permission for this action |
+| 401 | `NOT_AUTHENTICATED`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `SESSION_EXPIRED`, `INVALID_CREDENTIALS`, `DEVICE_REVOKED`, `MFA_REQUIRED` | `TOKEN_EXPIRED` → call `/auth/refresh/`. `SESSION_REVOKED`/`SESSION_EXPIRED` → sign in again. |
+| 403 | `PERMISSION_DENIED`, `CSRF_FAILED` | Missing permission; or a cookie-authenticated request without a valid `X-CSRFToken` |
 | 404 | `NOT_FOUND` | Missing **or** outside the caller's tenant/stores |
-| 409 | `STALE_VERSION`, `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT` | Retry or re-confirm |
+| 409 | `STALE_VERSION`, `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
 | 422 | `INSUFFICIENT_STOCK`, `CREDIT_LIMIT_EXCEEDED`, `PAYMENT_EXCEEDS_BALANCE`, `PRODUCT_INACTIVE`, `CUSTOMER_FROZEN`, `RETURN_EXCEEDS_SOLD`, `DISCOUNT_LIMIT_EXCEEDED`, `IDEMPOTENCY_KEY_REUSED`, `BUSINESS_RULE_VIOLATION` | Business rule rejected |
-| 429 | `RATE_LIMITED` | |
+| 429 | `RATE_LIMITED`, `LOGIN_TEMPORARILY_LOCKED` | Both send `Retry-After` |
 | 503 | `SERVICE_UNAVAILABLE` | Maintenance or dependency down |
 
 ## 3. Idempotency
@@ -80,22 +80,26 @@ Legend: 🔑 = `Idempotency-Key` required · `perm` = required permission code (
 
 ### 4.1 Auth and session — `/api/v1/auth/`
 
-| Method | Path | Notes |
-|---|---|---|
-| POST | `/auth/login/` | `{email, password, organization_id?}`. Returns user, memberships and tokens (cookies for web, body for mobile with `client: "mobile"` + `device_id`). May return `401 MFA_REQUIRED` with an `mfa_token`. |
-| POST | `/auth/mfa/verify/` | `{mfa_token, code}` → completes login |
-| POST | `/auth/refresh/` | Rotates the refresh token. Reuse of an old token revokes the whole family. |
-| POST | `/auth/logout/` | Revokes the current session |
-| POST | `/auth/logout-all/` | Revokes all of the user's sessions |
-| POST | `/auth/switch-organization/` | `{organization_id}` → new session scoped to that org (membership verified) |
-| GET | `/auth/me/` | Profile, current org, accessible stores, effective permissions |
-| GET | `/auth/sessions/` | Active sessions and devices |
-| DELETE | `/auth/sessions/{id}/` | Revoke one session (only revocation endpoints use DELETE) |
-| POST | `/auth/password/change/` | Requires the current password; revokes other sessions |
-| POST | `/auth/password/reset/` | `{email}`. Always 202 (no account enumeration). |
-| POST | `/auth/password/reset/confirm/` | `{token, new_password}`. Single-use token. |
-| POST | `/auth/email/verify/` | `{token}` |
-| POST | `/auth/mfa/totp/setup/` · `/confirm/` · `/disable/` | TOTP enrolment; recovery codes are shown once |
+Status column: ✅ implemented (Phase 1.5) · 1.6 / 1.9 = planned milestone.
+
+| Method | Path | Status | Notes |
+|---|---|---|---|
+| GET | `/auth/csrf/` | ✅ | Public. Sets the `csrftoken` cookie and returns `{csrf_token}`. Web clients send it as `X-CSRFToken` on every POST/PUT/PATCH/DELETE, **including login**. |
+| POST | `/auth/login/` | ✅ | `{email, password, client: "web"\|"mobile", device_name?}` (`client` defaults to `web`). Returns `{user, session}`. Web: tokens only as HttpOnly cookies. Mobile: adds `tokens: {token_type, access_token, refresh_token}`. Failures are always `401 INVALID_CREDENTIALS` (no account enumeration). Lockout: `429 LOGIN_TEMPORARILY_LOCKED`. |
+| POST | `/auth/login/` (org, MFA) | 1.6 / 1.9 | `organization_id` selection; `401 MFA_REQUIRED` with an `mfa_token` |
+| POST | `/auth/mfa/verify/` | 1.9 | `{mfa_token, code}` → completes login |
+| POST | `/auth/refresh/` | ✅ | Web: no body, uses the refresh cookie (CSRF required). Mobile: `{refresh_token}`. Rotates the refresh token and returns a new pair. A rotated token replayed within 20 s → `409 REFRESH_IN_PROGRESS` (benign race; retry). Replayed later → the whole session is revoked (`401 SESSION_EXPIRED`). |
+| POST | `/auth/logout/` | ✅ | Revokes the current session; clears cookies. `204` |
+| POST | `/auth/logout-all/` | ✅ | Revokes all of the user's sessions. `204` |
+| POST | `/auth/switch-organization/` | 1.6 | `{organization_id}` → new session scoped to that org (membership verified) |
+| GET | `/auth/me/` | ✅ | Profile. Current org, stores and permissions are added in 1.6. |
+| GET | `/auth/sessions/` | ✅ | Active sessions, with `current: true` on the caller's |
+| DELETE | `/auth/sessions/{id}/` | ✅ | Revoke one of your sessions (`404` for anyone else's). Only revocation endpoints use DELETE. |
+| POST | `/auth/password/change/` | 1.9 | Requires the current password; revokes other sessions |
+| POST | `/auth/password/reset/` | 1.9 | `{email}`. Always 202 (no account enumeration). |
+| POST | `/auth/password/reset/confirm/` | 1.9 | `{token, new_password}`. Single-use token. |
+| POST | `/auth/email/verify/` | 1.9 | `{token}` |
+| POST | `/auth/mfa/totp/setup/` · `/confirm/` · `/disable/` | 1.9 | TOTP enrolment; recovery codes are shown once |
 
 ### 4.2 Organization, stores, users and roles
 

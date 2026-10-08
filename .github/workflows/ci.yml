@@ -68,7 +68,8 @@ jobs:
           DJANGO_ADMIN_URL: ci-admin/
         run: |
           DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(50))')"
-          export DJANGO_SECRET_KEY
+          JWT_SIGNING_KEYS="ci=$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
+          export DJANGO_SECRET_KEY JWT_SIGNING_KEYS JWT_ACTIVE_KEY_ID=ci
           uv run python manage.py check --deploy --fail-level WARNING
       - name: Tests
         run: uv run pytest --cov --cov-report=term -W error

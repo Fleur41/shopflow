@@ -15,6 +15,7 @@ dependencies = [
     "redis>=5.2",
     "gunicorn>=23.0",
     "whitenoise>=6.8",
+    "pyjwt>=2.10",
 ]
 
 [dependency-groups]
@@ -23,6 +24,7 @@ dev = [
     "pytest-django>=4.9",
     "pytest-cov>=6.0",
     "factory-boy>=3.3",
+    "time-machine>=2.16",
     "ruff>=0.9",
     "mypy>=1.14",
     "django-stubs[compatible-mypy]>=5.2,<5.3",
@@ -50,6 +52,10 @@ select = [
     "SIM", "RUF", "PT", "DTZ", "T20", "PIE", "RET",
 ]
 
+# Domain errors are named for the condition they describe (InvalidCredentials),
+# mirroring their API error codes, rather than with an "Error" suffix.
+ignore = ["N818"]
+
 [tool.ruff.lint.per-file-ignores]
 "**/tests/**" = ["S101", "S105", "S106"]
 "config/settings/*.py" = ["F405", "F403"]
@@ -65,9 +71,17 @@ module = ["environ.*", "factory.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["*.tests.*"]
+# drf-spectacular's extension base class has an untyped __init_subclass__.
+module = ["apps.accounts.schema"]
+disallow_untyped_calls = false
+
+[[tool.mypy.overrides]]
+module = ["*.tests.*", "conftest"]
 disallow_untyped_defs = false
 disallow_incomplete_defs = false
+disallow_untyped_calls = false
+disallow_any_generics = false
+warn_return_any = false
 
 [tool.django-stubs]
 django_settings_module = "config.settings.test"

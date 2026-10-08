@@ -2,6 +2,11 @@
 
 import os
 
+os.environ.setdefault(
+    "JWT_SIGNING_KEYS",
+    "test=test-only-jwt-signing-key-0123456789abcdef,old=test-only-previous-jwt-key-0123456789abcd",
+)
+os.environ.setdefault("JWT_ACTIVE_KEY_ID", "test")
 os.environ.setdefault("DJANGO_SECRET_KEY", "test-only-secret-key")
 os.environ.setdefault("DATABASE_URL", "postgres://shopflow:shopflow@localhost:5432/shopflow")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")

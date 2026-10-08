@@ -5,3 +5,6 @@ class AccountsConfig(AppConfig):
     name = "apps.accounts"
     label = "accounts"
     verbose_name = "Accounts"
+
+    def ready(self) -> None:
+        from . import schema  # noqa: F401  (registers OpenAPI auth extensions)

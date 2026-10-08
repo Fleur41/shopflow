@@ -45,6 +45,8 @@ RUN DJANGO_SETTINGS_MODULE=config.settings.prod \
     DJANGO_SECRET_KEY=collectstatic-only \
     DATABASE_URL=postgres://unused@localhost/unused \
     REDIS_URL=redis://localhost:6379/0 \
+    JWT_SIGNING_KEYS=unused=unused \
+    JWT_ACTIVE_KEY_ID=unused \
     python manage.py collectstatic --noinput
 USER app
 EXPOSE 8000
