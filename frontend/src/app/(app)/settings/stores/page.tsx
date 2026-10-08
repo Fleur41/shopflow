@@ -108,7 +108,7 @@ function AddStoreForm({ onDone }: { onDone: () => void }) {
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-4">
       {create.error && !Object.keys(errors).length && <ErrorAlert error={create.error} />}
-      <TextField label="Store code" required maxLength={10} value={form.code} onChange={set("code")} error={errors.code} hint="2–10 letters or digits, shown on receipt numbers. Can't be changed later." />
+      <TextField label="Store code" required maxLength={10} value={form.code} onChange={set("code")} error={errors.code} hint="2–10 letters or digits, shown on receipt numbers. Can’t be changed later." />
       <TextField label="Store name" required value={form.name} onChange={set("name")} error={errors.name} />
       <TextField label="Phone" type="tel" autoComplete="tel" value={form.phone} onChange={set("phone")} error={errors.phone} />
       <TextField label="Address" value={form.address} onChange={set("address")} error={errors.address} />

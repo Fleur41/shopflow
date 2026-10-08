@@ -42,6 +42,7 @@ class ApplicationError(Exception):
         title: str | None = None,
         errors: list[dict[str, Any]] | None = None,
         headers: dict[str, str] | None = None,
+        extra: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(detail)
         self.detail = detail
@@ -53,6 +54,8 @@ class ApplicationError(Exception):
             self.title = title
         self.errors = errors or []
         self.headers = headers or {}
+        # Additional top-level fields for the client (e.g. "mfa_token").
+        self.extra = extra or {}
 
 
 # DRF exception class → (code, title). Looked up along the MRO, most specific first.
@@ -126,6 +129,7 @@ def exception_handler(exc: Exception, context: Mapping[str, Any]) -> Response | 
             request_id=request_id,
             errors=exc.errors,
         )
+        body.update({k: v for k, v in exc.extra.items() if k not in body})
         return Response(
             body, status=exc.status_code, headers=exc.headers, content_type=PROBLEM_CONTENT_TYPE
         )

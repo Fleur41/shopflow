@@ -1,0 +1,9 @@
+Hello {{ name }},
+
+Please confirm your email address by opening this link:
+
+{{ url }}
+
+The link expires in 24 hours. If you didn't create a ShopFlow account, you can ignore this email.
+
+ShopFlow

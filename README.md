@@ -30,13 +30,13 @@ make api     # regenerate the OpenAPI schema and TypeScript API types
 make help    # all commands
 ```
 
-Open http://localhost:3000 and choose **Register your business** to get started.
+Open http://localhost:3000 and choose **Register your business** to get started. Emails sent locally (verification, password reset, invitations) appear in Mailpit at http://localhost:8025.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the development workflow.
 
 ## Status
 
-**Phase 1 (foundation) in progress.** Milestones 1.1–1.8 are done: repo skeleton, local environment, CI, Django core, authentication, multi-business tenancy (stores, staff, roles, audit log), idempotency and least-privilege database roles, and the web app shell (sign-up, sign-in, stores and staff screens). Next: account lifecycle (1.9), then Phase 2: products and inventory.
+**Phase 1 (foundation) is complete.** It covers authentication with two-step verification, multi-business tenancy (stores, staff, roles, invitations, audit log), duplicate-request protection, least-privilege database roles, email flows, and the web app shell. Next: **Phase 2, products, barcodes and inventory.**
 
 ## Design documents
 

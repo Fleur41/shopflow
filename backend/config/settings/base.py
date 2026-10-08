@@ -145,6 +145,26 @@ AUTH_REFRESH_COOKIE_PATH = "/api/v1/auth/"
 IDEMPOTENCY_KEY_TTL = timedelta(days=30)
 IDEMPOTENCY_LOCK_TIMEOUT = timedelta(seconds=5)
 
+# --- Account lifecycle (Phase 1.9) ------------------------------------------
+# Links in emails point at the web app.
+FRONTEND_URL: str = env("FRONTEND_URL", default="http://localhost:3000").rstrip("/")
+EMAIL_CONFIG = env.email_url("EMAIL_URL", default="consolemail://")
+vars().update(EMAIL_CONFIG)
+DEFAULT_FROM_EMAIL: str = env("DEFAULT_FROM_EMAIL", default="ShopFlow <no-reply@shopflow.local>")
+
+AUTH_EMAIL_VERIFICATION_LIFETIME = timedelta(hours=24)
+AUTH_PASSWORD_RESET_LIFETIME = timedelta(minutes=30)
+AUTH_MFA_CHALLENGE_LIFETIME = timedelta(minutes=5)
+AUTH_MFA_MAX_ATTEMPTS = 5
+INVITATION_LIFETIME = timedelta(days=7)
+
+# Two-step verification (TOTP). Secrets are encrypted at rest with Fernet;
+# the first key encrypts, all keys decrypt (rotation). Holders of sensitive
+# permissions must have verified MFA in their session to use them.
+MFA_ENCRYPTION_KEYS: list[str] = env.list("MFA_ENCRYPTION_KEYS")
+MFA_ENFORCEMENT: bool = env.bool("MFA_ENFORCEMENT", default=True)
+MFA_ISSUER = "ShopFlow"
+
 # --- Internationalisation -------------------------------------------------
 # All timestamps are stored in UTC; business days use each store's timezone.
 LANGUAGE_CODE = "en"
@@ -179,6 +199,11 @@ REST_FRAMEWORK = {
         "login_email": "5/min",
         "auth_refresh": "60/min",
         "signup": "10/hour",
+        "password_reset_email": "3/hour",
+        "password_reset_ip": "10/hour",
+        "email_verification": "3/hour",
+        "mfa_verify": "10/min",
+        "invitation_token": "30/hour",
     },
     # Number of trusted reverse proxies in front of the API; used to read the
     # client IP from X-Forwarded-For for throttling and session records.

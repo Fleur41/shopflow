@@ -1,0 +1,11 @@
+Hello,
+
+{{ inviter }} invited you to join {{ organization }} on ShopFlow as {{ role }}.
+
+To accept, open:
+
+{{ url }}
+
+The invitation expires in 7 days. If you weren't expecting it, you can ignore this email.
+
+ShopFlow

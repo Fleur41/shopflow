@@ -23,7 +23,15 @@ from rest_framework import status
 
 from apps.common.errors import ApplicationError
 
-from .models import AuthSession, RefreshToken, User, normalize_email_address
+from . import one_time_tokens
+from .models import (
+    AuthSession,
+    OneTimeToken,
+    RefreshToken,
+    TOTPDevice,
+    User,
+    normalize_email_address,
+)
 from .tokens import generate_refresh_token, hash_refresh_token, issue_access_token
 
 security_log = structlog.get_logger("security")
@@ -56,6 +64,12 @@ class RefreshInProgress(ApplicationError):
     title = "Session is being refreshed"
 
 
+class MFARequired(ApplicationError):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    code = "MFA_REQUIRED"
+    title = "Second step required"
+
+
 class SessionNotFound(ApplicationError):
     status_code = status.HTTP_404_NOT_FOUND
     code = "NOT_FOUND"
@@ -81,6 +95,7 @@ class SessionState:
     user_id: uuid.UUID
     organization_id: uuid.UUID | None
     active: bool
+    mfa_verified: bool
 
 
 # --- Sign in -----------------------------------------------------------------
@@ -116,8 +131,25 @@ def login(
         _register_failure(normalized, ip_address)
         raise InvalidCredentials("The email or password is incorrect.")
 
-    _reset_failures(normalized)
+    reset_login_failures(normalized)
     organization_id = choose_organization(user) if choose_organization else None
+    if TOTPDevice.objects.filter(user=user, confirmed_at__isnull=False).exists():
+        challenge = one_time_tokens.issue(
+            user,
+            OneTimeToken.Purpose.MFA_CHALLENGE,
+            settings.AUTH_MFA_CHALLENGE_LIFETIME,
+            payload={
+                "client_type": client_type,
+                "organization_id": str(organization_id) if organization_id else None,
+                "ip_address": ip_address,
+                "user_agent": user_agent[:256],
+                "device_name": device_name[:100],
+            },
+        )
+        security_log.info("auth.mfa_challenge_issued", user_id=str(user.pk), ip=ip_address)
+        raise MFARequired(
+            "Enter the 6-digit code from your authenticator app.", extra={"mfa_token": challenge}
+        )
     with transaction.atomic():
         issued = start_session(
             user=user,
@@ -148,12 +180,14 @@ def start_session(
     ip_address: str | None,
     user_agent: str,
     device_name: str = "",
+    mfa_verified: bool = False,
 ) -> IssuedTokens:
     """Open a session for an already-authenticated user (sign-in, sign-up, switch)."""
     now = timezone.now()
     session = AuthSession.objects.create(
         user=user,
         organization_id=organization_id,
+        mfa_verified=mfa_verified,
         client_type=client_type,
         device_name=device_name[:100],
         user_agent=user_agent[:256],
@@ -184,6 +218,7 @@ def switch_organization(*, session_id: uuid.UUID, organization_id: uuid.UUID) ->
             ip_address=current.ip_address,
             user_agent=current.user_agent,
             device_name=current.device_name,
+            mfa_verified=current.mfa_verified,
         )
 
 
@@ -301,17 +336,18 @@ def get_session_state(session_id: uuid.UUID) -> SessionState | None:
 
     row = (
         AuthSession.objects.filter(pk=session_id)
-        .values_list("user_id", "organization_id", "revoked_at", "expires_at")
+        .values_list("user_id", "organization_id", "revoked_at", "expires_at", "mfa_verified")
         .first()
     )
     if row is None:
         return None
-    user_id, organization_id, revoked_at, expires_at = row
+    user_id, organization_id, revoked_at, expires_at, mfa_verified = row
     now = timezone.now()
     state = SessionState(
         user_id=user_id,
         organization_id=organization_id,
         active=revoked_at is None and expires_at > now,
+        mfa_verified=mfa_verified,
     )
     # Never cache an active session beyond its own expiry.
     ttl = settings.AUTH_SESSION_CACHE_SECONDS
@@ -344,6 +380,28 @@ def _issue_tokens(session: AuthSession, *, now: datetime) -> IssuedTokens:
     )
 
 
+def forget_session_state(session_id: uuid.UUID) -> None:
+    """Drop the cached state now and after commit (after changing a session row)."""
+    key = _session_cache_key(session_id)
+    cache.delete(key)
+    transaction.on_commit(lambda: cache.delete(key))
+
+
+def revoke_sessions(*, user: User, reason: str, keep_session_id: uuid.UUID | None = None) -> int:
+    """End a user's sessions (optionally keeping the current one)."""
+    with transaction.atomic():
+        now = timezone.now()
+        sessions = AuthSession.objects.select_for_update().filter(
+            user=user, revoked_at__isnull=True
+        )
+        if keep_session_id is not None:
+            sessions = sessions.exclude(pk=keep_session_id)
+        ended = list(sessions)
+        for session in ended:
+            _revoke(session, reason, now=now)
+    return len(ended)
+
+
 def _revoke(session: AuthSession, reason: str, *, now: datetime) -> None:
     session.revoked_at = now
     session.revoke_reason = reason
@@ -358,7 +416,7 @@ def _revoke(session: AuthSession, reason: str, *, now: datetime) -> None:
 
 def _session_cache_key(session_id: uuid.UUID) -> str:
     # Versioned: bump when SessionState's shape changes so stale pickles are ignored.
-    return f"auth:session:v2:{session_id}"
+    return f"auth:session:v3:{session_id}"
 
 
 def _session_max_lifetime(client_type: str) -> timedelta:
@@ -419,8 +477,13 @@ def _register_failure(normalized_email: str, ip_address: str | None) -> None:
         security_log.warning("auth.login_locked", email_fp=fingerprint, ip=ip_address)
 
 
-def _reset_failures(normalized_email: str) -> None:
+def reset_login_failures(normalized_email: str) -> None:
     cache.delete(_failures_key(normalized_email))
+
+
+def unlock_login(normalized_email: str) -> None:
+    """Clear both the failure count and any active lock (e.g. after a password reset)."""
+    cache.delete_many([_failures_key(normalized_email), _lock_key(normalized_email)])
 
 
 def _locked_error(retry_after: int) -> LoginTemporarilyLocked:

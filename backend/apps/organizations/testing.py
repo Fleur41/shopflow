@@ -66,14 +66,19 @@ def add_store(organization: Organization, code: str, name: str | None = None) ->
     )
 
 
-def client_for(user: User, organization: Organization | None) -> APIClient:
-    """A Bearer-authenticated client whose session works in ``organization``."""
+def client_for(user: User, organization: Organization | None, *, mfa: bool = True) -> APIClient:
+    """A Bearer-authenticated client whose session works in ``organization``.
+
+    By default the session counts as MFA-verified, as after a real two-step
+    sign-in; pass ``mfa=False`` to test enforcement.
+    """
     issued = start_session(
         user=user,
         client_type=AuthSession.ClientType.MOBILE,
         organization_id=organization.pk if organization else None,
         ip_address=None,
         user_agent="pytest",
+        mfa_verified=mfa,
     )
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {issued.access_token}")

@@ -19,6 +19,90 @@ paths:
               schema:
                 $ref: '#/components/schemas/CsrfToken'
           description: ''
+  /api/v1/auth/email/verification/:
+    post:
+      operationId: auth_email_verification_create
+      description: Send (again) the link that confirms the signed-in user's email
+        address.
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '202':
+          description: Accepted
+  /api/v1/auth/email/verify/:
+    post:
+      operationId: auth_email_verify_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailVerifyRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: Done
+  /api/v1/auth/invitations/accept/:
+    post:
+      operationId: auth_invitations_accept_create
+      description: |-
+        Accept an invitation.
+
+        New people send their name and a password: their account is created and
+        they are signed in to the business (201). People with an account must be
+        signed in as the invited email; they get the business ID to switch to (200).
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationAcceptRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationAccepted'
+          description: ''
+  /api/v1/auth/invitations/preview/:
+    post:
+      operationId: auth_invitations_preview_create
+      description: What an invitation link is for (the token itself is the credential).
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationTokenRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvitationPreview'
+          description: ''
   /api/v1/auth/login/:
     post:
       operationId: auth_login_create
@@ -78,6 +162,135 @@ paths:
               schema:
                 $ref: '#/components/schemas/Me'
           description: ''
+  /api/v1/auth/mfa/totp/confirm/:
+    post:
+      operationId: auth_mfa_totp_confirm_create
+      description: Confirm with a first code. Returns recovery codes once; other sessions
+        end.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPConfirmRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecoveryCodes'
+          description: ''
+  /api/v1/auth/mfa/totp/disable/:
+    post:
+      operationId: auth_mfa_totp_disable_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TOTPDisableRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: Done
+  /api/v1/auth/mfa/totp/setup/:
+    post:
+      operationId: auth_mfa_totp_setup_create
+      description: 'Start authenticator-app setup: returns the secret and a QR code
+        to scan.'
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TOTPSetup'
+          description: ''
+  /api/v1/auth/mfa/verify/:
+    post:
+      operationId: auth_mfa_verify_create
+      description: 'Second sign-in step after ``401 MFA_REQUIRED``: a 6-digit or recovery
+        code.'
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAVerifyRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/auth/password/change/:
+    post:
+      operationId: auth_password_change_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordChangeRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: Done
+  /api/v1/auth/password/reset/:
+    post:
+      operationId: auth_password_reset_create
+      description: Always 202, whether or not the address has an account.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '202':
+          description: Accepted
+  /api/v1/auth/password/reset/confirm/:
+    post:
+      operationId: auth_password_reset_confirm_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetConfirmRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          description: Done
   /api/v1/auth/refresh/:
     post:
       operationId: auth_refresh_create
@@ -191,6 +404,86 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/invitations/:
+    get:
+      operationId: invitations_list
+      description: Pending (and expired, not yet replaced) invitations.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - invitations
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInvitationList'
+          description: ''
+    post:
+      operationId: invitations_create
+      description: Pending (and expired, not yet replaced) invitations.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - invitations
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvitationCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
+          description: ''
+  /api/v1/invitations/{invitation_id}/revoke/:
+    post:
+      operationId: invitations_revoke_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: invitation_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - invitations
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invitation'
           description: ''
   /api/v1/members/:
     get:
@@ -670,6 +963,141 @@ components:
       - permissions
       - role
       - stores
+    EmailVerifyRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - token
+    Invitation:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleSummary'
+          readOnly: true
+        all_stores:
+          type: boolean
+          readOnly: true
+        store_ids:
+          readOnly: true
+        status:
+          type: string
+          readOnly: true
+        invited_by:
+          type: string
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - all_stores
+      - created_at
+      - email
+      - expires_at
+      - id
+      - invited_by
+      - role
+      - status
+      - store_ids
+    InvitationAcceptRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 128
+        full_name:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        client:
+          allOf:
+          - $ref: '#/components/schemas/ClientEnum'
+          default: web
+      required:
+      - token
+    InvitationAccepted:
+      type: object
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+      required:
+      - organization_id
+    InvitationCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        role_id:
+          type: string
+          format: uuid
+        all_stores:
+          type: boolean
+          default: false
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - email
+      - role_id
+    InvitationPreview:
+      type: object
+      properties:
+        organization_name:
+          type: string
+        email:
+          type: string
+          format: email
+        role_name:
+          type: string
+        account_exists:
+          type: boolean
+          description: If true, sign in as this email before accepting.
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - account_exists
+      - email
+      - expires_at
+      - organization_name
+      - role_name
+    InvitationTokenRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 128
+      required:
+      - token
     LoginRequest:
       type: object
       properties:
@@ -698,9 +1126,32 @@ components:
       required:
       - email
       - password
+    MFAVerifyRequest:
+      type: object
+      properties:
+        mfa_token:
+          type: string
+          minLength: 1
+          maxLength: 128
+        code:
+          type: string
+          minLength: 1
+          description: Authenticator or recovery code.
+          maxLength: 32
+        client:
+          allOf:
+          - $ref: '#/components/schemas/ClientEnum'
+          default: web
+      required:
+      - code
+      - mfa_token
     Me:
       type: object
       properties:
+        mfa_verified:
+          type: boolean
+          description: This session passed two-step verification (needed for sensitive
+            actions).
         user:
           $ref: '#/components/schemas/User'
         organization:
@@ -718,6 +1169,7 @@ components:
           description: Businesses this user can switch to.
       required:
       - access
+      - mfa_verified
       - organization
       - organizations
       - user
@@ -876,6 +1328,25 @@ components:
       - name
       - status
       - timezone
+    PaginatedInvitationList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Invitation'
     PaginatedMemberList:
       type: object
       required:
@@ -952,6 +1423,47 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Store'
+    PasswordChangeRequest:
+      type: object
+      properties:
+        current_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - current_password
+      - new_password
+    PasswordResetConfirmRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 128
+        new_password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - new_password
+      - token
+    PasswordResetRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+      required:
+      - email
     PatchedMemberUpdateRequest:
       type: object
       properties:
@@ -1149,6 +1661,16 @@ components:
         * `sync.resolve_conflicts` - sync.resolve_conflicts
         * `users.manage` - users.manage
         * `users.view` - users.view
+    RecoveryCodes:
+      type: object
+      properties:
+        recovery_codes:
+          type: array
+          items:
+            type: string
+          description: Shown once. Each works one time.
+      required:
+      - recovery_codes
     Role:
       type: object
       properties:
@@ -1480,6 +2002,46 @@ components:
           format: uuid
       required:
       - organization_id
+    TOTPConfirmRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 16
+      required:
+      - code
+    TOTPDisableRequest:
+      type: object
+      properties:
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        code:
+          type: string
+          minLength: 1
+          description: Authenticator or recovery code.
+          maxLength: 32
+      required:
+      - code
+      - password
+    TOTPSetup:
+      type: object
+      properties:
+        secret:
+          type: string
+          description: Base32 secret for manual entry.
+        otpauth_uri:
+          type: string
+        qr_code:
+          type: string
+          description: 'PNG QR code as a data: URI.'
+      required:
+      - otpauth_uri
+      - qr_code
+      - secret
     TemplateEnum:
       enum:
       - OWNER
@@ -1525,11 +2087,15 @@ components:
         email_verified:
           type: boolean
           readOnly: true
+        mfa_enabled:
+          type: boolean
+          readOnly: true
       required:
       - email
       - email_verified
       - full_name
       - id
+      - mfa_enabled
       - phone
   securitySchemes:
     bearerAuth:

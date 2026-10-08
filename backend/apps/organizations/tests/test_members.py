@@ -233,6 +233,7 @@ def test_last_active_owner_cannot_be_removed_even_in_a_race(biz, owner_client):
         permissions=role_permissions(role(biz.organization, Role.Template.OWNER)),
         store_ids=frozenset(),
         session_id=biz.membership.pk,
+        mfa_verified=True,
         request_id="",
         ip_address=None,
         user_agent="",

@@ -1,0 +1,7 @@
+Hello {{ name }},
+
+{{ event }} on your ShopFlow account.
+
+If this was you, there's nothing to do. If it wasn't, reset your password now at {{ reset_url }} and tell your business owner.
+
+ShopFlow

@@ -35,5 +35,5 @@ The spec (§52) asks that ambiguous business behaviour be identified rather than
 | # | Question | Current behaviour | Why it matters | Blocks |
 |---|---|---|---|---|
 | Q-24 | Do cashiers have email addresses? Many shop staff may only have a phone. | **Default applied in 1.8:** email sign-in. Every account needs an email; owners create staff accounts with an initial password. Phone/PIN sign-in can be added without reworking the web shell. | If staff lack email, we need phone-number sign-in and/or a quick till PIN, which is common on POS devices. Changes the `User` model and sign-in flow. | 1.8 / 1.9 |
-| Q-25 | May an owner add someone who already has a ShopFlow account (e.g. staff working at two shops)? | Refused until invitations exist (1.9). The person must accept, so one business can't silently attach itself to another's account. | Adding them directly would let any business probe accounts and see real names. | 1.9 |
+| Q-25 | May an owner add someone who already has a ShopFlow account (e.g. staff working at two shops)? | **Resolved in 1.9:** by invitation only. The person accepts while signed in as that account. The person must accept, so one business can't silently attach itself to another's account. | Adding them directly would let any business probe accounts and see real names. | 1.9 |
 

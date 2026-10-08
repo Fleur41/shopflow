@@ -31,6 +31,12 @@ services:
       timeout: 3s
       retries: 30
 
+  mailpit:
+    # Catches all outgoing email locally: http://localhost:8025
+    image: axllent/mailpit:v1.27
+    ports:
+      - "127.0.0.1:8025:8025"
+
   backend:
     build:
       context: ./backend
@@ -47,6 +53,8 @@ services:
       DATABASE_APP_ROLE: shopflow_app
       DATABASE_APP_PASSWORD: ${POSTGRES_APP_PASSWORD:-shopflow_app}
       REDIS_URL: redis://redis:6379/0
+      EMAIL_URL: smtp://mailpit:1025
+      FRONTEND_URL: http://localhost:3000
     command: >-
       sh -c "DATABASE_URL=$$MIGRATION_DATABASE_URL python manage.py migrate --noinput
       && python manage.py runserver 0.0.0.0:8000"
@@ -60,6 +68,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      mailpit:
+        condition: service_started
 
   frontend:
     build:

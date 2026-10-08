@@ -75,6 +75,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             {data.user.full_name} <span className="ml-2 text-sm text-slate-600">({data.access?.role.name})</span>
           </summary>
           <div className="absolute right-0 z-10 mt-1 flex w-56 flex-col rounded-md bg-white p-1 shadow-lg ring-1 ring-slate-200">
+            <Link href="/account" className="rounded px-3 py-2 hover:bg-slate-100">
+              Your account
+            </Link>
             {data.organizations.length > 1 && (
               <Link href="/select-business" className="rounded px-3 py-2 hover:bg-slate-100">
                 Switch business

@@ -1,6 +1,14 @@
 """Test runs (pytest, CI). Uses a real PostgreSQL; never SQLite."""
 
+import base64
+import hashlib
 import os
+
+# A fixed, non-secret Fernet key derived from a phrase (never used outside test).
+os.environ.setdefault(
+    "MFA_ENCRYPTION_KEYS",
+    base64.urlsafe_b64encode(hashlib.sha256(b"test-only-mfa-encryption-key").digest()).decode(),
+)
 
 os.environ.setdefault(
     "JWT_SIGNING_KEYS",

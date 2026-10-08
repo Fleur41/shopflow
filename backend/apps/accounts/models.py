@@ -102,6 +102,8 @@ class AuthSession(BaseModel):
         ADMIN = "ADMIN", "Revoked by an administrator"
         SWITCHED_ORGANIZATION = "SWITCHED_ORGANIZATION", "Switched to another business"
         MEMBERSHIP_SUSPENDED = "MEMBERSHIP_SUSPENDED", "Access to the business was suspended"
+        MFA_ENABLED = "MFA_ENABLED", "Two-step verification was turned on"
+        MFA_DISABLED = "MFA_DISABLED", "Two-step verification was turned off"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_sessions")
     organization = models.ForeignKey(
@@ -111,6 +113,10 @@ class AuthSession(BaseModel):
         blank=True,
         related_name="+",
         help_text="The business this session works in. Null until one is chosen.",
+    )
+    mfa_verified = models.BooleanField(
+        default=False,
+        help_text="Signed in with a second factor (or enrolled during this session).",
     )
     client_type = models.CharField(max_length=10, choices=ClientType.choices)
     device_name = models.CharField(max_length=100, blank=True)
@@ -164,3 +170,66 @@ class RefreshToken(BaseModel):
 
     def __str__(self) -> str:
         return f"refresh token {self.pk} of session {self.session_id}"
+
+
+class OneTimeToken(BaseModel):
+    """Single-use secret for an emailed link or a sign-in challenge.
+
+    Only a SHA-256 hash is stored. A token is usable once, until it expires;
+    issuing a new token for the same purpose invalidates older ones.
+    """
+
+    class Purpose(models.TextChoices):
+        VERIFY_EMAIL = "VERIFY_EMAIL", "Verify email address"
+        RESET_PASSWORD = "RESET_PASSWORD", "Reset password"
+        MFA_CHALLENGE = "MFA_CHALLENGE", "Second sign-in step"
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="one_time_tokens")
+    purpose = models.CharField(max_length=20, choices=Purpose.choices)
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    used_at = models.DateTimeField(null=True, blank=True)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    payload = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(
+                fields=["user", "purpose"],
+                condition=models.Q(used_at__isnull=True),
+                name="accounts_ott_open_idx",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.purpose} token for {self.user_id}"
+
+
+class TOTPDevice(BaseModel):
+    """An authenticator app. The shared secret is encrypted at rest."""
+
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="totp_device")
+    secret_encrypted = models.TextField()
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    last_used_counter = models.BigIntegerField(
+        null=True, blank=True, help_text="Time step of the last accepted code (blocks replays)."
+    )
+
+    def __str__(self) -> str:
+        return f"TOTP device of {self.user_id}"
+
+
+class RecoveryCode(BaseModel):
+    """One-time backup code for when the authenticator is unavailable (hash only)."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="recovery_codes")
+    code_hash = models.CharField(max_length=64)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(fields=["user", "code_hash"], name="accounts_recovery_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"recovery code of {self.user_id}"

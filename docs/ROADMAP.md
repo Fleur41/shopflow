@@ -35,8 +35,15 @@ Status: 1.1–1.4 done (2026-10-08), with these adjustments:
 - **Deferred:** UI to edit roles and members' roles/stores (the API exists), and sign-in by phone or PIN (Q-24).
 
 Deferred:
-- Invitations: adding people who already have an account, and `INVITED` memberships → 1.9 (needs email).
 - PostgreSQL row-level security → 8.1, as planned.
+
+1.9 done (2026-10-08). **Phase 1 is complete.**
+- **Email:** delivery via SMTP (Mailpit locally), email verification, password reset and change with email notices.
+- **Two-step verification:** TOTP with recovery codes and replay protection, enforced per sensitive action (SECURITY.md §2.4).
+- **Invitations**, including for people who already have an account.
+- **Web:** pages for all of the above, plus E2E journeys that use real emails from Mailpit and real TOTP codes.
+- **Fixed:** a password reset didn't lift an active sign-in lockout.
+- **Deferred:** step-up MFA for very sensitive actions → 8.6 (as planned). Regenerating recovery codes without turning MFA off → later.
 
 | # | Milestone | Acceptance criteria |
 |---|---|---|
@@ -48,7 +55,7 @@ Deferred:
 | 1.6 ✅ | Organizations and RBAC | Organization, Store, Membership, MembershipStore, Role, Permission catalog, role templates. Tenant context resolution. Scoped managers. Permission-declaration test. **Cross-tenant BOLA test harness** (parametrized over all routes). Org signup flow creates org, owner and default store. |
 | 1.7 ✅ | Audit and idempotency frameworks | `audit_log` (append-only trigger + grants). `record_audit()` service API. Idempotency claim/replay utility with concurrency tests. Two DB roles (migrator/app) in compose and CI. |
 | 1.8 ✅ | Web shell | Next.js App Router, TS strict, design system (accessible primitives, e.g. Radix/shadcn), login, org/store switcher, protected layout, API client generated from OpenAPI, error/loading/empty state patterns, Playwright + axe smoke test |
-| 1.9 | Account lifecycle | Email verification, password reset, password change, TOTP MFA (enforced for sensitive roles), member invitation |
+| 1.9 ✅ | Account lifecycle | Email verification, password reset, password change, TOTP MFA (enforced for sensitive roles), member invitation |
 
 **Demo:** sign up a business, invite a cashier limited to one store, and show that the cashier cannot see the other store or another org's data. Every one of those actions is in the audit log.
 

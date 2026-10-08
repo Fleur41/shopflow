@@ -1,13 +1,15 @@
 from collections.abc import Mapping
 from typing import Any, ClassVar
 
+from django.conf import settings
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
+from ..catalog import SENSITIVE_CODES
 from ..context import RequestContext, get_request_context
-from ..errors import MissingPermission
+from ..errors import MFAEnrollmentRequired, MissingPermission
 
 
 class TenantPermission(BasePermission):
@@ -35,6 +37,11 @@ class TenantPermission(BasePermission):
                         "meta": {"permission": code or f"undeclared:{method}"},
                     }
                 ],
+            )
+        if code in SENSITIVE_CODES and settings.MFA_ENFORCEMENT and not ctx.mfa_verified:
+            raise MFAEnrollmentRequired(
+                "Turn on two-step verification in your account settings to do this.",
+                errors=[{"pointer": "", "code": "MFA_REQUIRED", "meta": {"permission": code}}],
             )
         return True
 

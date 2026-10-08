@@ -14,6 +14,8 @@ export type Problem = {
   detail: string;
   errors?: ProblemError[];
   request_id?: string | null;
+  /** Present with code MFA_REQUIRED: complete sign-in at /auth/mfa/verify/. */
+  mfa_token?: string;
 };
 
 export class ApiError extends Error {

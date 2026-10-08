@@ -6,6 +6,7 @@ caller's organization (and accessible stores), so another business's IDs
 return 404, exactly like IDs that do not exist.
 """
 
+import dataclasses
 import uuid
 from typing import Any, ClassVar
 
@@ -22,19 +23,31 @@ from apps.accounts.api.cookies import set_auth_cookies
 from apps.accounts.api.serializers import AuthResponseSerializer, ClientType
 from apps.accounts.api.views import auth_response_body
 from apps.accounts.authentication import enforce_csrf
+from apps.accounts.lifecycle import send_email_verification
 from apps.accounts.models import AuthSession, User
-from apps.accounts.services import IssuedTokens, start_session, switch_organization
+from apps.accounts.services import (
+    IssuedTokens,
+    get_session_state,
+    start_session,
+    switch_organization,
+)
 from apps.accounts.tokens import AccessClaims
 from apps.common.errors import ApplicationError
 from apps.common.http import client_ip
 from apps.idempotency.service import idempotent
 
-from .. import selectors, services
+from .. import invitations, selectors, services
 from ..context import get_request_context
 from ..errors import TenantAccessError
-from ..models import Membership, Permission, Role, Store
+from ..models import Invitation, Membership, Permission, Role, Store
 from .permissions import TenantAPIView
 from .serializers import (
+    InvitationAcceptedSerializer,
+    InvitationAcceptSerializer,
+    InvitationCreateSerializer,
+    InvitationPreviewSerializer,
+    InvitationSerializer,
+    InvitationTokenSerializer,
     MemberCreateSerializer,
     MemberSerializer,
     MemberUpdateSerializer,
@@ -48,7 +61,7 @@ from .serializers import (
     SuspendSerializer,
     SwitchOrganizationSerializer,
 )
-from .throttles import SignupThrottle
+from .throttles import InvitationTokenThrottle, SignupThrottle
 
 
 class StaleVersion(ApplicationError):
@@ -96,6 +109,7 @@ class SignupView(APIView):
             ip_address=client_ip(request),
             user_agent=user_agent,
         )
+        send_email_verification(registered.user)
         issued = start_session(
             user=registered.user,
             client_type=AuthSession.ClientType.WEB if is_web else AuthSession.ClientType.MOBILE,
@@ -132,7 +146,17 @@ class MeView(APIView):
         user = request.user
         if not isinstance(user, User):
             raise Http404
-        body: dict[str, Any] = {"user": user, "organization": None, "access": None}
+        state = (
+            get_session_state(request.auth.session_id)
+            if isinstance(request.auth, AccessClaims)
+            else None
+        )
+        body: dict[str, Any] = {
+            "user": user,
+            "organization": None,
+            "access": None,
+            "mfa_verified": bool(state and state.mfa_verified),
+        }
         try:
             ctx = get_request_context(request)
         except TenantAccessError:
@@ -379,3 +403,112 @@ class MemberReactivateView(_MemberView):
     def post(self, request: Request, member_id: uuid.UUID) -> Response:
         membership = services.reactivate_member(self.ctx, self.get_member(member_id))
         return self.respond(membership)
+
+
+# --- Invitations ------------------------------------------------------------------
+
+
+class InvitationListView(mixins.ListModelMixin, TenantAPIView):
+    """Pending (and expired, not yet replaced) invitations."""
+
+    required_permissions: ClassVar[dict[str, str]] = {"GET": "users.view", "POST": "users.manage"}
+    serializer_class = InvitationSerializer
+
+    def get_queryset(self) -> QuerySet[Invitation]:
+        return (
+            Invitation.objects.for_org(self.ctx.organization)
+            .filter(accepted_at__isnull=True, revoked_at__isnull=True)
+            .select_related("role", "invited_by")
+        )
+
+    def get(self, request: Request) -> Response:
+        return self.list(request)
+
+    @extend_schema(request=InvitationCreateSerializer, responses={201: InvitationSerializer})
+    @idempotent(required=False)
+    def post(self, request: Request) -> Response:
+        serializer = InvitationCreateSerializer(
+            data=request.data, context=self.get_serializer_context()
+        )
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        invitation = invitations.invite_member(
+            self.ctx,
+            email=data["email"],
+            role=data["role_id"],
+            all_stores=data["all_stores"],
+            stores=data["store_ids"],
+        )
+        return Response(InvitationSerializer(invitation).data, status=status.HTTP_201_CREATED)
+
+
+class InvitationRevokeView(TenantAPIView):
+    required_permissions: ClassVar[dict[str, str]] = {"POST": "users.manage"}
+    serializer_class = InvitationSerializer
+
+    @extend_schema(request=None, responses=InvitationSerializer)
+    def post(self, request: Request, invitation_id: uuid.UUID) -> Response:
+        invitation = (
+            Invitation.objects.for_org(self.ctx.organization).filter(pk=invitation_id).first()
+        )
+        if invitation is None:
+            raise Http404
+        return Response(
+            InvitationSerializer(invitations.revoke_invitation(self.ctx, invitation)).data
+        )
+
+
+class InvitationPreviewView(APIView):
+    """What an invitation link is for (the token itself is the credential)."""
+
+    authentication_classes = ()
+    permission_classes = (AllowAny,)
+    throttle_classes = (InvitationTokenThrottle,)
+
+    @extend_schema(request=InvitationTokenSerializer, responses=InvitationPreviewSerializer)
+    def post(self, request: Request) -> Response:
+        serializer = InvitationTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        preview = invitations.preview(serializer.validated_data["token"])
+        return Response(InvitationPreviewSerializer(dataclasses.asdict(preview)).data)
+
+
+class InvitationAcceptView(APIView):
+    """Accept an invitation.
+
+    New people send their name and a password: their account is created and
+    they are signed in to the business (201). People with an account must be
+    signed in as the invited email; they get the business ID to switch to (200).
+    """
+
+    permission_classes = (AllowAny,)
+    throttle_classes = (InvitationTokenThrottle,)
+
+    @extend_schema(
+        request=InvitationAcceptSerializer,
+        responses={201: AuthResponseSerializer, 200: InvitationAcceptedSerializer},
+    )
+    def post(self, request: Request) -> Response:
+        serializer = InvitationAcceptSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        signed_in = request.user if isinstance(request.user, User) else None
+        is_web = data["client"] == ClientType.WEB
+        if signed_in is None and is_web:
+            enforce_csrf(request)  # we are about to set session cookies
+        membership = invitations.accept_invitation(
+            data["token"],
+            signed_in_user=signed_in,
+            full_name=data.get("full_name", ""),
+            password=data.get("password"),
+        )
+        if signed_in is not None:
+            return Response({"organization_id": str(membership.organization_id)})
+        issued = start_session(
+            user=membership.user,
+            client_type=AuthSession.ClientType.WEB if is_web else AuthSession.ClientType.MOBILE,
+            organization_id=membership.organization_id,
+            ip_address=client_ip(request),
+            user_agent=request.headers.get("User-Agent", ""),
+        )
+        return _session_response(issued, status_code=status.HTTP_201_CREATED)

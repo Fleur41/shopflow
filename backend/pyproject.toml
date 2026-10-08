@@ -16,6 +16,9 @@ dependencies = [
     "gunicorn>=23.0",
     "whitenoise>=6.8",
     "pyjwt>=2.10",
+    "pyotp>=2.9",
+    "segno>=1.6",
+    "cryptography>=44",
 ]
 
 [dependency-groups]

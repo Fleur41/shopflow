@@ -8,3 +8,10 @@ class SignupThrottle(SimpleRateThrottle):
 
     def get_cache_key(self, request: Request, view: APIView) -> str:
         return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}
+
+
+class InvitationTokenThrottle(SimpleRateThrottle):
+    scope = "invitation_token"
+
+    def get_cache_key(self, request: Request, view: APIView) -> str:
+        return self.cache_format % {"scope": self.scope, "ident": self.get_ident(request)}

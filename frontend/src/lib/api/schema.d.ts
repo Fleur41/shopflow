@@ -21,6 +21,79 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/email/verification/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Send (again) the link that confirms the signed-in user's email address. */
+        post: operations["auth_email_verification_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/email/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_email_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/invitations/accept/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @description Accept an invitation.
+         *
+         *     New people send their name and a password: their account is created and
+         *     they are signed in to the business (201). People with an account must be
+         *     signed in as the invited email; they get the business ID to switch to (200).
+         */
+        post: operations["auth_invitations_accept_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/invitations/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description What an invitation link is for (the token itself is the credential). */
+        post: operations["auth_invitations_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login/": {
         parameters: {
             query?: never;
@@ -80,6 +153,122 @@ export interface paths {
         get: operations["auth_me_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/totp/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Confirm with a first code. Returns recovery codes once; other sessions end. */
+        post: operations["auth_mfa_totp_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/totp/disable/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_mfa_totp_disable_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/totp/setup/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Start authenticator-app setup: returns the secret and a QR code to scan. */
+        post: operations["auth_mfa_totp_setup_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Second sign-in step after ``401 MFA_REQUIRED``: a 6-digit or recovery code. */
+        post: operations["auth_mfa_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/change/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_password_change_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Always 202, whether or not the address has an account. */
+        post: operations["auth_password_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["auth_password_reset_confirm_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -164,6 +353,41 @@ export interface paths {
         put?: never;
         /** @description Start a new session in another of the user's businesses (the old one ends). */
         post: operations["auth_switch_organization_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invitations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Pending (and expired, not yet replaced) invitations. */
+        get: operations["invitations_list"];
+        put?: never;
+        /** @description Pending (and expired, not yet replaced) invitations. */
+        post: operations["invitations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invitations/{invitation_id}/revoke/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["invitations_revoke_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -372,6 +596,57 @@ export interface components {
             all_stores: boolean;
             stores: components["schemas"]["StoreSummary"][];
         };
+        EmailVerifyRequest: {
+            token: string;
+        };
+        Invitation: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly role: components["schemas"]["RoleSummary"];
+            readonly all_stores: boolean;
+            readonly store_ids: unknown;
+            readonly status: string;
+            readonly invited_by: string;
+            /** Format: date-time */
+            readonly expires_at: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        InvitationAcceptRequest: {
+            token: string;
+            full_name?: string;
+            password?: string;
+            /** @default web */
+            client: components["schemas"]["ClientEnum"];
+        };
+        InvitationAccepted: {
+            /** Format: uuid */
+            organization_id: string;
+        };
+        InvitationCreateRequest: {
+            /** Format: email */
+            email: string;
+            /** Format: uuid */
+            role_id: string;
+            /** @default false */
+            all_stores: boolean;
+            store_ids?: string[];
+        };
+        InvitationPreview: {
+            organization_name: string;
+            /** Format: email */
+            email: string;
+            role_name: string;
+            /** @description If true, sign in as this email before accepting. */
+            account_exists: boolean;
+            /** Format: date-time */
+            expires_at: string;
+        };
+        InvitationTokenRequest: {
+            token: string;
+        };
         LoginRequest: {
             /** Format: email */
             email: string;
@@ -385,7 +660,16 @@ export interface components {
              */
             organization_id?: string;
         };
+        MFAVerifyRequest: {
+            mfa_token: string;
+            /** @description Authenticator or recovery code. */
+            code: string;
+            /** @default web */
+            client: components["schemas"]["ClientEnum"];
+        };
         Me: {
+            /** @description This session passed two-step verification (needed for sensitive actions). */
+            mfa_verified: boolean;
             user: components["schemas"]["User"];
             organization: components["schemas"]["Organization"] | null;
             access: components["schemas"]["CurrentAccess"] | null;
@@ -444,6 +728,19 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        PaginatedInvitationList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Invitation"][];
+        };
         PaginatedMemberList: {
             /**
              * Format: uri
@@ -495,6 +792,18 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Store"][];
+        };
+        PasswordChangeRequest: {
+            current_password: string;
+            new_password: string;
+        };
+        PasswordResetConfirmRequest: {
+            token: string;
+            new_password: string;
+        };
+        PasswordResetRequest: {
+            /** Format: email */
+            email: string;
         };
         PatchedMemberUpdateRequest: {
             /** @description The version you last read; the update is refused if someone changed it since. */
@@ -586,6 +895,10 @@ export interface components {
          * @enum {string}
          */
         PermissionsEnum: "audit.view" | "cash.close_session" | "cash.correct" | "cash.open_session" | "cash.pay_in_out" | "cash.view_sessions" | "customers.create" | "customers.exceed_credit_limit" | "customers.manage" | "customers.receive_payment" | "customers.reconcile" | "customers.reverse_entry" | "customers.set_credit_limit" | "customers.view" | "customers.view_balance" | "customers.view_contact" | "inventory.adjust" | "inventory.manage_levels" | "inventory.receive" | "inventory.view" | "inventory.view_movements" | "org.manage" | "org.view" | "products.change_price" | "products.manage" | "products.view" | "purchasing.create_po" | "purchasing.pay_supplier" | "purchasing.receive" | "purchasing.return" | "purchasing.view" | "purchasing.view_payables" | "reports.view" | "reports.view_all_stores" | "reports.view_customers" | "roles.manage" | "roles.view" | "sales.create" | "sales.credit" | "sales.discount" | "sales.override_price" | "sales.return" | "sales.view_all" | "sales.view_own" | "sales.void" | "stores.manage" | "stores.manage_inventory_policy" | "stores.view" | "suppliers.manage" | "suppliers.view" | "sync.register_device" | "sync.resolve_conflicts" | "users.manage" | "users.view";
+        RecoveryCodes: {
+            /** @description Shown once. Each works one time. */
+            recovery_codes: string[];
+        };
         Role: {
             /** Format: uuid */
             readonly id: string;
@@ -712,6 +1025,21 @@ export interface components {
             /** Format: uuid */
             organization_id: string;
         };
+        TOTPConfirmRequest: {
+            code: string;
+        };
+        TOTPDisableRequest: {
+            password: string;
+            /** @description Authenticator or recovery code. */
+            code: string;
+        };
+        TOTPSetup: {
+            /** @description Base32 secret for manual entry. */
+            secret: string;
+            otpauth_uri: string;
+            /** @description PNG QR code as a data: URI. */
+            qr_code: string;
+        };
         /**
          * @description * `OWNER` - Owner
          *     * `MANAGER` - Manager
@@ -733,6 +1061,7 @@ export interface components {
             readonly full_name: string;
             readonly phone: string;
             readonly email_verified: boolean;
+            readonly mfa_enabled: boolean;
         };
     };
     responses: never;
@@ -758,6 +1087,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CsrfToken"];
+                };
+            };
+        };
+    };
+    auth_email_verification_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_email_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Done */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_invitations_accept_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationAcceptRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationAccepted"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
+    auth_invitations_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationTokenRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationPreview"];
                 };
             };
         };
@@ -837,6 +1260,159 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Me"];
                 };
+            };
+        };
+    };
+    auth_mfa_totp_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TOTPConfirmRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodes"];
+                };
+            };
+        };
+    };
+    auth_mfa_totp_disable_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TOTPDisableRequest"];
+            };
+        };
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_mfa_totp_setup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TOTPSetup"];
+                };
+            };
+        };
+    };
+    auth_mfa_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MFAVerifyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
+    auth_password_change_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_password_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_password_reset_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Done */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
@@ -949,6 +1525,77 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthResponse"];
+                };
+            };
+        };
+    };
+    invitations_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedInvitationList"];
+                };
+            };
+        };
+    };
+    invitations_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"];
+                };
+            };
+        };
+    };
+    invitations_revoke_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"];
                 };
             };
         };

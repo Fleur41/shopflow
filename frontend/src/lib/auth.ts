@@ -23,7 +23,14 @@ export function can(me: Me | undefined, permission: string): boolean {
 
 /** Where to send a freshly signed-in user. */
 export function landingPath(me: Me, next: string): string {
-  return me.organization ? next : "/select-business";
+  // Pages like accepting an invitation work without a chosen business.
+  return me.organization || next !== "/" ? next : "/select-business";
+}
+
+/** Owners and managers hold sensitive permissions, which need two-step verification. */
+export function needsTwoStep(me: Me | undefined): boolean {
+  const template = me?.access?.role.template;
+  return Boolean(me && !me.mfa_verified && (template === "OWNER" || template === "MANAGER"));
 }
 
 export function isSignedOutError(error: unknown): boolean {
@@ -52,6 +59,24 @@ export type SignupInput = {
   currency: string;
   timezone: string;
 };
+
+export function useVerifyMfa() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { mfa_token: string; code: string }) => {
+      await unwrap(api.POST("/api/v1/auth/mfa/verify/", { body: { ...input, client: "web" } }));
+      return queryClient.fetchQuery({
+        queryKey: ME_KEY,
+        queryFn: () => unwrap(api.GET("/api/v1/auth/me/")),
+      });
+    },
+  });
+}
+
+/** The pending second sign-in step, if this error asks for one. */
+export function mfaChallengeFrom(error: unknown): string | null {
+  return error instanceof ApiError && error.code === "MFA_REQUIRED" ? (error.problem.mfa_token ?? null) : null;
+}
 
 export function useSignup() {
   const queryClient = useQueryClient();

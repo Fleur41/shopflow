@@ -582,7 +582,11 @@ Only non-obvious constraints are listed. Every tenant table also has `organizati
 | `membership_store` | PK `(membership_id, store_id)`. Service ensures the store belongs to the membership's org. |
 | `role` | `UNIQUE(organization_id, name)`. Partial `UNIQUE(organization_id) WHERE template = 'OWNER'` (one Owner role per business). `template IN (OWNER, MANAGER, CASHIER, CUSTOM)`. The Owner role is a system role: immutable, with no permission rows, implicitly holding every code. |
 | `permission` | Code-defined catalog (`organizations/catalog.py`), synced after every `migrate`. Codes newly added to a template are granted to existing roles from that template; codes removed from the catalog are deleted. Not editable at runtime. |
-| `auth_session` | One row per signed-in client (the "token family"). Partial index `(user_id) WHERE revoked_at IS NULL`. `CHECK(client_type IN ('WEB','MOBILE'))`. `CHECK` that `revoke_reason` is set exactly when `revoked_at` is. `organization_id` (1.6) and `device_id` (Phase 6) are added later. |
+| `one_time_token` | Hashed single-use tokens (`VERIFY_EMAIL`, `RESET_PASSWORD`, `MFA_CHALLENGE`) with `expires_at`, `used_at`, `attempts`, `payload`. `UNIQUE(token_hash)`. |
+| `totp_device` | One per user. `secret_encrypted` (Fernet), `confirmed_at`, `last_used_counter` (replay protection). |
+| `recovery_code` | Hashed, single-use. `UNIQUE(user_id, code_hash)`. |
+| `invitation` | Tenant-owned. Hashed token, 7-day `expires_at`, `accepted_at`/`revoked_at`. Partial `UNIQUE(organization_id, email) WHERE pending`. |
+| `auth_session` | One row per signed-in client (the "token family"). Partial index `(user_id) WHERE revoked_at IS NULL`. `CHECK(client_type IN ('WEB','MOBILE'))`. `CHECK` that `revoke_reason` is set exactly when `revoked_at` is. `mfa_verified` marks sessions that passed two-step verification. `organization_id` (1.6) and `device_id` (Phase 6) are added later. |
 | `refresh_token` | **`UNIQUE(token_hash)`** (SHA-256 hex; the token itself is never stored). `rotated_at` marks a used token for reuse detection. Rows of ended sessions are purged by a scheduled job (2.6). |
 
 ### Catalog

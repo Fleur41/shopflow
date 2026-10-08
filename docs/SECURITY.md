@@ -49,14 +49,21 @@ Attackers considered: an external unauthenticated attacker; an authenticated use
 - In local development the Next.js dev server forwards `/api/*` with a different `Host`, so `http://localhost:3000` is listed in `CSRF_TRUSTED_ORIGINS` (dev settings only). Deployed reverse proxies preserve `Host`.
 - `CORS_ALLOWED_ORIGINS` stays empty unless a separate origin is ever needed. In that case it gets an explicit allowlist and never `*` with credentials.
 
-### 2.4 MFA
-- TOTP (RFC 6238) with 10 single-use recovery codes, stored hashed. The TOTP secret is encrypted at rest with a key from the secrets manager.
-- **Required** for any membership whose role includes a permission marked `is_sensitive` (Owner/Admin by default). Optional for others.
+### 2.4 MFA (implemented in 1.9)
+- **Codes:** TOTP (RFC 6238), accepted for the current 30-second step ±1 (clock drift), and **never twice**: the last accepted step is stored, so a replayed code fails.
+- **Recovery codes:** 10 single-use codes, stored as SHA-256 hashes and shown once.
+- **Secret storage:** TOTP secrets are encrypted at rest with Fernet keys from `MFA_ENCRYPTION_KEYS` (the first key encrypts, all keys decrypt, so keys can rotate).
+- **Sign-in:** once MFA is on, the password alone yields only a `401 MFA_REQUIRED` challenge token, which lasts 5 minutes, is single-use and allows 5 attempts. The session is created only after a valid code, and is marked `mfa_verified`.
+- **Enforcement, per action:** using any `is_sensitive` permission requires an MFA-verified session (`403 MFA_ENROLLMENT_REQUIRED` otherwise). Signing in and everyday work (selling, viewing) are not blocked, so a shop can't be locked out of trading. Owners and managers are prompted in the UI to enrol. `MFA_ENFORCEMENT` defaults to on.
+- **Enrolment kicks out old sessions:** confirming enrolment marks the current session verified and **ends every other session**, so anyone who signed in with a stolen password before enrolment loses access.
+- **Turning it off** needs the password and a current or recovery code. It ends other sessions and sends an email notice.
 - Step-up: sensitive operations (role changes, negative-stock policy, reconciliation over a threshold) can require a fresh MFA check within the last 15 minutes (Phase 8).
 
 ### 2.5 Account lifecycle
-- **Email verification:** single-use token (stored hashed), 24 h expiry.
-- **Password reset:** single-use token (stored hashed), 30 min expiry. The response is always `202` (no enumeration). A successful reset revokes all sessions.
+- **Emailed links** use single-use tokens stored as SHA-256 hashes. Issuing a new one invalidates older ones of the same kind. Mail is sent only after the transaction commits, and a mail outage never fails the request.
+- **Email verification:** 24-hour token. The page asks for a click so link-scanning mail filters don't consume it.
+- **Password reset:** 30-minute token. The response is always `202` (no enumeration), rate-limited per email and per IP. A successful reset revokes all sessions and **lifts any sign-in lockout**, so a locked-out owner can recover.
+- **Security notices** are emailed for password reset or change and for MFA on or off.
 - **Brute force:**
   - per-email (5/min) and per-IP (20/min) throttles (§6);
   - temporary lock after 10 failures in 15 min, lasting 15 min. The lock is per email address and applies to unknown addresses too, so lockout never reveals whether an account exists;

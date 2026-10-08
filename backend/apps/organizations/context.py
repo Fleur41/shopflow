@@ -35,6 +35,7 @@ class RequestContext:
     permissions: frozenset[str]
     store_ids: frozenset[uuid.UUID]  # empty when all_stores
     session_id: uuid.UUID
+    mfa_verified: bool
     request_id: str
     ip_address: str | None
     user_agent: str
@@ -97,6 +98,7 @@ def get_request_context(request: Request) -> RequestContext:
         permissions=role_permissions(membership.role),
         store_ids=frozenset() if membership.all_stores else membership_store_ids(membership.pk),
         session_id=claims.session_id,
+        mfa_verified=state.mfa_verified,
         request_id=getattr(django_request, "request_id", ""),
         ip_address=client_ip(request),
         user_agent=request.headers.get("User-Agent", "")[:256],

@@ -2,7 +2,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from ..models import AuthSession, User
+from ..models import AuthSession, TOTPDevice, User
 
 
 class ClientType:
@@ -28,14 +28,18 @@ class MobileRefreshSerializer(serializers.Serializer[dict[str, Any]]):
 
 class UserSerializer(serializers.ModelSerializer[User]):
     email_verified = serializers.SerializerMethodField()
+    mfa_enabled = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ("id", "email", "full_name", "phone", "email_verified")
+        fields = ("id", "email", "full_name", "phone", "email_verified", "mfa_enabled")
         read_only_fields = fields
 
     def get_email_verified(self, user: User) -> bool:
         return user.email_verified_at is not None
+
+    def get_mfa_enabled(self, user: User) -> bool:
+        return TOTPDevice.objects.filter(user=user, confirmed_at__isnull=False).exists()
 
 
 class SessionSerializer(serializers.ModelSerializer[AuthSession]):
@@ -87,3 +91,51 @@ class AuthResponseSerializer(serializers.Serializer[dict[str, Any]]):
     tokens = TokenPairSerializer(
         required=False, help_text="Mobile clients only. Web clients receive HttpOnly cookies."
     )
+
+
+# --- Account lifecycle ----------------------------------------------------------
+
+
+class EmailVerifySerializer(serializers.Serializer[dict[str, Any]]):
+    token = serializers.CharField(max_length=128)
+
+
+class PasswordResetSerializer(serializers.Serializer[dict[str, Any]]):
+    email = serializers.EmailField(max_length=254)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer[dict[str, Any]]):
+    token = serializers.CharField(max_length=128)
+    new_password = serializers.CharField(max_length=128, write_only=True, trim_whitespace=False)
+
+
+class PasswordChangeSerializer(serializers.Serializer[dict[str, Any]]):
+    current_password = serializers.CharField(max_length=128, write_only=True, trim_whitespace=False)
+    new_password = serializers.CharField(max_length=128, write_only=True, trim_whitespace=False)
+
+
+class TOTPSetupSerializer(serializers.Serializer[dict[str, Any]]):
+    secret = serializers.CharField(help_text="Base32 secret for manual entry.")
+    otpauth_uri = serializers.CharField()
+    qr_code = serializers.CharField(help_text="PNG QR code as a data: URI.")
+
+
+class TOTPConfirmSerializer(serializers.Serializer[dict[str, Any]]):
+    code = serializers.CharField(max_length=16)
+
+
+class RecoveryCodesSerializer(serializers.Serializer[dict[str, Any]]):
+    recovery_codes = serializers.ListField(
+        child=serializers.CharField(), help_text="Shown once. Each works one time."
+    )
+
+
+class TOTPDisableSerializer(serializers.Serializer[dict[str, Any]]):
+    password = serializers.CharField(max_length=128, write_only=True, trim_whitespace=False)
+    code = serializers.CharField(max_length=32, help_text="Authenticator or recovery code.")
+
+
+class MFAVerifySerializer(serializers.Serializer[dict[str, Any]]):
+    mfa_token = serializers.CharField(max_length=128)
+    code = serializers.CharField(max_length=32, help_text="Authenticator or recovery code.")
+    client = serializers.ChoiceField(choices=ClientType.CHOICES, default=ClientType.WEB)

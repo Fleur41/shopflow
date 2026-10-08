@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { ApiError } from "@/lib/api/errors";
@@ -9,6 +10,11 @@ export function ErrorAlert({ error, title = "Something went wrong" }: { error: u
     <div role="alert" className="rounded-md border border-red-300 bg-red-50 p-4 text-red-900">
       <p className="font-semibold">{title}</p>
       <p className="mt-1 text-sm">{message}</p>
+      {error instanceof ApiError && error.code === "MFA_ENROLLMENT_REQUIRED" && (
+        <Link href="/account" className="mt-2 inline-block text-sm font-semibold underline">
+          Set up two-step verification
+        </Link>
+      )}
       {requestId && <p className="mt-2 text-xs text-red-800">Reference: {requestId}</p>}
     </div>
   );
@@ -42,6 +48,10 @@ export function PageHeader({ title, description, actions }: { title: string; des
       {actions && <div className="flex gap-2">{actions}</div>}
     </div>
   );
+}
+
+export function Notice({ children }: { children: ReactNode }) {
+  return <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-4 text-amber-950">{children}</div>;
 }
 
 export function Badge({ tone = "neutral", children }: { tone?: "neutral" | "success" | "warning"; children: ReactNode }) {

@@ -78,7 +78,8 @@ jobs:
         run: |
           DJANGO_SECRET_KEY="$(python -c 'import secrets; print(secrets.token_urlsafe(50))')"
           JWT_SIGNING_KEYS="ci=$(python -c 'import secrets; print(secrets.token_urlsafe(48))')"
-          export DJANGO_SECRET_KEY JWT_SIGNING_KEYS JWT_ACTIVE_KEY_ID=ci
+          MFA_ENCRYPTION_KEYS="$(python -c 'import base64, os; print(base64.urlsafe_b64encode(os.urandom(32)).decode())')"
+          export DJANGO_SECRET_KEY JWT_SIGNING_KEYS JWT_ACTIVE_KEY_ID=ci MFA_ENCRYPTION_KEYS
           uv run python manage.py check --deploy --fail-level WARNING
       - name: Tests
         # -rs lists skipped tests; the DB grant tests must not be skipped in CI.

@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import { PageHeader } from "@/components/ui/Feedback";
-import { useMe } from "@/lib/auth";
+import { Notice, PageHeader } from "@/components/ui/Feedback";
+import { needsTwoStep, useMe } from "@/lib/auth";
 import { useCurrentStore } from "@/lib/current-store";
 import { navItemsFor } from "@/lib/nav";
 
@@ -16,8 +16,26 @@ export default function DashboardPage() {
     <>
       <PageHeader
         title={`Welcome, ${me?.user.full_name.split(" ")[0] ?? ""}`}
-        description={store ? `You're working in ${store.name} (${store.code}).` : undefined}
+        description={store ? `You’re working in ${store.name} (${store.code}).` : undefined}
       />
+      {needsTwoStep(me) && (
+        <Notice>
+          <p className="font-semibold">Protect your business with two-step verification</p>
+          <p className="mt-1">You’ll need it to manage staff, stores and other sensitive settings.</p>
+          <Link href="/account" className="mt-2 inline-block font-semibold underline">
+            Set it up now
+          </Link>
+        </Notice>
+      )}
+      {me && !me.user.email_verified && (
+        <Notice>
+          <p className="font-semibold">Confirm your email address</p>
+          <p className="mt-1">We sent a link to {me.user.email}. It lets you reset your password if you ever forget it.</p>
+          <Link href="/account" className="mt-2 inline-block font-semibold underline">
+            Resend the link
+          </Link>
+        </Notice>
+      )}
       {sections.length > 0 && (
         <section aria-labelledby="manage-heading" className="mb-8">
           <h2 id="manage-heading" className="mb-3 text-lg font-semibold">

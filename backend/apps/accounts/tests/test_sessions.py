@@ -114,7 +114,7 @@ def test_revocation_clears_the_session_cache_again_after_commit(
     client, _ = mobile_session
     client.get(ME_URL)  # cache the active state
     session_id = AuthSession.objects.get().pk
-    key = f"auth:session:v2:{session_id}"
+    key = f"auth:session:v3:{session_id}"
 
     with django_capture_on_commit_callbacks(execute=False) as callbacks:
         services.logout(session_id=session_id)

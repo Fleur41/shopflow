@@ -82,4 +82,41 @@ describe("LoginForm", () => {
 
     await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
   });
+
+  it("asks for an authenticator code when two-step verification is on", async () => {
+    const me = {
+      user: { id: "u", email: "a@b.co", full_name: "A", phone: "", email_verified: true, mfa_enabled: true },
+      organization: { id: "o", name: "Duka" },
+      access: null,
+      organizations: [],
+      mfa_verified: true,
+    };
+    const seen: string[] = [];
+    vi.stubGlobal("fetch", async (input: Request) => {
+      const path = new URL(input.url).pathname;
+      seen.push(path);
+      if (path === "/api/v1/auth/login/") {
+        return json(401, { status: 401, code: "MFA_REQUIRED", detail: "Enter the code.", mfa_token: "challenge-1" });
+      }
+      if (path === "/api/v1/auth/mfa/verify/") {
+        const body = (await input.json()) as { mfa_token: string; code: string };
+        expect(body).toMatchObject({ mfa_token: "challenge-1", code: "123456", client: "web" });
+        return json(200, { user: me.user });
+      }
+      return json(200, me);
+    });
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText(/email/i), "a@b.co");
+    await userEvent.type(screen.getByLabelText(/password/i), "a-long-password");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(await screen.findByRole("heading", { name: "Two-step verification" })).toBeInTheDocument();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument(); // not shown as an error
+
+    await userEvent.type(screen.getByLabelText(/verification code/i), "123456");
+    await userEvent.click(screen.getByRole("button", { name: "Verify" }));
+
+    await vi.waitFor(() => expect(replace).toHaveBeenCalledWith("/"));
+    expect(seen).toContain("/api/v1/auth/mfa/verify/");
+  });
 });

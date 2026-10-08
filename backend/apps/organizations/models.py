@@ -256,3 +256,52 @@ class MembershipStore(models.Model):
 
     def __str__(self) -> str:
         return f"{self.membership_id}:{self.store_id}"
+
+
+# --- Invitations ------------------------------------------------------------------
+
+
+class Invitation(TenantModel):
+    """An emailed offer to join the business. Accepting needs the emailed token,
+    and for existing accounts, signing in as that account (their consent)."""
+
+    objects: ClassVar[TenantManager["Invitation"]]
+
+    email = models.EmailField(max_length=254)
+    role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="+")
+    all_stores = models.BooleanField(default=False)
+    store_ids = models.JSONField(default=list, blank=True)
+    invited_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    accepted_at = models.DateTimeField(null=True, blank=True)
+    accepted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["organization", "email"],
+                condition=models.Q(accepted_at__isnull=True, revoked_at__isnull=True),
+                name="organizations_one_pending_invitation",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"invitation for {self.email}"
+
+    @property
+    def status(self) -> str:
+        from django.utils import timezone
+
+        if self.accepted_at:
+            return "ACCEPTED"
+        if self.revoked_at:
+            return "REVOKED"
+        if self.expires_at <= timezone.now():
+            return "EXPIRED"
+        return "PENDING"

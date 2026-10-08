@@ -27,7 +27,7 @@ export default function SelectBusinessPage() {
       {me.isPending && <Loading />}
       {switchOrganization.error && <ErrorAlert error={switchOrganization.error} />}
       {me.data && me.data.organizations.length === 0 && (
-        <EmptyState title="You don't belong to any business yet">Ask a business owner to add you as staff.</EmptyState>
+        <EmptyState title="You don’t belong to any business yet">Ask a business owner to add you as staff.</EmptyState>
       )}
       <ul className="flex flex-col gap-3">
         {me.data?.organizations.map((membership) => (

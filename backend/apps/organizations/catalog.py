@@ -94,6 +94,7 @@ CATALOG: tuple[PermissionDef, ...] = (
 )
 
 ALL_CODES: frozenset[str] = frozenset(p.code for p in CATALOG)
+SENSITIVE_CODES: frozenset[str] = frozenset(p.code for p in CATALOG if p.sensitive)
 
 OWNER = "OWNER"
 MANAGER = "MANAGER"

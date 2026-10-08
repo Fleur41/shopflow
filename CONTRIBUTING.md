@@ -19,6 +19,7 @@ make lint                 # ruff, mypy, migration check, eslint, tsc
 - Web app: http://localhost:3000 (proxies `/api/*` to Django)
 - API docs (development only): http://localhost:8000/api/v1/docs/
 - Readiness probe: http://localhost:8000/readyz
+- Local email inbox (Mailpit): http://localhost:8025
 
 Install the git hooks once (needs [pre-commit](https://pre-commit.com)):
 

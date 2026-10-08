@@ -6,13 +6,15 @@ return 404, and nothing in A may change. New endpoints with path parameters
 fail here until they are registered in TARGETS.
 """
 
+from datetime import timedelta
 from types import SimpleNamespace
 
 import pytest
+from django.utils import timezone
 
 from apps.accounts.models import AuthSession
 from apps.audit.models import AuditLog
-from apps.organizations.models import Membership, Role, Store
+from apps.organizations.models import Invitation, Membership, Role, Store
 from apps.organizations.testing import add_staff, add_store, client_for, create_business, role
 
 from .routes import api_routes
@@ -27,6 +29,7 @@ TARGETS = {
     "api/v1/members/<uuid:member_id>/suspend/": lambda a: {"member_id": a.cashier.pk},
     "api/v1/members/<uuid:member_id>/reactivate/": lambda a: {"member_id": a.cashier.pk},
     "api/v1/auth/sessions/<uuid:session_id>/": lambda a: {"session_id": a.session.pk},
+    "api/v1/invitations/<uuid:invitation_id>/revoke/": lambda a: {"invitation_id": a.invitation.pk},
 }
 
 # A body that passes validation for any endpoint, so lookups (not validators) decide.
@@ -47,6 +50,15 @@ def world():
     store = add_store(a.organization, "BR2")
     cashier = add_staff(a.organization, email="cashier@duka-a.example", stores=[store])
     session = client_for(a.user, a.organization)  # creates an AuthSession for A's owner
+    invitation = Invitation.objects.create(
+        organization=a.organization,
+        email="invitee@example.com",
+        role=role(a.organization, Role.Template.CASHIER),
+        all_stores=True,
+        invited_by=a.user,
+        token_hash="0" * 64,
+        expires_at=timezone.now() + timedelta(days=7),
+    )
     return SimpleNamespace(
         a=SimpleNamespace(
             organization=a.organization,
@@ -54,6 +66,7 @@ def world():
             cashier=cashier,
             cashier_role=role(a.organization, Role.Template.CASHIER),
             session=AuthSession.objects.get(user=a.user),
+            invitation=invitation,
             client=session,
         ),
         b_client=client_for(b.user, b.organization),
@@ -72,6 +85,9 @@ def _snapshot(organization):
         ),
         "sessions": sorted(
             AuthSession.objects.filter(organization=organization).values_list("pk", "revoked_at")
+        ),
+        "invitations": sorted(
+            Invitation.objects.for_org(organization).values_list("pk", "revoked_at", "accepted_at")
         ),
     }
 
@@ -107,6 +123,7 @@ def test_list_endpoints_never_include_another_businesses_records(world):
             *Store.objects.for_org(world.a.organization).values_list("pk", flat=True),
             *Role.objects.for_org(world.a.organization).values_list("pk", flat=True),
             *Membership.objects.for_org(world.a.organization).values_list("pk", flat=True),
+            world.a.invitation.pk,
             world.a.session.pk,
             world.a.organization.pk,
         ]

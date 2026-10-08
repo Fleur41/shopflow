@@ -1,6 +1,14 @@
 """Local development. Never used with real data or real credentials."""
 
+import base64
+import hashlib
 import os
+
+# A fixed, non-secret Fernet key derived from a phrase (never used outside dev).
+os.environ.setdefault(
+    "MFA_ENCRYPTION_KEYS",
+    base64.urlsafe_b64encode(hashlib.sha256(b"dev-only-mfa-encryption-key").digest()).decode(),
+)
 
 os.environ.setdefault("JWT_SIGNING_KEYS", "dev=dev-only-insecure-jwt-signing-key-0123456789")
 os.environ.setdefault("JWT_ACTIVE_KEY_ID", "dev")

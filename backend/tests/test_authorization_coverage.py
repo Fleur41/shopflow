@@ -13,6 +13,14 @@ PUBLIC = {
     "api/v1/auth/login/",
     "api/v1/auth/refresh/",  # authenticated by the refresh token itself
     "api/v1/auth/signup/",
+    "api/v1/auth/email/verify/",  # the emailed single-use token is the credential
+    "api/v1/auth/password/reset/",  # always 202; reveals nothing
+    "api/v1/auth/password/reset/confirm/",  # emailed single-use token
+    "api/v1/auth/mfa/verify/",  # authenticated by the short-lived MFA challenge token
+    "api/v1/auth/invitations/preview/",  # the invitation token is the credential
+    # Optionally authenticated: existing accounts must be signed in as the invitee
+    # (enforced in the service); new people create their account here.
+    "api/v1/auth/invitations/accept/",
 }
 
 # Signed-in, but about the caller's own account rather than a business.
@@ -23,6 +31,11 @@ ACCOUNT_SCOPED = {
     "api/v1/auth/sessions/",
     "api/v1/auth/sessions/<uuid:session_id>/",
     "api/v1/auth/switch-organization/",
+    "api/v1/auth/email/verification/",
+    "api/v1/auth/password/change/",
+    "api/v1/auth/mfa/totp/setup/",
+    "api/v1/auth/mfa/totp/confirm/",
+    "api/v1/auth/mfa/totp/disable/",
     "api/v1/schema/",
     "api/v1/docs/",
 }

@@ -49,11 +49,11 @@ Core error codes:
 
 | HTTP | code | Meaning |
 |---|---|---|
-| 400 | `VALIDATION_ERROR`, `IDEMPOTENCY_KEY_REQUIRED`, `IDEMPOTENCY_KEY_INVALID` | Field-level validation failed (`errors[]`); missing or malformed `Idempotency-Key` |
+| 400 | `VALIDATION_ERROR`, `IDEMPOTENCY_KEY_REQUIRED`, `IDEMPOTENCY_KEY_INVALID`, `TOKEN_INVALID` (emailed link or MFA challenge invalid/expired), `MFA_CODE_INVALID`, `INVITATION_INVALID` | Field-level validation failed (`errors[]`); missing or malformed `Idempotency-Key` |
 | 401 | `NOT_AUTHENTICATED`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `SESSION_EXPIRED`, `INVALID_CREDENTIALS`, `DEVICE_REVOKED`, `MFA_REQUIRED` | `TOKEN_EXPIRED` → call `/auth/refresh/`. `SESSION_REVOKED`/`SESSION_EXPIRED` → sign in again. |
-| 403 | `PERMISSION_DENIED`, `CSRF_FAILED`, `ORGANIZATION_REQUIRED`, `MEMBERSHIP_INACTIVE`, `ORGANIZATION_SUSPENDED`, `NOT_A_MEMBER`, `PRIVILEGE_ESCALATION`, `CANNOT_MODIFY_SELF` | `PERMISSION_DENIED` carries `errors[0].meta.permission` (the code needed). `PRIVILEGE_ESCALATION` carries the permissions or stores you don't hold. |
+| 403 | `PERMISSION_DENIED`, `CSRF_FAILED`, `MFA_ENROLLMENT_REQUIRED` (sensitive permission without two-step verification), `SIGN_IN_REQUIRED` (invitation for an existing account), `ORGANIZATION_REQUIRED`, `MEMBERSHIP_INACTIVE`, `ORGANIZATION_SUSPENDED`, `NOT_A_MEMBER`, `PRIVILEGE_ESCALATION`, `CANNOT_MODIFY_SELF` | `PERMISSION_DENIED` carries `errors[0].meta.permission` (the code needed). `PRIVILEGE_ESCALATION` carries the permissions or stores you don't hold. |
 | 404 | `NOT_FOUND` | Missing **or** outside the caller's tenant/stores |
-| 409 | `STALE_VERSION`, `ALREADY_A_MEMBER`, `LOCK_TIMEOUT` (with `Retry-After`), `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
+| 409 | `STALE_VERSION`, `ALREADY_A_MEMBER`, `MFA_ALREADY_ENABLED`, `MFA_NOT_ENABLED`, `LOCK_TIMEOUT` (with `Retry-After`), `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
 | 422 | `INSUFFICIENT_STOCK`, `CREDIT_LIMIT_EXCEEDED`, `PAYMENT_EXCEEDS_BALANCE`, `PRODUCT_INACTIVE`, `CUSTOMER_FROZEN`, `RETURN_EXCEEDS_SOLD`, `DISCOUNT_LIMIT_EXCEEDED`, `IDEMPOTENCY_KEY_REUSED`, `LAST_OWNER`, `SYSTEM_ROLE_IMMUTABLE`, `BUSINESS_RULE_VIOLATION` | Business rule rejected |
 | 429 | `RATE_LIMITED`, `LOGIN_TEMPORARILY_LOCKED` | Both send `Retry-After` |
 | 503 | `SERVICE_UNAVAILABLE` | Maintenance or dependency down |
@@ -91,21 +91,26 @@ Status column: ✅ implemented (Phase 1.5) · 1.6 / 1.9 = planned milestone.
 | GET | `/auth/csrf/` | ✅ | Public. Sets the `csrftoken` cookie and returns `{csrf_token}`. Web clients send it as `X-CSRFToken` on every POST/PUT/PATCH/DELETE, **including login**. |
 | POST | `/auth/login/` | ✅ | `{email, password, client: "web"\|"mobile", device_name?}` (`client` defaults to `web`). Returns `{user, session}`. Web: tokens only as HttpOnly cookies. Mobile: adds `tokens: {token_type, access_token, refresh_token}`. Failures are always `401 INVALID_CREDENTIALS` (no account enumeration). Lockout: `429 LOGIN_TEMPORARILY_LOCKED`. |
 | POST | `/auth/login/` (business) | ✅ | Optional `organization_id`. Without it, a user with exactly one business is signed into it; users with several start with none and call `switch-organization`. Naming a business you don't belong to → `403 NOT_A_MEMBER`. |
-| POST | `/auth/login/` (MFA) | 1.9 | `401 MFA_REQUIRED` with an `mfa_token` |
+| POST | `/auth/login/` (MFA) | ✅ | If two-step verification is on: `401 MFA_REQUIRED` with a top-level `mfa_token` (5 min, single use, 5 attempts). No session is created yet. |
 | POST | `/auth/signup/` | ✅ | Public, 10/hour per IP, CSRF for web. `{email, full_name, password, organization_name, store_name?, currency="KES", timezone="Africa/Nairobi", client?, device_name?}` → `201`, signed in as Owner. Creates the business, Owner/Manager/Cashier roles and a `MAIN` store in one transaction. An existing email → `400` on `/email` (`TAKEN`). |
-| POST | `/auth/mfa/verify/` | 1.9 | `{mfa_token, code}` → completes login |
+| POST | `/auth/mfa/verify/` | ✅ | Public. `{mfa_token, code, client}`. `code` is an authenticator code or a recovery code. Same response as login, and the session is marked `mfa_verified`. 10/min per IP. |
 | POST | `/auth/refresh/` | ✅ | Web: no body, uses the refresh cookie (CSRF required). Mobile: `{refresh_token}`. Rotates the refresh token and returns a new pair. A rotated token replayed within 20 s → `409 REFRESH_IN_PROGRESS` (benign race; retry). Replayed later → the whole session is revoked (`401 SESSION_EXPIRED`). |
 | POST | `/auth/logout/` | ✅ | Revokes the current session; clears cookies. `204` |
 | POST | `/auth/logout-all/` | ✅ | Revokes all of the user's sessions. `204` |
 | POST | `/auth/switch-organization/` | ✅ | `{organization_id}` → a new session in that business (membership verified); the old session ends. Same response shape as login. |
-| GET | `/auth/me/` | ✅ | `{user, organization, access: {role, permissions, all_stores, stores}, organizations}`. `organization`/`access` are `null` until a business is chosen. `organizations` lists businesses to switch to. |
+| GET | `/auth/me/` | ✅ | `{user (with email_verified, mfa_enabled), mfa_verified, organization, access: {role, permissions, all_stores, stores}, organizations}`. `organization`/`access` are `null` until a business is chosen. `organizations` lists businesses to switch to. |
 | GET | `/auth/sessions/` | ✅ | Active sessions, with `current: true` on the caller's |
 | DELETE | `/auth/sessions/{id}/` | ✅ | Revoke one of your sessions (`404` for anyone else's). Only revocation endpoints use DELETE. |
-| POST | `/auth/password/change/` | 1.9 | Requires the current password; revokes other sessions |
-| POST | `/auth/password/reset/` | 1.9 | `{email}`. Always 202 (no account enumeration). |
-| POST | `/auth/password/reset/confirm/` | 1.9 | `{token, new_password}`. Single-use token. |
-| POST | `/auth/email/verify/` | 1.9 | `{token}` |
-| POST | `/auth/mfa/totp/setup/` · `/confirm/` · `/disable/` | 1.9 | TOTP enrolment; recovery codes are shown once |
+| POST | `/auth/password/change/` | ✅ | `{current_password, new_password}` → `204`. Other sessions end; this one continues. Email notice. |
+| POST | `/auth/password/reset/` | ✅ | Public. `{email}` → always `202`, whether or not an account exists (3/hour per email, 10/hour per IP). Emails a 30-minute single-use link to `/reset-password?token=`. |
+| POST | `/auth/password/reset/confirm/` | ✅ | Public. `{token, new_password}`. Ends **every** session, lifts any sign-in lockout, sends an email notice. A rejected (weak) password leaves the link usable. |
+| POST | `/auth/email/verification/` | ✅ | Sends (again) the 24-hour confirmation link; older links stop working. Sign-up sends one automatically. 3/hour. |
+| POST | `/auth/email/verify/` | ✅ | Public. `{token}`. The web page asks for a click, so mail scanners that prefetch links don't use up the token. |
+| POST | `/auth/mfa/totp/setup/` | ✅ | Returns `{secret, otpauth_uri, qr_code}`, where `qr_code` is a PNG `data:` URI. `409 MFA_ALREADY_ENABLED` if it's on. |
+| POST | `/auth/mfa/totp/confirm/` | ✅ | `{code}` → `{recovery_codes}` (10, shown once). This session becomes `mfa_verified`; **all other sessions end**. |
+| POST | `/auth/mfa/totp/disable/` | ✅ | `{password, code}` (authenticator or recovery code) → `204`. Other sessions end. |
+| POST | `/auth/invitations/preview/` | ✅ | Public. `{token}` → `{organization_name, email, role_name, account_exists, expires_at}` |
+| POST | `/auth/invitations/accept/` | ✅ | `{token, full_name?, password?, client?}`. New person: creates the account (email counts as verified) and signs in → `201`. Existing account: must be signed in **as the invited email** (else `403 SIGN_IN_REQUIRED`) → `200 {organization_id}`, then switch business. |
 
 ### 4.2 Organization, stores, users and roles
 
@@ -120,10 +125,12 @@ Implemented in Phase 1.6 unless marked otherwise. Every change is audited.
 | GET | `/permissions/` | `roles.view` | The permission catalog (not paginated) |
 | GET/POST | `/roles/` | `roles.view` / `roles.manage` | POST: `{name, description?, permissions: [codes]}`. You can only grant permissions you hold (`403 PRIVILEGE_ESCALATION`). |
 | GET/PATCH | `/roles/{id}/` | `roles.view` / `roles.manage` | The Owner role is immutable (`422 SYSTEM_ROLE_IMMUTABLE`) and always holds every permission. You can't edit roles stronger than your own. Changes apply on members' next request. |
-| GET/POST | `/members/` | `users.view` / `users.manage` | POST: `{email, full_name, password, role_id, all_stores, store_ids}` creates the staff account with an initial password. Emails that already have an account are refused (`400 ACCOUNT_EXISTS`) until invitations exist (1.9). |
+| GET/POST | `/members/` | `users.view` / `users.manage` | POST: `{email, full_name, password, role_id, all_stores, store_ids}` creates the staff account with an initial password. Emails that already have an account are refused (`400 ACCOUNT_EXISTS`); invite them instead. |
 | GET/PATCH | `/members/{id}/` | `users.view` / `users.manage` | PATCH: `{version, role_id?, all_stores?, store_ids?}`. A stale `version` → `409 STALE_VERSION`. You can't change your own access (`CANNOT_MODIFY_SELF`), manage someone with a stronger role, assign a role stronger than yours, or grant stores outside your own access. |
 | POST | `/members/{id}/suspend/` | `users.manage` | `{reason}` (required). Ends the person's sessions in this business immediately. The last active Owner can't be suspended or demoted (`LAST_OWNER`). |
 | POST | `/members/{id}/reactivate/` | `users.manage` | |
+| GET/POST | `/invitations/` | `users.view` / `users.manage` | Pending (and expired) invitations. POST: `{email, role_id, all_stores, store_ids}` emails a 7-day link. Same privilege rules as adding a member; a new invitation replaces a pending one for the same email. |
+| POST | `/invitations/{id}/revoke/` | `users.manage` | Withdraw a pending invitation |
 
 ### 4.3 Catalog — products, categories, identifiers
 

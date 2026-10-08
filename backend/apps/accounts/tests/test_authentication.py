@@ -123,7 +123,7 @@ def test_cached_session_state_saves_a_query_per_request(mobile_session):
 
     with CaptureQueriesContext(connection) as cached:
         assert client.get(ME_URL).status_code == 200
-    cache.delete(f"auth:session:v2:{body['session']['id']}")
+    cache.delete(f"auth:session:v3:{body['session']['id']}")
     with CaptureQueriesContext(connection) as uncached:
         assert client.get(ME_URL).status_code == 200
 

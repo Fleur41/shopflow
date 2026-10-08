@@ -50,6 +50,7 @@ def test_web_login_sets_hardened_cookies_and_returns_no_tokens(web_client, user)
         "full_name": "Jane Cashier",
         "phone": "",
         "email_verified": False,
+        "mfa_enabled": False,
     }
     assert body["session"]["client_type"] == "WEB"
 

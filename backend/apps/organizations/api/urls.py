@@ -11,6 +11,8 @@ auth_urlpatterns = [
         "switch-organization/", views.SwitchOrganizationView.as_view(), name="switch-organization"
     ),
     path("me/", views.MeView.as_view(), name="me"),
+    path("invitations/preview/", views.InvitationPreviewView.as_view(), name="invitation-preview"),
+    path("invitations/accept/", views.InvitationAcceptView.as_view(), name="invitation-accept"),
 ]
 
 urlpatterns = [
@@ -31,5 +33,11 @@ urlpatterns = [
         "members/<uuid:member_id>/reactivate/",
         views.MemberReactivateView.as_view(),
         name="member-reactivate",
+    ),
+    path("invitations/", views.InvitationListView.as_view(), name="invitations"),
+    path(
+        "invitations/<uuid:invitation_id>/revoke/",
+        views.InvitationRevokeView.as_view(),
+        name="invitation-revoke",
     ),
 ]

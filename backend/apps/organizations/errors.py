@@ -28,6 +28,11 @@ class MissingPermission(TenantAccessError):
     code = "PERMISSION_DENIED"
 
 
+class MFAEnrollmentRequired(TenantAccessError):
+    code = "MFA_ENROLLMENT_REQUIRED"
+    title = "Two-step verification required"
+
+
 class PrivilegeEscalation(TenantAccessError):
     code = "PRIVILEGE_ESCALATION"
 

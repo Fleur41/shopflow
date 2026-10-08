@@ -13,6 +13,7 @@ from apps.common.fields import currency_code_validator
 from ..catalog import ALL_CODES
 from ..context import RequestContext
 from ..models import (
+    Invitation,
     Membership,
     Organization,
     Permission,
@@ -218,8 +219,8 @@ class MemberCreateSerializer(serializers.Serializer[dict[str, Any]]):
         if User.objects.filter(email=email).exists():
             # Adding existing accounts needs their consent: invitations (Phase 1.9).
             raise serializers.ValidationError(
-                "This email already has a ShopFlow account. Adding existing accounts "
-                "will be possible once invitations are available.",
+                "This email already has a ShopFlow account. Invite them instead, so they "
+                "can accept with their own sign-in.",
                 code="account_exists",
             )
         return email
@@ -269,7 +270,65 @@ class CurrentAccessSerializer(serializers.Serializer[dict[str, Any]]):
     stores = StoreSummarySerializer(many=True)
 
 
+class InvitationSerializer(serializers.ModelSerializer[Invitation]):
+    role = RoleSummarySerializer(read_only=True)
+    invited_by = serializers.CharField(source="invited_by.full_name", read_only=True)
+    status = serializers.CharField(read_only=True)
+
+    class Meta:
+        model = Invitation
+        fields = (
+            "id", "email", "role", "all_stores", "store_ids", "status", "invited_by",
+            "expires_at", "created_at",
+        )  # fmt: skip
+        read_only_fields = fields
+
+
+class InvitationCreateSerializer(serializers.Serializer[dict[str, Any]]):
+    email = serializers.EmailField(max_length=254)
+    role_id = ScopedPrimaryKeyField(Role)
+    all_stores = serializers.BooleanField(default=False)
+    store_ids = ScopedPrimaryKeyField(Store, many=True, required=False, default=list)
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        if not attrs["all_stores"] and not attrs["store_ids"]:
+            raise serializers.ValidationError(
+                {"store_ids": ["Choose at least one store, or give access to all stores."]}
+            )
+        return attrs
+
+
+class InvitationTokenSerializer(serializers.Serializer[dict[str, Any]]):
+    token = serializers.CharField(max_length=128)
+
+
+class InvitationPreviewSerializer(serializers.Serializer[dict[str, Any]]):
+    organization_name = serializers.CharField()
+    email = serializers.EmailField()
+    role_name = serializers.CharField()
+    account_exists = serializers.BooleanField(
+        help_text="If true, sign in as this email before accepting."
+    )
+    expires_at = serializers.DateTimeField()
+
+
+class InvitationAcceptSerializer(serializers.Serializer[dict[str, Any]]):
+    token = serializers.CharField(max_length=128)
+    full_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    password = serializers.CharField(
+        max_length=128, required=False, write_only=True, trim_whitespace=False
+    )
+    client = serializers.ChoiceField(choices=ClientType.CHOICES, default=ClientType.WEB)
+
+
+class InvitationAcceptedSerializer(serializers.Serializer[dict[str, Any]]):
+    organization_id = serializers.UUIDField()
+
+
 class MeSerializer(serializers.Serializer[dict[str, Any]]):
+    mfa_verified = serializers.BooleanField(
+        help_text="This session passed two-step verification (needed for sensitive actions)."
+    )
     user = UserSerializer()
     organization = OrganizationSerializer(allow_null=True)
     access = CurrentAccessSerializer(allow_null=True)
