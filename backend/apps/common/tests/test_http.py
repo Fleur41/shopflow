@@ -104,3 +104,14 @@ def test_readyz_reports_cache_that_does_not_store(client: Client, monkeypatch: p
     monkeypatch.setattr(cache, "get", lambda key: None)
 
     assert client.get("/readyz").json()["checks"]["cache"] == "error"
+
+
+def test_csrf_failure_returns_problem_json():
+    # Django's test client skips CSRF by default; enforce it as a browser would.
+    browser = Client(enforce_csrf_checks=True)
+
+    response = browser.post("/readyz")
+
+    assert response.status_code == 403
+    assert response["Content-Type"] == "application/problem+json"
+    assert response.json()["code"] == "CSRF_FAILED"

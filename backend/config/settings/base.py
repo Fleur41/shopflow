@@ -44,6 +44,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
+# CSRF rejections return problem JSON instead of an HTML page.
+CSRF_FAILURE_VIEW = "apps.common.views.csrf_failure"
+
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
 

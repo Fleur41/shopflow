@@ -33,7 +33,10 @@ CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # --- Production image ------------------------------------------------------
 FROM base AS runtime
-RUN groupadd --system app && useradd --system --gid app --no-create-home app
+# The runtime never installs packages: drop the base image's pip, which also
+# removes its vendored copies of urllib3/msgpack/setuptools from the scan surface.
+RUN python -m pip uninstall --yes pip \
+    && groupadd --system app && useradd --system --gid app --no-create-home app
 COPY --from=deps /opt/venv /opt/venv
 COPY --chown=app:app . .
 # collectstatic needs settings to import; these placeholder values exist only

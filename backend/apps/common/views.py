@@ -113,3 +113,14 @@ def server_error(request: HttpRequest) -> JsonResponse:
         "Something went wrong",
         "An unexpected error occurred. Quote the request ID if you contact support.",
     )
+
+
+def csrf_failure(request: HttpRequest, reason: str = "") -> JsonResponse:
+    """``CSRF_FAILURE_VIEW``: CSRF rejections use the same JSON shape as the API."""
+    return _problem_response(
+        request,
+        403,
+        "CSRF_FAILED",
+        "Security check failed",
+        "Your session's security token is missing or invalid. Refresh the page and try again.",
+    )
