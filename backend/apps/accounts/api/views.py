@@ -19,8 +19,11 @@ from rest_framework.exceptions import NotAuthenticated
 from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.throttling import AnonRateThrottle, BaseThrottle
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
+
+from apps.common.http import client_ip
+from apps.organizations.selectors import choose_login_organization
 
 from .. import services
 from ..authentication import enforce_csrf
@@ -34,7 +37,6 @@ from .serializers import (
     LoginSerializer,
     MobileRefreshSerializer,
     SessionSerializer,
-    UserSerializer,
 )
 from .throttles import LoginEmailThrottle, LoginIPThrottle, RefreshThrottle
 
@@ -56,12 +58,8 @@ def _current_claims(request: Request) -> AccessClaims:
     return request.auth
 
 
-def _client_ip(request: Request) -> str | None:
-    # Same logic as the throttles, honouring REST_FRAMEWORK["NUM_PROXIES"].
-    return BaseThrottle().get_ident(request) or None
-
-
-def _token_payload(issued: services.IssuedTokens, *, include_tokens: bool) -> dict[str, Any]:
+def auth_response_body(issued: services.IssuedTokens, *, include_tokens: bool) -> dict[str, Any]:
+    """Response body after sign-in, sign-up, refresh or switching business."""
     body: dict[str, Any] = {
         "user": issued.session.user,
         "session": {
@@ -111,11 +109,14 @@ class LoginView(APIView):
             email=data["email"],
             password=data["password"],
             client_type=_CLIENT_TYPES[data["client"]],
-            ip_address=_client_ip(request),
+            ip_address=client_ip(request),
             user_agent=request.headers.get("User-Agent", ""),
             device_name=data.get("device_name", ""),
+            choose_organization=lambda user: choose_login_organization(
+                user, data.get("organization_id")
+            ),
         )
-        response = Response(_token_payload(issued, include_tokens=not is_web))
+        response = Response(auth_response_body(issued, include_tokens=not is_web))
         if is_web:
             set_auth_cookies(response, issued)
         return response
@@ -141,7 +142,7 @@ class RefreshView(APIView):
                 refresh_token=serializer.validated_data["refresh_token"],
                 client_type=AuthSession.ClientType.MOBILE,
             )
-            return Response(_token_payload(issued, include_tokens=True))
+            return Response(auth_response_body(issued, include_tokens=True))
 
         enforce_csrf(request)
         raw_token = request.COOKIES.get(settings.AUTH_REFRESH_COOKIE_NAME, "")
@@ -157,7 +158,7 @@ class RefreshView(APIView):
             response = self.handle_exception(exc)
             clear_auth_cookies(response)
             return response
-        response = Response(_token_payload(issued, include_tokens=False))
+        response = Response(auth_response_body(issued, include_tokens=False))
         set_auth_cookies(response, issued)
         return response
 
@@ -178,12 +179,6 @@ class LogoutAllView(APIView):
         response = Response(status=status.HTTP_204_NO_CONTENT)
         clear_auth_cookies(response)
         return response
-
-
-class MeView(APIView):
-    @extend_schema(responses=UserSerializer)
-    def get(self, request: Request) -> Response:
-        return Response(UserSerializer(_current_user(request)).data)
 
 
 class SessionListView(generics.ListAPIView[AuthSession]):

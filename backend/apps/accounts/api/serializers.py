@@ -16,6 +16,10 @@ class LoginSerializer(serializers.Serializer[dict[str, Any]]):
     password = serializers.CharField(max_length=128, trim_whitespace=False, write_only=True)
     client = serializers.ChoiceField(choices=ClientType.CHOICES, default=ClientType.WEB)
     device_name = serializers.CharField(max_length=100, required=False, allow_blank=True)
+    organization_id = serializers.UUIDField(
+        required=False,
+        help_text="Business to work in. Optional when the user belongs to exactly one.",
+    )
 
 
 class MobileRefreshSerializer(serializers.Serializer[dict[str, Any]]):

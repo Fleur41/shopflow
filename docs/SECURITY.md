@@ -32,14 +32,14 @@ Attackers considered: an external unauthenticated attacker; an authenticated use
 
 | Token | Form | Lifetime | Storage (web) | Storage (Android) |
 |---|---|---|---|---|
-| Access | JWT (HS256, `kid` header for key rotation; `iss`/`aud`/`typ` verified). Claims: `sub`, `sid`, `iat`, `exp`, `jti` (`org` added in 1.6). **No permissions or personal data in the token.** | 10 min | `__Host-sf_at` cookie: HttpOnly, Secure, SameSite=Lax, Path=/ | Memory, plus Keystore-wrapped encrypted storage |
+| Access | JWT (HS256, `kid` header for key rotation; `iss`/`aud`/`typ` verified). Claims: `sub`, `sid`, `iat`, `exp`, `jti`. **No permissions or personal data in the token.** | 10 min | `__Host-sf_at` cookie: HttpOnly, Secure, SameSite=Lax, Path=/ | Memory, plus Keystore-wrapped encrypted storage |
 | Refresh | 256-bit opaque random value; the server stores only its SHA-256 hash (`accounts_refreshtoken`) | 14 days idle / 30 days absolute (web); 30 days idle / 90 days absolute (mobile) | `__Secure-sf_rt` cookie: HttpOnly, Secure, SameSite=Strict, Path=`/api/v1/auth/` | Keystore-wrapped encrypted storage |
 
 - **Rotation:** every refresh issues a new refresh token and invalidates the old one.
 - **Reuse detection:** presenting an already-rotated refresh token more than 20 seconds after its rotation revokes the **whole session** (every token in the chain) and logs `auth.refresh_token_reuse_detected`. That pattern means the token was copied. Within 20 seconds it is treated as a benign race, such as two browser tabs refreshing together: the response is `409 REFRESH_IN_PROGRESS` and nothing is revoked. Refreshes of one token are serialized with a row lock, so concurrent refreshes yield exactly one new token (covered by a threaded test). Emailing the user about reuse arrives with email delivery in 1.9.
 - **Revocation:** every request checks the token's session (`sid`), cached for at most 30 s. Revoking a session deletes its cache entry immediately and again after commit, so logout, logout-all and session revocation take effect **on the next request**. The cache TTL only bounds staleness if a cache delete is lost. Deactivated users are rejected on the next request too.
 - **Permissions** are resolved per request from the membership (cached and invalidated on change). Role changes apply right away without reissuing tokens.
-- **Org-scoped sessions** (1.6): a session belongs to one organization. Switching org creates a new session after verifying membership. Clients never send an org ID to "choose" a tenant on ordinary requests.
+- **Business-scoped sessions:** a session belongs to one business, recorded on the session row (deliberately not as a token claim, so it can't go stale). Switching business creates a new session after verifying membership and ends the old one. Clients never send a business ID on ordinary requests.
 
 ### 2.3 Web: CSRF and CORS
 - The web app and API share one origin (`/api/*` is proxied), so cookies are first-party and **CORS is disabled** for the web app.
@@ -122,16 +122,21 @@ These are copied into each new organization as editable roles. Owner is not edit
 
 Manager is an addition to the two roles in the spec. It is a common need and costs nothing, because roles are data.
 
+Managers have **view-only** access to staff and roles by default; only Owners (or custom roles granted `users.manage` / `roles.manage`) manage staff.
+
 ### 3.4 Enforcement layers
-1. **Route declaration.** Every DRF view declares `required_permissions` per action. A test enumerates all URL patterns and **fails the build** if any non-public view lacks a declaration.
-2. **Tenant-scoped data access.** Managers refuse unscoped queries. Every ID in the path or body is resolved through `for_org(ctx)`, and `for_store(ctx, store)` where relevant.
+1. **Route declaration.** Every business-scoped view extends `TenantAPIView` and declares `required_permissions` per HTTP method; an undeclared method is denied. `tests/test_authorization_coverage.py` walks every API route and **fails the build** unless each is a tenant view with valid declarations or is on an explicit public / account-scoped allowlist.
+2. **Tenant-scoped data access.** `Model.objects` on tenant models raises `UnscopedQueryError` unless scoped with `.for_org(...)`; Django internals use a separate `unscoped` default manager. IDs in request bodies resolve through scoped querysets, so another business's ID fails like a nonexistent one. Every ID in the path or body is resolved through `for_org(ctx)`, and `for_store(ctx, store)` where relevant.
 3. **Service-level rules.** Value-based checks (discount limits, credit limit overrides, return quantities) run inside the transaction.
 4. **Database.** Row-Level Security policies keyed on a per-transaction `app.current_org` setting (Phase 8), plus constraints.
 
 ### 3.5 Privilege escalation guards
-- A user can grant or assign only roles whose permission set is a **subset** of their own.
-- Users cannot change their own role or store access.
-- Role and permission changes are audited with old and new values and require MFA (sensitive).
+- A user can grant or assign only roles whose permission set is a **subset** of their own. Only Owners can make Owners.
+- A user can manage only members (and edit only roles) whose permissions are a subset of their own.
+- Store access you grant must be within your own; store-limited users cannot grant all-stores access.
+- Users cannot change their own role, store access or status.
+- The last active Owner cannot be suspended or demoted. Owner rows are locked during the check, so two owners cannot remove each other concurrently.
+- Role and member changes are audited with old and new values. MFA for these sensitive permissions arrives in 1.9.
 
 ---
 
@@ -139,7 +144,7 @@ Manager is an addition to the two roles in the spec. It is a common need and cos
 
 - The organization comes **only** from the authenticated session. Store IDs come from the URL and are checked against membership. Org/store fields in request bodies are ignored or rejected. Serializers mark `organization`, `store`, `created_by`, `cashier` etc. as read-only (this also prevents mass assignment).
 - Cross-tenant references are rejected. For example, a sale line pointing at another org's product returns `422`/`404`, because lookup goes through the scoped queryset.
-- **Automated BOLA suite:** every endpoint is called as a user from org B, with org A's IDs, and must return 404 and leave no side effects. A same-org check also runs with a user who lacks access to the store.
+- **Automated BOLA suite** (`tests/test_cross_tenant_access.py`): every route with a path ID is called by business B's owner (who holds every permission in B) with business A's IDs, for every method, with a body that passes validation. Each call must return 404 and A's data must be unchanged. List endpoints must never include A's IDs. New routes with IDs fail the suite until registered. Store-level scoping within one business is covered by the tenancy tests.
 - Caches are keyed by `org_id` (and `store_id`), never by bare object ID.
 - Object storage keys are prefixed `org/{org_id}/…`, and access goes only through short-lived presigned URLs issued after an authorization check.
 - Phase 8 adds PostgreSQL RLS and composite `(organization_id, id)` FKs on financial tables, so the database itself refuses cross-tenant reads and writes.
@@ -240,7 +245,7 @@ Limits are implemented with DRF throttles backed by Redis, plus coarse per-IP li
   - `entity_type`/`entity_id`;
   - `changes` (`{field: [old, new]}`, with personal data minimized);
   - `reason`, `request_id`, `ip`, `user_agent`, `device_id`, `occurred_at`.
-- **Immutability:** a DB trigger plus grants (no UPDATE/DELETE for the app role). No API endpoint can modify or delete audit rows, not even for Owners. Phase 8 option: a hash chain (`prev_hash`) for tamper evidence, with periodic export to WORM storage.
+- **Immutability:** a DB trigger (`shopflow_prevent_modification`) rejects UPDATE and DELETE from any code path, including raw SQL. Separate DB roles (no UPDATE/DELETE grants for the app role) follow in 1.7. No API endpoint can modify or delete audit rows, not even for Owners. Phase 8 option: a hash chain (`prev_hash`) for tamper evidence, with periodic export to WORM storage.
 - **Retention:** default 7 years, configurable, subject to confirmation of local tax-law requirements (DECISIONS Q-19).
 
 ---

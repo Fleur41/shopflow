@@ -51,10 +51,10 @@ Core error codes:
 |---|---|---|
 | 400 | `VALIDATION_ERROR` | Field-level validation failed (`errors[]`) |
 | 401 | `NOT_AUTHENTICATED`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `SESSION_EXPIRED`, `INVALID_CREDENTIALS`, `DEVICE_REVOKED`, `MFA_REQUIRED` | `TOKEN_EXPIRED` → call `/auth/refresh/`. `SESSION_REVOKED`/`SESSION_EXPIRED` → sign in again. |
-| 403 | `PERMISSION_DENIED`, `CSRF_FAILED` | Missing permission; or a cookie-authenticated request without a valid `X-CSRFToken` |
+| 403 | `PERMISSION_DENIED`, `CSRF_FAILED`, `ORGANIZATION_REQUIRED`, `MEMBERSHIP_INACTIVE`, `ORGANIZATION_SUSPENDED`, `NOT_A_MEMBER`, `PRIVILEGE_ESCALATION`, `CANNOT_MODIFY_SELF` | `PERMISSION_DENIED` carries `errors[0].meta.permission` (the code needed). `PRIVILEGE_ESCALATION` carries the permissions or stores you don't hold. |
 | 404 | `NOT_FOUND` | Missing **or** outside the caller's tenant/stores |
-| 409 | `STALE_VERSION`, `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
-| 422 | `INSUFFICIENT_STOCK`, `CREDIT_LIMIT_EXCEEDED`, `PAYMENT_EXCEEDS_BALANCE`, `PRODUCT_INACTIVE`, `CUSTOMER_FROZEN`, `RETURN_EXCEEDS_SOLD`, `DISCOUNT_LIMIT_EXCEEDED`, `IDEMPOTENCY_KEY_REUSED`, `BUSINESS_RULE_VIOLATION` | Business rule rejected |
+| 409 | `STALE_VERSION`, `ALREADY_A_MEMBER`, `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
+| 422 | `INSUFFICIENT_STOCK`, `CREDIT_LIMIT_EXCEEDED`, `PAYMENT_EXCEEDS_BALANCE`, `PRODUCT_INACTIVE`, `CUSTOMER_FROZEN`, `RETURN_EXCEEDS_SOLD`, `DISCOUNT_LIMIT_EXCEEDED`, `IDEMPOTENCY_KEY_REUSED`, `LAST_OWNER`, `SYSTEM_ROLE_IMMUTABLE`, `BUSINESS_RULE_VIOLATION` | Business rule rejected |
 | 429 | `RATE_LIMITED`, `LOGIN_TEMPORARILY_LOCKED` | Both send `Retry-After` |
 | 503 | `SERVICE_UNAVAILABLE` | Maintenance or dependency down |
 
@@ -86,13 +86,15 @@ Status column: ✅ implemented (Phase 1.5) · 1.6 / 1.9 = planned milestone.
 |---|---|---|---|
 | GET | `/auth/csrf/` | ✅ | Public. Sets the `csrftoken` cookie and returns `{csrf_token}`. Web clients send it as `X-CSRFToken` on every POST/PUT/PATCH/DELETE, **including login**. |
 | POST | `/auth/login/` | ✅ | `{email, password, client: "web"\|"mobile", device_name?}` (`client` defaults to `web`). Returns `{user, session}`. Web: tokens only as HttpOnly cookies. Mobile: adds `tokens: {token_type, access_token, refresh_token}`. Failures are always `401 INVALID_CREDENTIALS` (no account enumeration). Lockout: `429 LOGIN_TEMPORARILY_LOCKED`. |
-| POST | `/auth/login/` (org, MFA) | 1.6 / 1.9 | `organization_id` selection; `401 MFA_REQUIRED` with an `mfa_token` |
+| POST | `/auth/login/` (business) | ✅ | Optional `organization_id`. Without it, a user with exactly one business is signed into it; users with several start with none and call `switch-organization`. Naming a business you don't belong to → `403 NOT_A_MEMBER`. |
+| POST | `/auth/login/` (MFA) | 1.9 | `401 MFA_REQUIRED` with an `mfa_token` |
+| POST | `/auth/signup/` | ✅ | Public, 10/hour per IP, CSRF for web. `{email, full_name, password, organization_name, store_name?, currency="KES", timezone="Africa/Nairobi", client?, device_name?}` → `201`, signed in as Owner. Creates the business, Owner/Manager/Cashier roles and a `MAIN` store in one transaction. An existing email → `400` on `/email` (`TAKEN`). |
 | POST | `/auth/mfa/verify/` | 1.9 | `{mfa_token, code}` → completes login |
 | POST | `/auth/refresh/` | ✅ | Web: no body, uses the refresh cookie (CSRF required). Mobile: `{refresh_token}`. Rotates the refresh token and returns a new pair. A rotated token replayed within 20 s → `409 REFRESH_IN_PROGRESS` (benign race; retry). Replayed later → the whole session is revoked (`401 SESSION_EXPIRED`). |
 | POST | `/auth/logout/` | ✅ | Revokes the current session; clears cookies. `204` |
 | POST | `/auth/logout-all/` | ✅ | Revokes all of the user's sessions. `204` |
-| POST | `/auth/switch-organization/` | 1.6 | `{organization_id}` → new session scoped to that org (membership verified) |
-| GET | `/auth/me/` | ✅ | Profile. Current org, stores and permissions are added in 1.6. |
+| POST | `/auth/switch-organization/` | ✅ | `{organization_id}` → a new session in that business (membership verified); the old session ends. Same response shape as login. |
+| GET | `/auth/me/` | ✅ | `{user, organization, access: {role, permissions, all_stores, stores}, organizations}`. `organization`/`access` are `null` until a business is chosen. `organizations` lists businesses to switch to. |
 | GET | `/auth/sessions/` | ✅ | Active sessions, with `current: true` on the caller's |
 | DELETE | `/auth/sessions/{id}/` | ✅ | Revoke one of your sessions (`404` for anyone else's). Only revocation endpoints use DELETE. |
 | POST | `/auth/password/change/` | 1.9 | Requires the current password; revokes other sessions |
@@ -103,18 +105,21 @@ Status column: ✅ implemented (Phase 1.5) · 1.6 / 1.9 = planned milestone.
 
 ### 4.2 Organization, stores, users and roles
 
-| Method | Path | perm |
-|---|---|---|
-| GET/PATCH | `/organization/` | `org.view` / `org.manage` |
-| GET/POST | `/stores/` | `stores.view` / `stores.manage` |
-| GET/PATCH | `/stores/{id}/` | `stores.view` / `stores.manage` |
-| POST | `/stores/{id}/settings/negative-stock/` | `stores.manage_inventory_policy` (sensitive, audited, reason required) |
-| GET/POST | `/members/` | `users.view` / `users.manage` (POST = invite) |
-| GET/PATCH | `/members/{id}/` | `users.manage` (role, stores, suspend) |
-| POST | `/members/{id}/suspend/` · `/reactivate/` | `users.manage` |
-| GET | `/permissions/` | `roles.view` (catalog) |
-| GET/POST | `/roles/` | `roles.view` / `roles.manage` |
-| GET/PATCH | `/roles/{id}/` | `roles.manage` |
+Implemented in Phase 1.6 unless marked otherwise. Every change is audited.
+
+| Method | Path | perm | Notes |
+|---|---|---|---|
+| GET/PATCH | `/organization/` | `org.view` / `org.manage` | PATCH: `name`, `timezone`, `locale`. `base_currency` is fixed once set. |
+| GET/POST | `/stores/` | `stores.view` / `stores.manage` | Lists only stores the caller can access. POST: `{code, name, address?, phone?, currency?, timezone?}`; `code` is upper-cased, 2–10 letters/digits, unique per business; currency and time zone default to the business's. |
+| GET/PATCH | `/stores/{id}/` | `stores.view` / `stores.manage` | `404` for stores outside the caller's access. `code` and `currency` are fixed after creation (they appear on receipts and money records). |
+| POST | `/stores/{id}/settings/negative-stock/` | `stores.manage_inventory_policy` | Phase 2: sensitive, audited, reason required |
+| GET | `/permissions/` | `roles.view` | The permission catalog (not paginated) |
+| GET/POST | `/roles/` | `roles.view` / `roles.manage` | POST: `{name, description?, permissions: [codes]}`. You can only grant permissions you hold (`403 PRIVILEGE_ESCALATION`). |
+| GET/PATCH | `/roles/{id}/` | `roles.view` / `roles.manage` | The Owner role is immutable (`422 SYSTEM_ROLE_IMMUTABLE`) and always holds every permission. You can't edit roles stronger than your own. Changes apply on members' next request. |
+| GET/POST | `/members/` | `users.view` / `users.manage` | POST: `{email, full_name, password, role_id, all_stores, store_ids}` creates the staff account with an initial password. Emails that already have an account are refused (`400 ACCOUNT_EXISTS`) until invitations exist (1.9). |
+| GET/PATCH | `/members/{id}/` | `users.view` / `users.manage` | PATCH: `{version, role_id?, all_stores?, store_ids?}`. A stale `version` → `409 STALE_VERSION`. You can't change your own access (`CANNOT_MODIFY_SELF`), manage someone with a stronger role, assign a role stronger than yours, or grant stores outside your own access. |
+| POST | `/members/{id}/suspend/` | `users.manage` | `{reason}` (required). Ends the person's sessions in this business immediately. The last active Owner can't be suspended or demoted (`LAST_OWNER`). |
+| POST | `/members/{id}/reactivate/` | `users.manage` | |
 
 ### 4.3 Catalog — products, categories, identifiers
 

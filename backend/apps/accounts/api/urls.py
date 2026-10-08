@@ -10,7 +10,6 @@ urlpatterns = [
     path("refresh/", views.RefreshView.as_view(), name="refresh"),
     path("logout/", views.LogoutView.as_view(), name="logout"),
     path("logout-all/", views.LogoutAllView.as_view(), name="logout-all"),
-    path("me/", views.MeView.as_view(), name="me"),
     path("sessions/", views.SessionListView.as_view(), name="sessions"),
     path("sessions/<uuid:session_id>/", views.SessionRevokeView.as_view(), name="session-revoke"),
 ]

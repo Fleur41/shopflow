@@ -158,6 +158,8 @@ flowchart LR
 ```
 An arrow means "depends on". `audit`, `common` and `notifications` are leaf utilities that every app may use.
 
+One deliberate exception: `accounts.api` (the login view) imports `organizations.selectors` to choose the business for a new session. The `accounts` services stay independent; the view passes a callback.
+
 ---
 
 ## 3. Request lifecycle

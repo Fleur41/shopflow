@@ -32,6 +32,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "apps.common",
     "apps.accounts",
+    "apps.organizations",
+    "apps.audit",
 ]
 
 MIDDLEWARE = [
@@ -165,6 +167,7 @@ REST_FRAMEWORK = {
         "login_ip": "20/min",
         "login_email": "5/min",
         "auth_refresh": "60/min",
+        "signup": "10/hour",
     },
     # Number of trusted reverse proxies in front of the API; used to read the
     # client IP from X-Forwarded-For for throttling and session records.

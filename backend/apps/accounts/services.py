@@ -8,6 +8,7 @@ Security events are logged under the ``security`` logger (docs/SECURITY.md
 import hashlib
 import math
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
@@ -78,6 +79,7 @@ class SessionState:
     """Cached view of a session used when authenticating every request."""
 
     user_id: uuid.UUID
+    organization_id: uuid.UUID | None
     active: bool
 
 
@@ -92,8 +94,12 @@ def login(
     ip_address: str | None,
     user_agent: str,
     device_name: str = "",
+    choose_organization: Callable[[User], uuid.UUID | None] | None = None,
 ) -> IssuedTokens:
     """Verify credentials and open a new session.
+
+    ``choose_organization`` picks the business the session works in once the
+    user is known (the tenancy layer supplies it; it may raise to refuse).
 
     Unknown emails, wrong passwords and inactive accounts all produce the same
     error, and lockout applies to unknown emails too, so responses never
@@ -111,19 +117,18 @@ def login(
         raise InvalidCredentials("The email or password is incorrect.")
 
     _reset_failures(normalized)
+    organization_id = choose_organization(user) if choose_organization else None
     with transaction.atomic():
-        now = timezone.now()
-        session = AuthSession.objects.create(
+        issued = start_session(
             user=user,
             client_type=client_type,
-            device_name=device_name[:100],
-            user_agent=user_agent[:256],
+            organization_id=organization_id,
             ip_address=ip_address,
-            last_used_at=now,
-            expires_at=now + _session_max_lifetime(client_type),
+            user_agent=user_agent,
+            device_name=device_name,
         )
-        issued = _issue_tokens(session, now=now)
         update_last_login(sender=User, user=user)
+        session = issued.session
 
     security_log.info(
         "auth.login_succeeded",
@@ -133,6 +138,67 @@ def login(
         ip=ip_address,
     )
     return issued
+
+
+def start_session(
+    *,
+    user: User,
+    client_type: str,
+    organization_id: uuid.UUID | None,
+    ip_address: str | None,
+    user_agent: str,
+    device_name: str = "",
+) -> IssuedTokens:
+    """Open a session for an already-authenticated user (sign-in, sign-up, switch)."""
+    now = timezone.now()
+    session = AuthSession.objects.create(
+        user=user,
+        organization_id=organization_id,
+        client_type=client_type,
+        device_name=device_name[:100],
+        user_agent=user_agent[:256],
+        ip_address=ip_address,
+        last_used_at=now,
+        expires_at=now + _session_max_lifetime(client_type),
+    )
+    return _issue_tokens(session, now=now)
+
+
+def switch_organization(*, session_id: uuid.UUID, organization_id: uuid.UUID) -> IssuedTokens:
+    """Replace the current session with a new one bound to another business.
+
+    The caller must already have verified the user's membership. The old
+    session is revoked so each session only ever acts for one business.
+    """
+    with transaction.atomic():
+        current = (
+            AuthSession.objects.select_for_update()
+            .select_related("user")
+            .get(pk=session_id, revoked_at__isnull=True)
+        )
+        _revoke(current, AuthSession.RevokeReason.SWITCHED_ORGANIZATION, now=timezone.now())
+        return start_session(
+            user=current.user,
+            client_type=current.client_type,
+            organization_id=organization_id,
+            ip_address=current.ip_address,
+            user_agent=current.user_agent,
+            device_name=current.device_name,
+        )
+
+
+def revoke_organization_sessions(*, user_id: uuid.UUID, organization_id: uuid.UUID) -> int:
+    """End a user's sessions for one business (e.g. their membership was suspended)."""
+    with transaction.atomic():
+        now = timezone.now()
+        sessions = list(
+            AuthSession.objects.select_for_update().filter(
+                user_id=user_id, organization_id=organization_id, revoked_at__isnull=True
+            )
+        )
+        for session in sessions:
+            _revoke(session, AuthSession.RevokeReason.MEMBERSHIP_SUSPENDED, now=now)
+    return len(sessions)
 
 
 # --- Refresh -----------------------------------------------------------------
@@ -235,14 +301,18 @@ def get_session_state(session_id: uuid.UUID) -> SessionState | None:
 
     row = (
         AuthSession.objects.filter(pk=session_id)
-        .values_list("user_id", "revoked_at", "expires_at")
+        .values_list("user_id", "organization_id", "revoked_at", "expires_at")
         .first()
     )
     if row is None:
         return None
-    user_id, revoked_at, expires_at = row
+    user_id, organization_id, revoked_at, expires_at = row
     now = timezone.now()
-    state = SessionState(user_id=user_id, active=revoked_at is None and expires_at > now)
+    state = SessionState(
+        user_id=user_id,
+        organization_id=organization_id,
+        active=revoked_at is None and expires_at > now,
+    )
     # Never cache an active session beyond its own expiry.
     ttl = settings.AUTH_SESSION_CACHE_SECONDS
     if state.active:
@@ -287,7 +357,8 @@ def _revoke(session: AuthSession, reason: str, *, now: datetime) -> None:
 
 
 def _session_cache_key(session_id: uuid.UUID) -> str:
-    return f"auth:session:{session_id}"
+    # Versioned: bump when SessionState's shape changes so stale pickles are ignored.
+    return f"auth:session:v2:{session_id}"
 
 
 def _session_max_lifetime(client_type: str) -> timedelta:

@@ -578,10 +578,10 @@ Only non-obvious constraints are listed. Every tenant table also has `organizati
 | `organization` | `UNIQUE(slug)` |
 | `store` | `UNIQUE(organization_id, code)`. `offline_oversell_policy IN ('QUEUE_FOR_REVIEW','ALLOW_NEGATIVE')` (see DECISIONS Q-4) |
 | `user` | `UNIQUE(email)` (citext). Password stored only as a Django hash (Argon2id). |
-| `membership` | `UNIQUE(user_id, organization_id)`. `status IN ('INVITED','ACTIVE','SUSPENDED')`. A trigger or service prevents removing the last Owner. |
+| `membership` | `UNIQUE(user_id, organization_id)`. `status IN ('ACTIVE','SUSPENDED')` (`INVITED` arrives with invitations in 1.9). `version` for optimistic locking. The service prevents removing the last active Owner, locking owner rows while it checks. |
 | `membership_store` | PK `(membership_id, store_id)`. Service ensures the store belongs to the membership's org. |
-| `role` | `UNIQUE(organization_id, name)`. System roles (`is_system`) cannot be deleted. |
-| `permission` | Code-defined catalog, synced by a data migration; not editable at runtime |
+| `role` | `UNIQUE(organization_id, name)`. Partial `UNIQUE(organization_id) WHERE template = 'OWNER'` (one Owner role per business). `template IN (OWNER, MANAGER, CASHIER, CUSTOM)`. The Owner role is a system role: immutable, with no permission rows, implicitly holding every code. |
+| `permission` | Code-defined catalog (`organizations/catalog.py`), synced after every `migrate`. Codes newly added to a template are granted to existing roles from that template; codes removed from the catalog are deleted. Not editable at runtime. |
 | `auth_session` | One row per signed-in client (the "token family"). Partial index `(user_id) WHERE revoked_at IS NULL`. `CHECK(client_type IN ('WEB','MOBILE'))`. `CHECK` that `revoke_reason` is set exactly when `revoked_at` is. `organization_id` (1.6) and `device_id` (Phase 6) are added later. |
 | `refresh_token` | **`UNIQUE(token_hash)`** (SHA-256 hex; the token itself is never stored). `rotated_at` marks a used token for reuse detection. Rows of ended sessions are purged by a scheduled job (2.6). |
 

@@ -32,7 +32,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the development workf
 
 ## Status
 
-**Phase 1 (foundation) in progress.** Milestones 1.1–1.5 are done: repo skeleton, local environment, CI, Django core, and authentication (cookie and bearer tokens, refresh rotation with reuse detection, session management, lockout). Next is 1.6: organizations, stores and role-based access.
+**Phase 1 (foundation) in progress.** Milestones 1.1–1.6 are done: repo skeleton, local environment, CI, Django core, authentication, and multi-business tenancy (sign-up, stores, staff, roles and permissions, audit log). Next: idempotency (1.7), then the web shell (1.8).
 
 ## Design documents
 

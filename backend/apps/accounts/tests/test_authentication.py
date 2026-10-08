@@ -18,7 +18,7 @@ def test_bearer_token_authenticates(mobile_session, user):
     response = client.get(ME_URL)
 
     assert response.status_code == 200
-    assert response.json()["email"] == user.email
+    assert response.json()["user"]["email"] == user.email
 
 
 def test_cookie_authenticates_safe_requests_without_csrf_header(signed_in_web_client):
@@ -113,9 +113,18 @@ def test_session_past_its_absolute_expiry_is_rejected(mobile_session):
     assert response.json()["code"] == "SESSION_REVOKED"
 
 
-def test_cached_session_state_saves_a_query_per_request(mobile_session, django_assert_num_queries):
-    client, _ = mobile_session
-    client.get(ME_URL)  # first request populates the cache
+def test_cached_session_state_saves_a_query_per_request(mobile_session):
+    from django.core.cache import cache
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
 
-    with django_assert_num_queries(1):  # only the user lookup
+    client, body = mobile_session
+    client.get(ME_URL)  # populates the session cache
+
+    with CaptureQueriesContext(connection) as cached:
         assert client.get(ME_URL).status_code == 200
+    cache.delete(f"auth:session:v2:{body['session']['id']}")
+    with CaptureQueriesContext(connection) as uncached:
+        assert client.get(ME_URL).status_code == 200
+
+    assert len(uncached) == len(cached) + 1

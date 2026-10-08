@@ -100,8 +100,18 @@ class AuthSession(BaseModel):
         TOKEN_REUSE = "TOKEN_REUSE", "Refresh token reuse detected"
         PASSWORD_CHANGED = "PASSWORD_CHANGED", "Password changed"
         ADMIN = "ADMIN", "Revoked by an administrator"
+        SWITCHED_ORGANIZATION = "SWITCHED_ORGANIZATION", "Switched to another business"
+        MEMBERSHIP_SUSPENDED = "MEMBERSHIP_SUSPENDED", "Access to the business was suspended"
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="auth_sessions")
+    organization = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The business this session works in. Null until one is chosen.",
+    )
     client_type = models.CharField(max_length=10, choices=ClientType.choices)
     device_name = models.CharField(max_length=100, blank=True)
     user_agent = models.CharField(max_length=256, blank=True)
@@ -109,7 +119,7 @@ class AuthSession(BaseModel):
     last_used_at = models.DateTimeField()
     expires_at = models.DateTimeField(help_text="Absolute end of the session.")
     revoked_at = models.DateTimeField(null=True, blank=True)
-    revoke_reason = models.CharField(max_length=20, choices=RevokeReason.choices, blank=True)
+    revoke_reason = models.CharField(max_length=24, choices=RevokeReason.choices, blank=True)
 
     class Meta:
         indexes: ClassVar[list[models.Index]] = [
