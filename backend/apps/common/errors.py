@@ -13,6 +13,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 from django.core.exceptions import PermissionDenied as DjangoPermissionDenied
+from django.db import OperationalError
 from django.http import Http404, HttpRequest
 from rest_framework import exceptions, status
 from rest_framework.response import Response
@@ -99,6 +100,15 @@ def exception_handler(exc: Exception, context: Mapping[str, Any]) -> Response | 
     which logs them (and reports them to Sentry) and renders the JSON 500
     handler in :mod:`apps.common.views`.
     """
+    if isinstance(exc, OperationalError) and is_lock_timeout(exc):
+        exc = ApplicationError(
+            "Someone else is updating the same records right now. Please try again.",
+            code="LOCK_TIMEOUT",
+            title="Busy, please retry",
+            status_code=status.HTTP_409_CONFLICT,
+            headers={"Retry-After": "1"},
+        )
+
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
     elif isinstance(exc, DjangoPermissionDenied):
@@ -202,6 +212,15 @@ def flatten_validation_errors(detail: Any, pointer: str = "") -> list[dict[str, 
 def _escape(token: str) -> str:
     # RFC 6901: "~" → "~0", "/" → "~1"
     return token.replace("~", "~0").replace("/", "~1")
+
+
+_LOCK_NOT_AVAILABLE = "55P03"  # PostgreSQL: lock_timeout expired
+
+
+def is_lock_timeout(exc: BaseException) -> bool:
+    """True if a database error was caused by ``lock_timeout`` expiring."""
+    cause = exc.__cause__ or exc.__context__
+    return getattr(cause, "sqlstate", None) == _LOCK_NOT_AVAILABLE
 
 
 def request_id_of(request: HttpRequest) -> str | None:

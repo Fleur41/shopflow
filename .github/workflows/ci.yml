@@ -43,8 +43,17 @@ jobs:
       DATABASE_URL: postgres://shopflow:shopflow@localhost:5432/shopflow
       REDIS_URL: redis://localhost:6379/0
       DJANGO_SETTINGS_MODULE: config.settings.test
+      # Restricted runtime role: the grant tests connect as it (CI-only credentials).
+      DATABASE_APP_ROLE: shopflow_app
+      DATABASE_APP_PASSWORD: shopflow_app
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Create the restricted app database role
+        env:
+          PGPASSWORD: shopflow
+        run: >-
+          psql -h localhost -U shopflow -d shopflow -v ON_ERROR_STOP=1
+          -c "CREATE ROLE shopflow_app LOGIN PASSWORD 'shopflow_app' NOSUPERUSER NOCREATEDB NOCREATEROLE"
       - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
         with:
           version: "0.12.23"
@@ -72,7 +81,8 @@ jobs:
           export DJANGO_SECRET_KEY JWT_SIGNING_KEYS JWT_ACTIVE_KEY_ID=ci
           uv run python manage.py check --deploy --fail-level WARNING
       - name: Tests
-        run: uv run pytest --cov --cov-report=term -W error
+        # -rs lists skipped tests; the DB grant tests must not be skipped in CI.
+        run: uv run pytest --cov --cov-report=term -W error -rs
       - name: Dependency vulnerability audit
         run: |
           uv export --locked --no-dev --no-emit-project --format requirements-txt > "$RUNNER_TEMP/requirements.txt"

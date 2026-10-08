@@ -323,6 +323,8 @@ Full detail in [SECURITY.md §2](SECURITY.md#2-authentication).
     - Same key + different hash → `422 IDEMPOTENCY_KEY_REUSED`.
     - Concurrent duplicate → it waits on the unique index, then replays the committed response.
     - Business failure → the transaction rolls back, the key vanishes, and a corrected retry is possible.
+    - A duplicate waits at most `IDEMPOTENCY_LOCK_TIMEOUT` (5 s), then gets `409 IDEMPOTENCY_IN_PROGRESS`.
+    - Implemented as the `@idempotent(required=...)` view decorator (`apps/idempotency`).
   - Sales, payments and adjustments **also** carry a permanent `client_txn_id` with a unique constraint, as a second line of defence after key expiry.
 - **Trade-offs:** One extra indexed insert per write. Keys are purged after 30 days (longer than any plausible offline window). `client_txn_id` uniqueness is permanent.
 

@@ -49,11 +49,11 @@ Core error codes:
 
 | HTTP | code | Meaning |
 |---|---|---|
-| 400 | `VALIDATION_ERROR` | Field-level validation failed (`errors[]`) |
+| 400 | `VALIDATION_ERROR`, `IDEMPOTENCY_KEY_REQUIRED`, `IDEMPOTENCY_KEY_INVALID` | Field-level validation failed (`errors[]`); missing or malformed `Idempotency-Key` |
 | 401 | `NOT_AUTHENTICATED`, `TOKEN_EXPIRED`, `SESSION_REVOKED`, `SESSION_EXPIRED`, `INVALID_CREDENTIALS`, `DEVICE_REVOKED`, `MFA_REQUIRED` | `TOKEN_EXPIRED` → call `/auth/refresh/`. `SESSION_REVOKED`/`SESSION_EXPIRED` → sign in again. |
 | 403 | `PERMISSION_DENIED`, `CSRF_FAILED`, `ORGANIZATION_REQUIRED`, `MEMBERSHIP_INACTIVE`, `ORGANIZATION_SUSPENDED`, `NOT_A_MEMBER`, `PRIVILEGE_ESCALATION`, `CANNOT_MODIFY_SELF` | `PERMISSION_DENIED` carries `errors[0].meta.permission` (the code needed). `PRIVILEGE_ESCALATION` carries the permissions or stores you don't hold. |
 | 404 | `NOT_FOUND` | Missing **or** outside the caller's tenant/stores |
-| 409 | `STALE_VERSION`, `ALREADY_A_MEMBER`, `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
+| 409 | `STALE_VERSION`, `ALREADY_A_MEMBER`, `LOCK_TIMEOUT` (with `Retry-After`), `PRICE_CHANGED`, `IDEMPOTENCY_IN_PROGRESS`, `LOCK_TIMEOUT`, `REFRESH_IN_PROGRESS` | Retry or re-confirm |
 | 422 | `INSUFFICIENT_STOCK`, `CREDIT_LIMIT_EXCEEDED`, `PAYMENT_EXCEEDS_BALANCE`, `PRODUCT_INACTIVE`, `CUSTOMER_FROZEN`, `RETURN_EXCEEDS_SOLD`, `DISCOUNT_LIMIT_EXCEEDED`, `IDEMPOTENCY_KEY_REUSED`, `LAST_OWNER`, `SYSTEM_ROLE_IMMUTABLE`, `BUSINESS_RULE_VIOLATION` | Business rule rejected |
 | 429 | `RATE_LIMITED`, `LOGIN_TEMPORARILY_LOCKED` | Both send `Retry-After` |
 | 503 | `SERVICE_UNAVAILABLE` | Maintenance or dependency down |
@@ -71,6 +71,10 @@ Idempotency-Key: 01926b3e-8a7c-7d4e-9f00-3c2b1a0e9d11
 - **Duplicate in flight:** it waits for the first to commit, then replays the result. If the wait exceeds the lock timeout, the response is `409 IDEMPOTENCY_IN_PROGRESS`.
 - **Business failure** (4xx): nothing is stored, so the client may fix the request and retry with the **same** key.
 - Keys are retained for 30 days. Sales, payments and adjustments also carry a permanent `client_txn_id`.
+- A key belongs to one user in one business, for one endpoint. Using it from another user or endpoint is `IDEMPOTENCY_KEY_REUSED`, so a key can never return someone else's response.
+- Keys: 8–255 characters of letters, digits and `. _ : -`. A UUID is recommended.
+- Only successful (2xx) responses are remembered.
+- **Status:** the framework is implemented (Phase 1.7). Financial and inventory endpoints (Phase 2 onward) will *require* the header. `POST /stores/`, `/roles/` and `/members/` accept it optionally.
 
 ---
 

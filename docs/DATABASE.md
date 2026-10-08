@@ -649,7 +649,7 @@ Real FK columns per source type were chosen over a generic `(reference_type, ref
 | Table | Key constraints / indexes |
 |---|---|
 | `audit_log` | **Append-only.** Index `(organization_id, entity_type, entity_id)` and `(organization_id, occurred_at)`. Monthly range partitions once volume warrants. |
-| `idempotency_key` | **`UNIQUE(organization_id, key)`**. Index `(expires_at)` for purge. |
+| `idempotency_key` | **`UNIQUE(organization_id, key)`**, inserted in the same transaction as the change it guards. Also stores `user_id`, `endpoint` and `request_hash`; a replay must match all three. Index `(expires_at)` for purge (`manage.py purge_idempotency_keys`, scheduled in 2.6). |
 | `sync_device` | `UNIQUE(store_id, device_code)` |
 | `sync_operation` | **`UNIQUE(device_id, client_op_id)`** |
 | `sync_conflict` | `status IN ('OPEN','ACCEPTED','REJECTED')`. Index `(store_id) WHERE status = 'OPEN'`. |
@@ -662,8 +662,8 @@ Real FK columns per source type were chosen over a generic `(reference_type, ref
 `inventory_movement`, `cash_movement`, `customer_ledger_entry`, `supplier_ledger_entry`, `audit_log`, `product_price_history`, `sync_operation` (results only, apart from a status transition from PENDING).
 
 These are enforced three ways:
-1. A `BEFORE UPDATE OR DELETE` trigger raises an exception.
-2. The runtime DB role (`shopflow_app`) has only `SELECT, INSERT` on these tables. Migrations run as a separate owner role (`shopflow_migrator`).
+1. A `BEFORE UPDATE OR DELETE` trigger (`shopflow_prevent_modification()`) raises an exception. A test checks every append-only table has it.
+2. The runtime DB role (`shopflow_app`) has only `SELECT, INSERT` on these tables. Migrations run as the schema owner. A model opts in with `append_only = True`; the grants are re-applied after every `migrate`.
 3. The Django models override `save()`/`delete()` to refuse updates. This gives an early, friendly error; the DB is the real guard.
 
 ---

@@ -15,6 +15,12 @@ os.environ.setdefault("LOG_LEVEL", "WARNING")
 
 from .base import *
 
+# Tests create and destroy databases, so they connect as the schema owner even
+# where the app itself runs as the restricted role.
+if os.environ.get("TEST_DATABASE_URL"):
+    DATABASES = {"default": env.db("TEST_DATABASE_URL")}
+    DATABASES["default"]["ATOMIC_REQUESTS"] = False
+
 ALLOWED_HOSTS = ["testserver", "localhost"]
 
 # Fast hashing in tests only; production uses Argon2id (see base.py).

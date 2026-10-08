@@ -2,9 +2,11 @@
 .DEFAULT_GOAL := help
 COMPOSE := docker compose
 BACKEND := $(COMPOSE) run --rm backend
+# Schema changes run as the database owner, not the app's restricted role.
+BACKEND_OWNER := $(COMPOSE) run --rm backend env DATABASE_URL=postgres://shopflow:shopflow@db:5432/shopflow
 FRONTEND := $(COMPOSE) run --rm --no-deps frontend
 
-.PHONY: help up down logs ps migrate makemigrations superuser shell \
+.PHONY: help up down logs ps migrate makemigrations superuser shell db-roles \
         test test-backend test-frontend lint lint-backend lint-frontend fmt check clean
 
 help: ## Show available commands
@@ -23,11 +25,15 @@ logs: ## Follow logs from all services
 ps: ## Show running services
 	$(COMPOSE) ps
 
-migrate: ## Apply database migrations
-	$(BACKEND) python manage.py migrate
+migrate: ## Apply database migrations (as the schema owner)
+	$(BACKEND_OWNER) python manage.py migrate
 
 makemigrations: ## Create migrations after model changes
-	$(BACKEND) python manage.py makemigrations
+	$(BACKEND_OWNER) python manage.py makemigrations
+
+db-roles: ## Create the app's restricted database role on an existing local volume
+	$(COMPOSE) exec db sh /docker-entrypoint-initdb.d/01-app-role.sh
+	$(BACKEND_OWNER) python manage.py migrate
 
 superuser: ## Create a platform admin user
 	$(BACKEND) python manage.py createsuperuser

@@ -19,6 +19,9 @@ class AuditLog(models.Model):
     clearer error (docs/SECURITY.md §10).
     """
 
+    # The runtime database role gets no UPDATE/DELETE here (apps.common.db_grants).
+    append_only = True
+
     class ActorType(models.TextChoices):
         USER = "USER", "User"
         SYSTEM = "SYSTEM", "System"

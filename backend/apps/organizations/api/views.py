@@ -27,6 +27,7 @@ from apps.accounts.services import IssuedTokens, start_session, switch_organizat
 from apps.accounts.tokens import AccessClaims
 from apps.common.errors import ApplicationError
 from apps.common.http import client_ip
+from apps.idempotency.service import idempotent
 
 from .. import selectors, services
 from ..context import get_request_context
@@ -185,6 +186,7 @@ class StoreListView(mixins.ListModelMixin, TenantAPIView):
     def get(self, request: Request) -> Response:
         return self.list(request)
 
+    @idempotent(required=False)
     def post(self, request: Request) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -239,6 +241,7 @@ class RoleListView(mixins.ListModelMixin, TenantAPIView):
     def get(self, request: Request) -> Response:
         return self.list(request)
 
+    @idempotent(required=False)
     def post(self, request: Request) -> Response:
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -294,6 +297,7 @@ class MemberListView(mixins.ListModelMixin, TenantAPIView):
         return self.list(request)
 
     @extend_schema(request=MemberCreateSerializer, responses={201: MemberSerializer})
+    @idempotent(required=False)
     def post(self, request: Request) -> Response:
         serializer = MemberCreateSerializer(
             data=request.data, context=self.get_serializer_context()

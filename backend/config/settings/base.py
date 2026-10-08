@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.organizations",
     "apps.audit",
+    "apps.idempotency",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +74,10 @@ TEMPLATES = [
 # ATOMIC_REQUESTS stays off (see docs/ARCHITECTURE.md, request lifecycle).
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = False
+# The runtime role the app connects as in deployed environments. After every
+# migrate (run as the schema owner) it is granted row access only, with no
+# UPDATE/DELETE on append-only tables. Empty disables grant management.
+DATABASE_APP_ROLE: str = env("DATABASE_APP_ROLE", default="")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- Cache ----------------------------------------------------------------
@@ -133,6 +138,12 @@ AUTH_COOKIE_SECURE = True
 AUTH_ACCESS_COOKIE_NAME = "__Host-sf_at"
 AUTH_REFRESH_COOKIE_NAME = "__Secure-sf_rt"
 AUTH_REFRESH_COOKIE_PATH = "/api/v1/auth/"
+
+# Idempotency keys (docs/API.md §3): kept longer than any plausible offline
+# window. A duplicate request waits at most IDEMPOTENCY_LOCK_TIMEOUT for the
+# first copy to finish before getting 409 IDEMPOTENCY_IN_PROGRESS.
+IDEMPOTENCY_KEY_TTL = timedelta(days=30)
+IDEMPOTENCY_LOCK_TIMEOUT = timedelta(seconds=5)
 
 # --- Internationalisation -------------------------------------------------
 # All timestamps are stored in UTC; business days use each store's timezone.

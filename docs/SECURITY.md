@@ -230,7 +230,11 @@ Limits are implemented with DRF throttles backed by Redis, plus coarse per-IP li
 - **gitleaks** runs in pre-commit and CI.
 - Each environment has separate credentials. Production credentials are never used locally.
 - JWT signing keys carry a `kid` for rotation (old keys stay valid for verification during the rotation window). The DB password, `SECRET_KEY` and the TOTP encryption key are rotated on a schedule and on any suspected exposure.
-- Separate DB roles: `shopflow_migrator` (DDL, CI/CD only) and `shopflow_app` (DML, with no UPDATE/DELETE on append-only tables).
+- **Separate DB roles** (implemented in 1.7):
+  - Migrations run as the schema owner, via `MIGRATION_DATABASE_URL`, in the deploy job only.
+  - The app connects as `shopflow_app`, which can read and write rows but cannot change the schema or `django_migrations`, and has **no UPDATE/DELETE on append-only tables**.
+  - Grants are re-applied after every `migrate` (`apps/common/db_grants.py`), so new tables are always covered.
+  - Tests connect as the app role and confirm that UPDATE, DELETE, TRUNCATE, ALTER and DROP are refused.
 - **Scanning in CI:** `pip-audit`, `npm audit`/`osv-scanner`, Gradle dependency check, Trivy for container images, Bandit + Semgrep for SAST, CodeQL, and Dependabot or Renovate for updates. High/critical findings block merges.
 - Container images: pinned base digests, a non-root user, a read-only root filesystem where possible, no build tools in runtime images.
 
@@ -245,7 +249,7 @@ Limits are implemented with DRF throttles backed by Redis, plus coarse per-IP li
   - `entity_type`/`entity_id`;
   - `changes` (`{field: [old, new]}`, with personal data minimized);
   - `reason`, `request_id`, `ip`, `user_agent`, `device_id`, `occurred_at`.
-- **Immutability:** a DB trigger (`shopflow_prevent_modification`) rejects UPDATE and DELETE from any code path, including raw SQL. Separate DB roles (no UPDATE/DELETE grants for the app role) follow in 1.7. No API endpoint can modify or delete audit rows, not even for Owners. Phase 8 option: a hash chain (`prev_hash`) for tamper evidence, with periodic export to WORM storage.
+- **Immutability:** a DB trigger (`shopflow_prevent_modification`) rejects UPDATE and DELETE from any code path, including raw SQL. The app's database role also has no UPDATE/DELETE grant on it, so even a compromised application can't rewrite history. No API endpoint can modify or delete audit rows, not even for Owners. Phase 8 option: a hash chain (`prev_hash`) for tamper evidence, with periodic export to WORM storage.
 - **Retention:** default 7 years, configurable, subject to confirmation of local tax-law requirements (DECISIONS Q-19).
 
 ---

@@ -32,7 +32,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the development workf
 
 ## Status
 
-**Phase 1 (foundation) in progress.** Milestones 1.1–1.6 are done: repo skeleton, local environment, CI, Django core, authentication, and multi-business tenancy (sign-up, stores, staff, roles and permissions, audit log). Next: idempotency (1.7), then the web shell (1.8).
+**Phase 1 (foundation) in progress.** Milestones 1.1–1.7 are done: repo skeleton, local environment, CI, Django core, authentication, and multi-business tenancy (sign-up, stores, staff, roles and permissions, audit log). Milestone 1.7 (idempotency, least-privilege database roles) is done too. Next: the web shell (1.8).
 
 ## Design documents
 
