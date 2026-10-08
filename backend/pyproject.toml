@@ -1,0 +1,95 @@
+[project]
+name = "shopflow-backend"
+version = "0.1.0"
+description = "ShopFlow POS, inventory and customer credit API"
+requires-python = ">=3.13"
+dependencies = [
+    "django>=5.2,<5.3",
+    "djangorestframework>=3.16",
+    "drf-spectacular>=0.28",
+    "psycopg[binary,pool]>=3.2",
+    "django-environ>=0.12",
+    "argon2-cffi>=23.1",
+    "structlog>=25.1",
+    "sentry-sdk[django]>=2.20",
+    "redis>=5.2",
+    "gunicorn>=23.0",
+    "whitenoise>=6.8",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "pytest-cov>=6.0",
+    "factory-boy>=3.3",
+    "ruff>=0.9",
+    "mypy>=1.14",
+    "django-stubs[compatible-mypy]>=5.2,<5.3",
+    "djangorestframework-stubs[compatible-mypy]>=3.15",
+    "pip-audit>=2.7",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+extend-exclude = ["**/migrations/*.py"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F",   # pycodestyle, pyflakes
+    "I",             # isort
+    "B",             # bugbear
+    "UP",            # pyupgrade
+    "S",             # bandit (security)
+    "DJ",            # django
+    "N",             # naming
+    "SIM", "RUF", "PT", "DTZ", "T20", "PIE", "RET",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101", "S105", "S106"]
+"config/settings/*.py" = ["F405", "F403"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
+exclude = ["migrations/"]
+
+[[tool.mypy.overrides]]
+module = ["environ.*", "factory.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["*.tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+# --ds wins over a DJANGO_SETTINGS_MODULE env var (e.g. dev settings set by docker compose),
+# so tests can never run against development or production settings.
+addopts = "-ra --strict-markers --strict-config --ds=config.settings.test"
+python_files = ["test_*.py"]
+filterwarnings = ["error::RuntimeWarning"]
+
+[tool.coverage.run]
+source = ["apps", "config"]
+# Environment settings (dev/prod) are exercised by `manage.py check --deploy` in CI.
+omit = [
+    "**/migrations/*", "**/tests/*", "config/wsgi.py", "config/asgi.py",
+    "config/settings/dev.py", "config/settings/prod.py",
+]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
