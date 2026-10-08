@@ -1,0 +1,10 @@
+# Gitleaks configuration: default rules plus narrowly scoped exceptions.
+# Every exception must name the exact value and say why it is not a secret.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Example Idempotency-Key UUID in docs/API.md (public documentation, not a credential)"
+regexTarget = "match"
+regexes = ['''Idempotency-Key: 01926b3e-8a7c-7d4e-9f00-3c2b1a0e9d11''']

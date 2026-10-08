@@ -98,11 +98,14 @@ shopflow/
 ├── frontend/                    Next.js web app (App Router, TypeScript strict)
 ├── mobile/                      Android (Gradle, Kotlin, Compose)
 ├── shared/
-│   └── pricing-test-vectors/    JSON fixtures every client + server must pass (§6.4)
-├── infra/                       Dockerfiles, compose, proxy config, deploy scripts
+│   └── pricing-test-vectors/    JSON fixtures every client + server must pass (ADR-17, Phase 3)
+├── infra/                       reverse-proxy config, deploy scripts (Phase 8)
 ├── docs/
+├── compose.yaml                 local development stack
 └── .github/workflows/
 ```
+
+Each deployable (`backend/`, `frontend/`) owns its `Dockerfile`, with `dev` and `runtime` targets.
 
 ### Deviations from the suggested module list (and why)
 

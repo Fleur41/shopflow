@@ -6,9 +6,35 @@ Point of Sale, inventory, customer credit, supplier and reconciliation managemen
 - **Mobile:** Android (Kotlin, Jetpack Compose), with camera barcode/QR scanning and offline sales with safe sync
 - **Backend:** Django + Django REST Framework + PostgreSQL, with Redis/Celery for background work
 
+## Repository layout
+
+| Path | Contents |
+|---|---|
+| `backend/` | Django + DRF API (Python 3.13, PostgreSQL 17, Redis) |
+| `frontend/` | Next.js web app (TypeScript strict, Tailwind) |
+| `mobile/` | Android app (Phase 6, placeholder) |
+| `docs/` | Architecture, database, API, security, roadmap, decisions |
+| `compose.yaml`, `Makefile` | Local development environment |
+| `.github/` | CI, Dependabot, PR template |
+
+## Quick start
+
+Requires Docker and `make`.
+
+```bash
+make up      # http://localhost:3000 (web), http://localhost:8000/api/v1/docs/ (API docs)
+make test    # backend + frontend tests
+make lint    # linters and type checks
+make help    # all commands
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the development workflow.
+
 ## Status
 
-**Phase 0: design.** No application code yet. The design documents are ready for review:
+**Phase 1 (foundation) in progress.** Milestones 1.1–1.4 are done: repo skeleton, local environment, CI, and the Django core (errors, logging, health checks, custom user model). Next is 1.5: authentication.
+
+## Design documents
 
 | Document | Contents |
 |---|---|
@@ -19,4 +45,4 @@ Point of Sale, inventory, customer credit, supplier and reconciliation managemen
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Phased milestones with acceptance criteria and Definition of Done |
 | [docs/DECISIONS.md](docs/DECISIONS.md) | Decisions on ambiguous requirements (all accepted) |
 
-`DEPLOYMENT.md`, `CONTRIBUTING.md` and `DISASTER_RECOVERY.md` are written in the phases that produce what they describe (see the roadmap). Local setup instructions arrive with Phase 1.
+`DEPLOYMENT.md` and `DISASTER_RECOVERY.md` are written in Phase 8, when there is a deployment to describe.
