@@ -2106,6 +2106,6 @@ components:
     cookieAuth:
       type: apiKey
       in: cookie
-      name: sf_at
+      name: __Host-sf_at
       description: 'Web clients: HttpOnly cookie set at sign-in. Unsafe methods also
         need the X-CSRFToken header.'

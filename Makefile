@@ -36,7 +36,8 @@ db-roles: ## Create the app's restricted database role on an existing local volu
 	$(BACKEND_OWNER) python manage.py migrate
 
 api: ## Regenerate shared/openapi.yaml and the frontend's TypeScript API types
-	$(BACKEND) python manage.py spectacular --file /shared/openapi.yaml --validate --fail-on-warn
+	@# Test settings, as in CI, so the schema documents production names (e.g. cookies).
+	$(BACKEND) env DJANGO_SETTINGS_MODULE=config.settings.test python manage.py spectacular --file /shared/openapi.yaml --validate --fail-on-warn
 	cd frontend && npm run api:types
 
 e2e: ## Run Playwright end-to-end + accessibility tests against the running stack (make up first)
