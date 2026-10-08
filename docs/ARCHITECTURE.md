@@ -391,6 +391,26 @@ See §6.6 for the full flow.
 - **Recommendation:** The server is authoritative. Clients implement only the documented display algorithm (line totals, discounts, tax-inclusive/exclusive, rounding). All three implementations must pass the same `shared/pricing-test-vectors/*.json` in CI.
 - **Trade-offs:** Three implementations of roughly 100 lines each, kept honest by shared tests. A "quote" round-trip per cart change was rejected: too slow, and impossible offline.
 
+### ADR-18 Strict nonce-based CSP over static prerendering
+
+- **Problem:** The web app handles financial and personal data, so XSS must be contained by a strict Content-Security-Policy. Next.js can only attach a per-request nonce to pages rendered per request, and its Partial Prerendering (`cacheComponents`) is incompatible with nonces.
+- **Options:**
+  (a) `cacheComponents` + a CSP allowing `'unsafe-inline'` scripts;
+  (b) experimental SRI hashes;
+  (c) nonce CSP with every page rendered per request.
+- **Recommendation:** (c). `src/proxy.ts` sets a fresh nonce per request, the root layout calls `connection()`, and `cacheComponents` is off.
+  - The production policy: `script-src 'self' 'nonce-…' 'strict-dynamic'`, `style-src 'self' 'nonce-…'`, `connect-src 'self'`, `frame-ancestors 'none'`.
+  - The end-to-end suite runs against a production build with **zero CSP violations**.
+- **Why:** Security outranks performance in our priority order. Almost every page is behind sign-in and personalised, so static prerendering would gain little.
+- **Trade-offs:** Each page view renders on the server and pages can't be CDN-cached. That is acceptable for a business app with a handful of users per shop. Revisit if Next.js supports nonces with PPR, or if SRI leaves experimental status.
+
+### ADR-19 Web client architecture
+
+- **Data:** server state lives in TanStack Query. There is no global client store; the selected store is a per-business `localStorage` preference read via `useSyncExternalStore`.
+- **Rendering:** pages are client components behind an `AppShell` that loads `/auth/me/` and redirects to sign-in or business selection.
+- **API calls:** they go through a typed client generated from the OpenAPI schema (`shared/openapi.yaml` → `src/lib/api/schema.d.ts`, checked for drift in CI). The client adds the CSRF header, and on `TOKEN_EXPIRED` performs **one** shared refresh and retries the original request.
+- **Components:** UI primitives are built on native elements (`<button>`, `<label>`, `<dialog>`, `<select>`), which provide keyboard, focus and screen-reader behaviour without a component library. All screens are audited with axe (WCAG 2.1 AA) in the end-to-end suite.
+
 ---
 
 ## 6. Key flows

@@ -36,6 +36,12 @@ pre-commit install
 - Dependencies: edit `backend/pyproject.toml`, then refresh the lockfile with `docker compose run --rm backend uv lock`.
 
 ## Frontend conventions
+- After changing an API endpoint, run `make api`: it regenerates `shared/openapi.yaml` and `frontend/src/lib/api/schema.d.ts`. CI fails if either is stale.
+- Call the API only through `api` in `src/lib/api/client.ts` (typed, with CSRF and session refresh), and wrap calls in `unwrap()` so failures become `ApiError`s with the server's message.
+- Creates of business records send an `Idempotency-Key` (`newIdempotencyKey()`), one per form, so double-submits are harmless.
+- Server state lives in TanStack Query; avoid global client stores.
+- New screens get an end-to-end test with an axe audit (`e2e/helpers.ts: expectAccessible`).
+- No inline `style={...}` attributes: the production CSP blocks them. Use Tailwind classes.
 - TypeScript strict mode. No `any` without a comment explaining why.
 - Components handle loading, error and empty states, and are keyboard and screen-reader accessible.
 - No tokens in `localStorage`/`sessionStorage`. Authentication uses HttpOnly cookies (docs/SECURITY.md §2).

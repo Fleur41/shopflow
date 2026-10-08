@@ -11,15 +11,16 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-  // A nonce-based Content-Security-Policy is added with the web shell (Phase 1.8).
+  // Content-Security-Policy (with a per-request nonce) is set in src/proxy.ts.
 ];
 
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
-  cacheComponents: true,
-  partialPrefetching: true,
+  // Off on purpose: every page renders per request so it can carry a CSP nonce,
+  // and Partial Prerendering is incompatible with nonces (ADR-18).
+  cacheComponents: false,
   // Django's URLs end in "/"; don't let Next.js redirect them away.
   skipTrailingSlashRedirect: true,
   turbopack: {

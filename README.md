@@ -25,14 +25,18 @@ Requires Docker and `make`.
 make up      # http://localhost:3000 (web), http://localhost:8000/api/v1/docs/ (API docs)
 make test    # backend + frontend tests
 make lint    # linters and type checks
+make e2e     # browser end-to-end + accessibility tests (needs `make up`)
+make api     # regenerate the OpenAPI schema and TypeScript API types
 make help    # all commands
 ```
+
+Open http://localhost:3000 and choose **Register your business** to get started.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions and the development workflow.
 
 ## Status
 
-**Phase 1 (foundation) in progress.** Milestones 1.1–1.7 are done: repo skeleton, local environment, CI, Django core, authentication, and multi-business tenancy (sign-up, stores, staff, roles and permissions, audit log). Milestone 1.7 (idempotency, least-privilege database roles) is done too. Next: the web shell (1.8).
+**Phase 1 (foundation) in progress.** Milestones 1.1–1.8 are done: repo skeleton, local environment, CI, Django core, authentication, multi-business tenancy (stores, staff, roles, audit log), idempotency and least-privilege database roles, and the web app shell (sign-up, sign-in, stores and staff screens). Next: account lifecycle (1.9), then Phase 2: products and inventory.
 
 ## Design documents
 

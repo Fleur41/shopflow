@@ -46,6 +46,7 @@ Attackers considered: an external unauthenticated attacker; an authenticated use
 - Cookie-authenticated unsafe requests (POST/PUT/PATCH/DELETE) must pass Django CSRF checks (the `X-CSRFToken` header must match the `csrftoken` cookie). `SameSite` is defence in depth, not the only control.
 - Login and refresh with `client: "web"` are CSRF-checked too: they set cookies, so login CSRF must be prevented. Clients get the token from `GET /auth/csrf/`. CSRF failures return `403 CSRF_FAILED` as JSON.
 - Bearer-authenticated requests (mobile) are not CSRF-checked, because browsers never attach such headers automatically.
+- In local development the Next.js dev server forwards `/api/*` with a different `Host`, so `http://localhost:3000` is listed in `CSRF_TRUSTED_ORIGINS` (dev settings only). Deployed reverse proxies preserve `Host`.
 - `CORS_ALLOWED_ORIGINS` stays empty unless a separate origin is ever needed. In that case it gets an explicit allowlist and never `*` with credentials.
 
 ### 2.4 MFA
@@ -156,7 +157,7 @@ Managers have **view-only** access to staff and roles by default; only Owners (o
 | Risk | Control |
 |---|---|
 | SQL injection | ORM / parameterized queries only. Raw SQL is allowed only in reviewed `selectors` with params. Bandit + Semgrep rules in CI. |
-| XSS | React escaping. `dangerouslySetInnerHTML` banned by lint. Strict CSP with nonces (`default-src 'self'`, no `unsafe-inline` scripts). Receipt HTML rendered with Django autoescape. |
+| XSS | React escaping. Strict CSP with a per-request nonce, set in `frontend/src/proxy.ts` (ADR-18): no inline or `eval` scripts and no inline styles in production, verified by end-to-end tests against a production build. Receipt HTML rendered with Django autoescape. |
 | CSRF | §2.3 |
 | SSRF | The server never fetches user-supplied URLs. Outbound integrations use allowlisted hosts. Image import is upload-only, never URL fetch. |
 | IDOR / BOLA | §3.4, §4 |
@@ -171,7 +172,7 @@ Managers have **view-only** access to staff and roles by default; only Owners (o
 
 ### Security headers (proxy + Django)
 - `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
-- `Content-Security-Policy` (nonce-based)
+- `Content-Security-Policy` (nonce-based; development additionally allows `eval`, inline styles and the HMR websocket)
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Camera becomes `(self)` only if browser camera scanning is added later.

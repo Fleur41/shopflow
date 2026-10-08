@@ -29,6 +29,11 @@ Status: 1.1–1.4 done (2026-10-08), with these adjustments:
 - "Progressive delay" was replaced by the per-email throttle plus lockout, which together bound guessing at 5/min and 10 per 15 min.
 
 1.6 done (2026-10-08), with the 1.7 audit log pulled forward so tenancy changes were audited from the start. 1.7 completed the same day: the idempotency framework (with real-concurrency tests) and separate owner/app database roles.
+1.8 done (2026-10-08):
+- **Screens:** sign-up, sign-in, business selection, app shell (navigation filtered by permissions, store switcher, sign-out and sign-out-everywhere), dashboard, stores (list and create), staff (list, add, suspend, reactivate), roles (read-only).
+- **Platform:** strict nonce CSP (ADR-18), typed API client with CSRF and shared refresh (ADR-19), and a Playwright + axe end-to-end suite in CI.
+- **Deferred:** UI to edit roles and members' roles/stores (the API exists), and sign-in by phone or PIN (Q-24).
+
 Deferred:
 - Invitations: adding people who already have an account, and `INVITED` memberships → 1.9 (needs email).
 - PostgreSQL row-level security → 8.1, as planned.
@@ -42,7 +47,7 @@ Deferred:
 | 1.5 ✅ | Accounts and auth | Custom `User` (email login, Argon2id). Login, refresh with rotation and reuse detection, logout, logout-all, session list and revoke. Cookie transport + CSRF for web, bearer for mobile. Throttles and lockout. Full test coverage of token flows. |
 | 1.6 ✅ | Organizations and RBAC | Organization, Store, Membership, MembershipStore, Role, Permission catalog, role templates. Tenant context resolution. Scoped managers. Permission-declaration test. **Cross-tenant BOLA test harness** (parametrized over all routes). Org signup flow creates org, owner and default store. |
 | 1.7 ✅ | Audit and idempotency frameworks | `audit_log` (append-only trigger + grants). `record_audit()` service API. Idempotency claim/replay utility with concurrency tests. Two DB roles (migrator/app) in compose and CI. |
-| 1.8 | Web shell | Next.js App Router, TS strict, design system (accessible primitives, e.g. Radix/shadcn), login, org/store switcher, protected layout, API client generated from OpenAPI, error/loading/empty state patterns, Playwright + axe smoke test |
+| 1.8 ✅ | Web shell | Next.js App Router, TS strict, design system (accessible primitives, e.g. Radix/shadcn), login, org/store switcher, protected layout, API client generated from OpenAPI, error/loading/empty state patterns, Playwright + axe smoke test |
 | 1.9 | Account lifecycle | Email verification, password reset, password change, TOTP MFA (enforced for sensitive roles), member invitation |
 
 **Demo:** sign up a business, invite a cashier limited to one store, and show that the cashier cannot see the other store or another org's data. Every one of those actions is in the audit log.

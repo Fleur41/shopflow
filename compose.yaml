@@ -52,6 +52,7 @@ services:
       && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
+      - ./shared:/shared
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -69,6 +70,7 @@ services:
       WATCHPACK_POLLING: "true"
     volumes:
       - ./frontend:/app
+      - ./shared:/shared:ro
       - /app/node_modules
       - /app/.next
     ports:

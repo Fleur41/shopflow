@@ -6,7 +6,7 @@ BACKEND := $(COMPOSE) run --rm backend
 BACKEND_OWNER := $(COMPOSE) run --rm backend env DATABASE_URL=postgres://shopflow:shopflow@db:5432/shopflow
 FRONTEND := $(COMPOSE) run --rm --no-deps frontend
 
-.PHONY: help up down logs ps migrate makemigrations superuser shell db-roles \
+.PHONY: help up down logs ps migrate makemigrations superuser shell db-roles api e2e \
         test test-backend test-frontend lint lint-backend lint-frontend fmt check clean
 
 help: ## Show available commands
@@ -34,6 +34,13 @@ makemigrations: ## Create migrations after model changes
 db-roles: ## Create the app's restricted database role on an existing local volume
 	$(COMPOSE) exec db sh /docker-entrypoint-initdb.d/01-app-role.sh
 	$(BACKEND_OWNER) python manage.py migrate
+
+api: ## Regenerate shared/openapi.yaml and the frontend's TypeScript API types
+	$(BACKEND) python manage.py spectacular --file /shared/openapi.yaml --validate --fail-on-warn
+	cd frontend && npm run api:types
+
+e2e: ## Run Playwright end-to-end + accessibility tests against the running stack (make up first)
+	cd frontend && npx playwright test
 
 superuser: ## Create a platform admin user
 	$(BACKEND) python manage.py createsuperuser

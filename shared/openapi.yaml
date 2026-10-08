@@ -1,0 +1,1545 @@
+openapi: 3.0.3
+info:
+  title: ShopFlow API
+  version: 1.0.0
+paths:
+  /api/v1/auth/csrf/:
+    get:
+      operationId: auth_csrf_retrieve
+      description: Issue the CSRF cookie and return its token for the ``X-CSRFToken``
+        header.
+      tags:
+      - auth
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CsrfToken'
+          description: ''
+  /api/v1/auth/login/:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/auth/logout/:
+    post:
+      operationId: auth_logout_create
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: Signed out
+  /api/v1/auth/logout-all/:
+    post:
+      operationId: auth_logout_all_create
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: All sessions ended
+  /api/v1/auth/me/:
+    get:
+      operationId: auth_me_retrieve
+      description: The signed-in user, the current business and what they may do in
+        it.
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+          description: ''
+  /api/v1/auth/refresh/:
+    post:
+      operationId: auth_refresh_create
+      description: Web clients send no body; the refresh token comes from the cookie.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MobileRefreshRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/auth/sessions/:
+    get:
+      operationId: auth_sessions_list
+      description: 'The caller''s active sessions; the one making the request has
+        ``current: true``.'
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSessionList'
+          description: ''
+  /api/v1/auth/sessions/{session_id}/:
+    delete:
+      operationId: auth_sessions_destroy
+      parameters:
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - auth
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: Session revoked
+  /api/v1/auth/signup/:
+    post:
+      operationId: auth_signup_create
+      description: Create an account and a business in one step; the caller is signed
+        in as its owner.
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequest'
+        required: true
+      security:
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/auth/switch-organization/:
+    post:
+      operationId: auth_switch_organization_create
+      description: Start a new session in another of the user's businesses (the old
+        one ends).
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SwitchOrganizationRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/members/:
+    get:
+      operationId: members_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - members
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMemberList'
+          description: ''
+    post:
+      operationId: members_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemberCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+  /api/v1/members/{member_id}/:
+    get:
+      operationId: members_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - members
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+    patch:
+      operationId: members_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMemberUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+  /api/v1/members/{member_id}/reactivate/:
+    post:
+      operationId: members_reactivate_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - members
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+  /api/v1/members/{member_id}/suspend/:
+    post:
+      operationId: members_suspend_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: member_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - members
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuspendRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Member'
+          description: ''
+  /api/v1/organization/:
+    get:
+      operationId: organization_retrieve
+      description: Base for every organization-scoped endpoint.
+      tags:
+      - organization
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
+    patch:
+      operationId: organization_partial_update
+      description: Base for every organization-scoped endpoint.
+      tags:
+      - organization
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedOrganizationRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+          description: ''
+  /api/v1/permissions/:
+    get:
+      operationId: permissions_retrieve
+      description: Base for every organization-scoped endpoint.
+      tags:
+      - permissions
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+          description: ''
+  /api/v1/roles/:
+    get:
+      operationId: roles_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - roles
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRoleList'
+          description: ''
+    post:
+      operationId: roles_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/roles/{role_id}/:
+    get:
+      operationId: roles_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: role_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - roles
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+    patch:
+      operationId: roles_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: role_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - roles
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedRoleRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+          description: ''
+  /api/v1/stores/:
+    get:
+      operationId: stores_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStoreList'
+          description: ''
+    post:
+      operationId: stores_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Store'
+          description: ''
+  /api/v1/stores/{store_id}/:
+    get:
+      operationId: stores_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreUpdate'
+          description: ''
+    patch:
+      operationId: stores_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStoreUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoreUpdate'
+          description: ''
+components:
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        session:
+          $ref: '#/components/schemas/SessionInfo'
+        tokens:
+          allOf:
+          - $ref: '#/components/schemas/TokenPair'
+          description: Mobile clients only. Web clients receive HttpOnly cookies.
+      required:
+      - session
+      - user
+    ClientEnum:
+      enum:
+      - web
+      - mobile
+      type: string
+      description: |-
+        * `web` - web
+        * `mobile` - mobile
+    ClientTypeEnum:
+      enum:
+      - WEB
+      - MOBILE
+      type: string
+      description: |-
+        * `WEB` - Web browser
+        * `MOBILE` - Mobile app
+    CsrfToken:
+      type: object
+      properties:
+        csrf_token:
+          type: string
+      required:
+      - csrf_token
+    CurrentAccess:
+      type: object
+      properties:
+        role:
+          $ref: '#/components/schemas/RoleSummary'
+        permissions:
+          type: array
+          items:
+            type: string
+        all_stores:
+          type: boolean
+        stores:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreSummary'
+      required:
+      - all_stores
+      - permissions
+      - role
+      - stores
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        client:
+          allOf:
+          - $ref: '#/components/schemas/ClientEnum'
+          default: web
+        device_name:
+          type: string
+          maxLength: 100
+        organization_id:
+          type: string
+          format: uuid
+          description: Business to work in. Optional when the user belongs to exactly
+            one.
+      required:
+      - email
+      - password
+    Me:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        organization:
+          allOf:
+          - $ref: '#/components/schemas/Organization'
+          nullable: true
+        access:
+          allOf:
+          - $ref: '#/components/schemas/CurrentAccess'
+          nullable: true
+        organizations:
+          type: array
+          items:
+            $ref: '#/components/schemas/MembershipSummary'
+          description: Businesses this user can switch to.
+      required:
+      - access
+      - organization
+      - organizations
+      - user
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        user:
+          allOf:
+          - $ref: '#/components/schemas/MemberUser'
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleSummary'
+          readOnly: true
+        all_stores:
+          type: boolean
+          readOnly: true
+        stores:
+          type: array
+          items:
+            $ref: '#/components/schemas/StoreSummary'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - all_stores
+      - created_at
+      - id
+      - role
+      - status
+      - stores
+      - user
+      - version
+    MemberCreateRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          description: Initial password for the new account. Share it with the person
+            privately.
+          maxLength: 128
+        role_id:
+          type: string
+          format: uuid
+        all_stores:
+          type: boolean
+          default: false
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+      required:
+      - email
+      - full_name
+      - password
+      - role_id
+    MemberUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        full_name:
+          type: string
+          readOnly: true
+      required:
+      - email
+      - full_name
+      - id
+    MembershipSummary:
+      type: object
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+        organization_name:
+          type: string
+        role:
+          type: string
+      required:
+      - organization_id
+      - organization_name
+      - role
+    MobileRefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+      required:
+      - refresh_token
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        base_currency:
+          type: string
+          readOnly: true
+          description: Default currency for new stores. Fixed once set.
+        timezone:
+          type: string
+          maxLength: 64
+        locale:
+          type: string
+          maxLength: 16
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StatusEnum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - base_currency
+      - created_at
+      - id
+      - name
+      - status
+      - timezone
+    PaginatedMemberList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Member'
+    PaginatedRoleList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    PaginatedSessionList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Session'
+    PaginatedStoreList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Store'
+    PatchedMemberUpdateRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
+        role_id:
+          type: string
+          format: uuid
+        all_stores:
+          type: boolean
+        store_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+    PatchedOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 16
+    PatchedRoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        description:
+          type: string
+          default: ''
+          maxLength: 255
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionsEnum'
+    PatchedStoreUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 20
+        timezone:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+    Permission:
+      type: object
+      properties:
+        code:
+          type: string
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        is_sensitive:
+          type: boolean
+          readOnly: true
+      required:
+      - category
+      - code
+      - description
+      - is_sensitive
+    PermissionsEnum:
+      enum:
+      - audit.view
+      - cash.close_session
+      - cash.correct
+      - cash.open_session
+      - cash.pay_in_out
+      - cash.view_sessions
+      - customers.create
+      - customers.exceed_credit_limit
+      - customers.manage
+      - customers.receive_payment
+      - customers.reconcile
+      - customers.reverse_entry
+      - customers.set_credit_limit
+      - customers.view
+      - customers.view_balance
+      - customers.view_contact
+      - inventory.adjust
+      - inventory.manage_levels
+      - inventory.receive
+      - inventory.view
+      - inventory.view_movements
+      - org.manage
+      - org.view
+      - products.change_price
+      - products.manage
+      - products.view
+      - purchasing.create_po
+      - purchasing.pay_supplier
+      - purchasing.receive
+      - purchasing.return
+      - purchasing.view
+      - purchasing.view_payables
+      - reports.view
+      - reports.view_all_stores
+      - reports.view_customers
+      - roles.manage
+      - roles.view
+      - sales.create
+      - sales.credit
+      - sales.discount
+      - sales.override_price
+      - sales.return
+      - sales.view_all
+      - sales.view_own
+      - sales.void
+      - stores.manage
+      - stores.manage_inventory_policy
+      - stores.view
+      - suppliers.manage
+      - suppliers.view
+      - sync.register_device
+      - sync.resolve_conflicts
+      - users.manage
+      - users.view
+      type: string
+      description: |-
+        * `audit.view` - audit.view
+        * `cash.close_session` - cash.close_session
+        * `cash.correct` - cash.correct
+        * `cash.open_session` - cash.open_session
+        * `cash.pay_in_out` - cash.pay_in_out
+        * `cash.view_sessions` - cash.view_sessions
+        * `customers.create` - customers.create
+        * `customers.exceed_credit_limit` - customers.exceed_credit_limit
+        * `customers.manage` - customers.manage
+        * `customers.receive_payment` - customers.receive_payment
+        * `customers.reconcile` - customers.reconcile
+        * `customers.reverse_entry` - customers.reverse_entry
+        * `customers.set_credit_limit` - customers.set_credit_limit
+        * `customers.view` - customers.view
+        * `customers.view_balance` - customers.view_balance
+        * `customers.view_contact` - customers.view_contact
+        * `inventory.adjust` - inventory.adjust
+        * `inventory.manage_levels` - inventory.manage_levels
+        * `inventory.receive` - inventory.receive
+        * `inventory.view` - inventory.view
+        * `inventory.view_movements` - inventory.view_movements
+        * `org.manage` - org.manage
+        * `org.view` - org.view
+        * `products.change_price` - products.change_price
+        * `products.manage` - products.manage
+        * `products.view` - products.view
+        * `purchasing.create_po` - purchasing.create_po
+        * `purchasing.pay_supplier` - purchasing.pay_supplier
+        * `purchasing.receive` - purchasing.receive
+        * `purchasing.return` - purchasing.return
+        * `purchasing.view` - purchasing.view
+        * `purchasing.view_payables` - purchasing.view_payables
+        * `reports.view` - reports.view
+        * `reports.view_all_stores` - reports.view_all_stores
+        * `reports.view_customers` - reports.view_customers
+        * `roles.manage` - roles.manage
+        * `roles.view` - roles.view
+        * `sales.create` - sales.create
+        * `sales.credit` - sales.credit
+        * `sales.discount` - sales.discount
+        * `sales.override_price` - sales.override_price
+        * `sales.return` - sales.return
+        * `sales.view_all` - sales.view_all
+        * `sales.view_own` - sales.view_own
+        * `sales.void` - sales.void
+        * `stores.manage` - stores.manage
+        * `stores.manage_inventory_policy` - stores.manage_inventory_policy
+        * `stores.view` - stores.view
+        * `suppliers.manage` - suppliers.manage
+        * `suppliers.view` - suppliers.view
+        * `sync.register_device` - sync.register_device
+        * `sync.resolve_conflicts` - sync.resolve_conflicts
+        * `users.manage` - users.manage
+        * `users.view` - users.view
+    Role:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 60
+        description:
+          type: string
+          default: ''
+          maxLength: 255
+        template:
+          allOf:
+          - $ref: '#/components/schemas/TemplateEnum'
+          readOnly: true
+        is_system:
+          type: boolean
+          readOnly: true
+          description: System roles (Owner) cannot be edited or deleted.
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionsEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - is_system
+      - name
+      - permissions
+      - template
+    RoleRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        description:
+          type: string
+          default: ''
+          maxLength: 255
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionsEnum'
+      required:
+      - name
+      - permissions
+    RoleSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        template:
+          allOf:
+          - $ref: '#/components/schemas/TemplateEnum'
+          readOnly: true
+      required:
+      - id
+      - name
+      - template
+    Session:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        client_type:
+          allOf:
+          - $ref: '#/components/schemas/ClientTypeEnum'
+          readOnly: true
+        device_name:
+          type: string
+          readOnly: true
+        user_agent:
+          type: string
+          readOnly: true
+        ip_address:
+          type: string
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_used_at:
+          type: string
+          format: date-time
+          readOnly: true
+        expires_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Absolute end of the session.
+        current:
+          type: boolean
+          readOnly: true
+      required:
+      - client_type
+      - created_at
+      - current
+      - device_name
+      - expires_at
+      - id
+      - ip_address
+      - last_used_at
+      - user_agent
+    SessionInfo:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        client_type:
+          $ref: '#/components/schemas/ClientTypeEnum'
+        access_expires_at:
+          type: string
+          format: date-time
+        refresh_expires_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          description: Absolute end of the session.
+      required:
+      - access_expires_at
+      - client_type
+      - expires_at
+      - id
+      - refresh_expires_at
+    SignupRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        full_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 128
+        organization_name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        store_name:
+          type: string
+          maxLength: 150
+        currency:
+          type: string
+          minLength: 1
+          default: KES
+          pattern: ^[A-Z]{3}$
+        timezone:
+          type: string
+          minLength: 1
+          default: Africa/Nairobi
+        client:
+          allOf:
+          - $ref: '#/components/schemas/ClientEnum'
+          default: web
+        device_name:
+          type: string
+          maxLength: 100
+      required:
+      - email
+      - full_name
+      - organization_name
+      - password
+    StatusEnum:
+      enum:
+      - ACTIVE
+      - SUSPENDED
+      type: string
+      description: |-
+        * `ACTIVE` - Active
+        * `SUSPENDED` - Suspended
+    Store:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 150
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 20
+        currency:
+          type: string
+          pattern: ^[A-Z]{3}$
+        timezone:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+    StoreRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 20
+        currency:
+          type: string
+          minLength: 1
+          pattern: ^[A-Z]{3}$
+        timezone:
+          type: string
+          minLength: 1
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
+    StoreSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+      required:
+      - code
+      - id
+      - name
+    StoreUpdate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        address:
+          type: string
+          maxLength: 255
+        phone:
+          type: string
+          maxLength: 20
+        currency:
+          type: string
+          readOnly: true
+        timezone:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - currency
+      - id
+      - name
+    SuspendRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - reason
+    SwitchOrganizationRequest:
+      type: object
+      properties:
+        organization_id:
+          type: string
+          format: uuid
+      required:
+      - organization_id
+    TemplateEnum:
+      enum:
+      - OWNER
+      - MANAGER
+      - CASHIER
+      - CUSTOM
+      type: string
+      description: |-
+        * `OWNER` - Owner
+        * `MANAGER` - Manager
+        * `CASHIER` - Cashier
+        * `CUSTOM` - Custom
+    TokenPair:
+      type: object
+      properties:
+        token_type:
+          type: string
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+      required:
+      - access_token
+      - refresh_token
+      - token_type
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        full_name:
+          type: string
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        email_verified:
+          type: boolean
+          readOnly: true
+      required:
+      - email
+      - email_verified
+      - full_name
+      - id
+      - phone
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Mobile clients: access token from /auth/login/ or /auth/refresh/.'
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sf_at
+      description: 'Web clients: HttpOnly cookie set at sign-in. Unsafe methods also
+        need the X-CSRFToken header.'
