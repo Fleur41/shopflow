@@ -6,7 +6,7 @@ This follows the phase order in the spec, with three deliberate changes:
 1. **CI, security baseline and observability start in Phase 1**, not Phase 8. Phase 8 is hardening, not introduction (spec §33).
 2. **Idempotency and audit frameworks are built in Phase 1**, so every later financial endpoint uses them from day one.
 3. **Suppliers (basic CRUD) move into Phase 2**, where the spec also lists them. Phase 5 adds purchasing on top.
-4. **KRA eTIMS fiscal invoicing** (added 2026-10-11, Q-23): data groundwork in 2.2, integration in 3.8.
+4. **KRA eTIMS fiscal invoicing** (added 2026-10-11, Q-23; see [ETIMS.md](ETIMS.md)): data groundwork in 2.2, integration in 3.8, and eTIMS-driven changes in 3.2, 3.3, 3.5 and 3.6.
 
 The sync API contract (`client_txn_id`, `occurred_at`, `origin`) is designed into the sales and payments endpoints from Phase 3, so Phase 6 (mobile) needs no backend rework.
 
@@ -80,13 +80,13 @@ Deferred:
 | # | Milestone | Acceptance criteria |
 |---|---|---|
 | 3.1 ✅ | Pricing module | Server pricing engine (line discount, order discount, tax-inclusive/exclusive, rounding) + `shared/pricing-test-vectors`. TS implementation passes the same vectors. |
-| 3.2 | Payment methods | Configurable payment methods per org. Provider interface stub. |
+| 3.2 | Payment methods | Configurable payment methods per org, each with its eTIMS payment type (`01`–`07`). Provider interface stub. |
 | 3.3 | Complete sale API | Atomic sale with idempotency, `client_txn_id`, receipt numbering, price check (409), stock locks (422 with friendly message), mixed tenders, audit. **Concurrency test:** two cashiers race for the last unit and exactly one succeeds. **Fault-injection test:** a failure at each step leaves no partial rows. |
 | 3.4 | POS screen (web) | Keyboard-wedge scanner detection, focused scan input, local product cache, quantity merge on rescan, keyboard shortcuts (F-keys for tenders), cart, tender dialog with change calculation, offline-tolerant error messages. Accessibility: fully keyboard-operable, screen-reader labels. E2E test with a simulated scanner. |
 | 3.5 | Receipts | Receipt JSON/HTML (printable 58/80 mm CSS), reprint, delivery interface stub |
 | 3.6 | Voids and returns | Void (same day, permissioned, reason) and returns with restock option, all via reversal movements |
 | 3.7 | Cash sessions | Tills, open session with float, pay-in/pay-out/drop, blind close-out count, expected vs counted variance, X/Z reports, variance alerts, void allowed only while the session is open. Mobile: per-device till, synced as `cash_session.*` ops. |
-| 3.8 | eTIMS fiscal invoicing | Org KRA PIN and store-to-branch mapping, device initialization per store. `FiscalProvider` interface with an eTIMS OSCU adapter (Q-26) and a no-op provider. Sales and returns (credit notes) submitted via a transactional outbox with retries; each sale records the solution and KRA invoice number that signed it. Item registration and stock movements reported. Receipts show the KRA invoice number, signature and QR, including reprints. "Unsigned invoices" queue with alerts (Q-28). Tests against recorded sandbox responses, plus a sandbox run before release. |
+| 3.8 | eTIMS fiscal invoicing | Per [ETIMS.md](ETIMS.md). Org KRA PIN and store-to-branch mapping, device initialization per store. `FiscalProvider` interface with an eTIMS OSCU adapter (Q-26) and a no-op provider. Sales are signed synchronously before any receipt (`PENDING_FISCAL` until signed); credit notes for voids and returns; gapless `invcNo` per store; each sale records the solution and KRA invoice number that signed it. Pricing vectors v2 with the tax breakdown by tax type (A–E). Fiscal daily X/Z reports. Training mode. Item registration and stock movements reported. Receipts show the KRA invoice number, signature and QR, including reprints. "Unsigned invoices" queue with alerts (Q-28). Tests against recorded sandbox responses, plus a sandbox run before release. |
 
 **Demo:** open the till, scan products with a USB scanner, complete a mixed cash/mobile-money sale, print the receipt (signed by the eTIMS sandbox), see stock decrease and the movement history, void the sale, then close the till with a blind count and see the variance.
 
@@ -118,7 +118,7 @@ Deferred:
 | 6.2 | Local data | Room + SQLCipher. Pull sync of products, identifiers, stock, customers and payment methods, with a cursor. Repository tests. |
 | 6.3 | Camera scanning | CameraX + ML Kit, format restrictions, debounce, haptic feedback, lookup against Room. Scanner workflow tests with recorded frames/fakes. |
 | 6.4 | Mobile POS | Cart, pricing (passes shared vectors), tenders, credit sale, receipt view, offline indicator |
-| 6.5 | Outbox and push sync | Outbox in the same Room transaction as the local sale. WorkManager sync with backoff, ordered ops, dependency handling, result mapping, conflict display. Server `/sync/push` and the conflict queue in web admin. Offline sales are submitted to eTIMS when they sync (Q-26). **Tests:** duplicate push never creates duplicates; kill the app mid-sync and retry; clock skew. |
+| 6.5 | Outbox and push sync | Outbox in the same Room transaction as the local sale. WorkManager sync with backoff, ordered ops, dependency handling, result mapping, conflict display. Server `/sync/push` and the conflict queue in web admin. Stores with eTIMS switched on can't sell offline (Q-26). **Tests:** duplicate push never creates duplicates; kill the app mid-sync and retry; clock skew. |
 | 6.6 | Other mobile flows | Customer payments, customer lookup, stock adjustment (if permitted), goods receipt, quick-action dashboard |
 | 6.7 | Device security | Revocation and quarantine, offline time limit, backup exclusion, release signing, Play internal track |
 
