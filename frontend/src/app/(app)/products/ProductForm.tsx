@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { CheckboxField, SelectField, TextField } from "@/components/ui/Field";
+import { AmountField, CheckboxField, SelectField, TextField } from "@/components/ui/Field";
 import { ErrorAlert } from "@/components/ui/Feedback";
 import { api, newIdempotencyKey } from "@/lib/api/client";
 import { ApiError, unwrap } from "@/lib/api/errors";
@@ -125,17 +125,24 @@ export function ProductForm({ product, onDone }: { product: Product | null; onDo
       )}
       <TextField label="Name" required maxLength={200} value={form.name} onChange={set("name")} error={errors.name} />
       <div className="grid gap-4 sm:grid-cols-2">
-        <TextField
+        <AmountField
           label="Selling price"
           required
-          inputMode="decimal"
+          currency={me?.organization?.base_currency}
           value={form.selling_price}
-          onChange={set("selling_price")}
+          onValueChange={(selling_price) => setForm((current) => ({ ...current, selling_price }))}
           error={errors.selling_price}
           disabled={!canChangePrice}
-          hint={canChangePrice ? undefined : "You can't change prices. Ask a manager."}
+          hint={canChangePrice ? "What customers pay, as shown at the till." : "You can't change prices. Ask a manager."}
         />
-        <TextField label="Cost (optional)" inputMode="decimal" value={form.default_cost} onChange={set("default_cost")} error={errors.default_cost} />
+        <AmountField
+          label="Cost (optional)"
+          currency={me?.organization?.base_currency}
+          value={form.default_cost}
+          onValueChange={(default_cost) => setForm((current) => ({ ...current, default_cost }))}
+          error={errors.default_cost}
+          hint="What you usually pay, for margins."
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField label="Unit" required value={form.unit} onChange={set("unit")} error={errors.unit}>

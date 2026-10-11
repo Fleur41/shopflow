@@ -41,19 +41,19 @@ export default function PaymentMethodsPage() {
       {methods.error && <ErrorAlert error={methods.error} title="Couldn't load payment methods" />}
       {methods.isSuccess && rows.length === 0 && <EmptyState title="No payment methods yet" />}
       {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white ring-1 ring-slate-200">
-          <table className="w-full text-left text-sm">
+        <div className="table-card">
+          <table>
             <caption className="sr-only">Payment methods</caption>
-            <thead className="border-b border-slate-200 bg-slate-50">
+            <thead>
               <tr>
-                <th scope="col" className="px-4 py-3">Name</th>
-                <th scope="col" className="px-4 py-3">Code</th>
-                <th scope="col" className="px-4 py-3">Kind</th>
-                <th scope="col" className="px-4 py-3">Reference</th>
-                <th scope="col" className="px-4 py-3">eTIMS type</th>
-                <th scope="col" className="px-4 py-3">Status</th>
+                <th scope="col">Name</th>
+                <th scope="col">Code</th>
+                <th scope="col">Kind</th>
+                <th scope="col">Reference</th>
+                <th scope="col">eTIMS type</th>
+                <th scope="col">Status</th>
                 {canManage && (
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col">
                     <span className="sr-only">Actions</span>
                   </th>
                 )}
@@ -61,17 +61,17 @@ export default function PaymentMethodsPage() {
             </thead>
             <tbody>
               {rows.map((method) => (
-                <tr key={method.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 font-medium">{method.name}</td>
-                  <td className="px-4 py-3 font-mono">{method.code}</td>
-                  <td className="px-4 py-3">{KIND_LABELS[method.kind]}</td>
-                  <td className="px-4 py-3">{method.requires_reference ? "Required" : "—"}</td>
-                  <td className="px-4 py-3">{method.etims_payment_type ? ETIMS_LABELS[method.etims_payment_type] : "—"}</td>
-                  <td className="px-4 py-3">
+                <tr key={method.id}>
+                  <td className="font-medium">{method.name}</td>
+                  <td className="font-mono">{method.code}</td>
+                  <td>{KIND_LABELS[method.kind]}</td>
+                  <td>{method.requires_reference ? "Required" : "—"}</td>
+                  <td>{method.etims_payment_type ? ETIMS_LABELS[method.etims_payment_type] : "—"}</td>
+                  <td>
                     {method.is_active ? <Badge tone="success">Active</Badge> : <Badge>Inactive</Badge>}
                   </td>
                   {canManage && (
-                    <td className="px-4 py-3 text-right">
+                    <td className="text-right">
                       <Button variant="secondary" onClick={() => setEditing(method)} aria-label={`Edit ${method.name}`}>
                         Edit
                       </Button>

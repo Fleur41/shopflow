@@ -35,26 +35,26 @@ export default function StoresPage() {
       {stores.error && <ErrorAlert error={stores.error} title="Couldn't load stores" />}
       {stores.isSuccess && rows.length === 0 && <EmptyState title="No stores yet" />}
       {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white ring-1 ring-slate-200">
-          <table className="w-full text-left text-sm">
+        <div className="table-card">
+          <table>
             <caption className="sr-only">Stores</caption>
-            <thead className="border-b border-slate-200 bg-slate-50">
+            <thead>
               <tr>
-                <th scope="col" className="px-4 py-3">Code</th>
-                <th scope="col" className="px-4 py-3">Name</th>
-                <th scope="col" className="px-4 py-3">Phone</th>
-                <th scope="col" className="px-4 py-3">Currency</th>
-                <th scope="col" className="px-4 py-3">Status</th>
+                <th scope="col">Code</th>
+                <th scope="col">Name</th>
+                <th scope="col">Phone</th>
+                <th scope="col">Currency</th>
+                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((store) => (
-                <tr key={store.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 font-mono">{store.code}</td>
-                  <td className="px-4 py-3">{store.name}</td>
-                  <td className="px-4 py-3">{store.phone || "—"}</td>
-                  <td className="px-4 py-3">{store.currency}</td>
-                  <td className="px-4 py-3">
+                <tr key={store.id}>
+                  <td className="font-mono">{store.code}</td>
+                  <td>{store.name}</td>
+                  <td>{store.phone || "—"}</td>
+                  <td>{store.currency}</td>
+                  <td>
                     {store.is_active ? <Badge tone="success">Active</Badge> : <Badge>Inactive</Badge>}
                   </td>
                 </tr>

@@ -21,11 +21,3 @@ export const PRODUCT_TYPE_LABELS: Record<Schemas["EtimsProductTypeEnum"], string
 export function formatRate(rate: string): string {
   return `${Number((Number(rate) * 100).toFixed(2))}%`;
 }
-
-/** For display only; amounts are never computed with floats (docs/PRICING.md). */
-export function formatMoney(amount: string | null | undefined, currency: string | undefined): string {
-  if (amount === null || amount === undefined || amount === "") return "—";
-  const value = Number(amount);
-  if (!currency) return value.toFixed(2);
-  return new Intl.NumberFormat("en-KE", { style: "currency", currency }).format(value);
-}

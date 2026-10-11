@@ -118,12 +118,12 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
 
     await page.getByLabel(/^Selling price/).fill("155");
     await page.getByRole("button", { name: "Save changes" }).click();
-    await expect(page.getByRole("region", { name: "Price history" })).toContainText(/150\.00 → .*155\.00/);
+    await expect(page.getByRole("region", { name: "Price history" })).toContainText(/150\.00.*→.*155\.00/);
     await expectAccessible(page, "product page");
   });
 
   await test.step("a typo still finds the product", async () => {
-    await page.getByRole("link", { name: "← All products" }).click();
+    await page.getByRole("link", { name: "All products" }).click();
     await page.getByLabel("Search products").fill("suger");
     await expect(page.getByRole("link", { name: "Sugar 1kg" })).toBeVisible();
     await expectAccessible(page, "products");

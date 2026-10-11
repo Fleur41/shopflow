@@ -45,17 +45,17 @@ export default function StaffPage() {
       {members.error && <ErrorAlert error={members.error} title="Couldn't load staff" />}
       {members.isSuccess && rows.length === 0 && <EmptyState title="No staff yet" />}
       {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white ring-1 ring-slate-200">
-          <table className="w-full text-left text-sm">
+        <div className="table-card">
+          <table>
             <caption className="sr-only">Staff members</caption>
-            <thead className="border-b border-slate-200 bg-slate-50">
+            <thead>
               <tr>
-                <th scope="col" className="px-4 py-3">Name</th>
-                <th scope="col" className="px-4 py-3">Role</th>
-                <th scope="col" className="px-4 py-3">Stores</th>
-                <th scope="col" className="px-4 py-3">Status</th>
+                <th scope="col">Name</th>
+                <th scope="col">Role</th>
+                <th scope="col">Stores</th>
+                <th scope="col">Status</th>
                 {canManage && (
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col">
                     <span className="sr-only">Actions</span>
                   </th>
                 )}
@@ -63,18 +63,18 @@ export default function StaffPage() {
             </thead>
             <tbody>
               {rows.map((member) => (
-                <tr key={member.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3">
+                <tr key={member.id}>
+                  <td>
                     <div className="font-medium">{member.user.full_name}</div>
                     <div className="text-slate-600">{member.user.email}</div>
                   </td>
-                  <td className="px-4 py-3">{member.role.name}</td>
-                  <td className="px-4 py-3">{member.all_stores ? "All stores" : member.stores.map((s) => s.code).join(", ")}</td>
-                  <td className="px-4 py-3">
+                  <td>{member.role.name}</td>
+                  <td>{member.all_stores ? "All stores" : member.stores.map((s) => s.code).join(", ")}</td>
+                  <td>
                     {member.status === "ACTIVE" ? <Badge tone="success">Active</Badge> : <Badge tone="warning">Suspended</Badge>}
                   </td>
                   {canManage && (
-                    <td className="px-4 py-3 text-right">
+                    <td className="text-right">
                       {member.user.id !== me?.user.id &&
                         (member.status === "ACTIVE" ? (
                           <Button variant="ghost" onClick={() => setSuspending(member)}>

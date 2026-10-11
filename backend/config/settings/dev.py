@@ -35,10 +35,12 @@ AUTH_COOKIE_SECURE = False
 AUTH_ACCESS_COOKIE_NAME = "sf_at"
 AUTH_REFRESH_COOKIE_NAME = "sf_rt"
 
-# Repeated local end-to-end runs register many businesses.
+# Repeated local end-to-end runs register many businesses and reset many
+# passwords from the same address. Production keeps the strict limits.
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"] = {
     **REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"],
     "signup": "200/hour",
+    "password_reset_ip": "200/hour",
 }
 
 SPECTACULAR_SETTINGS["SERVE_PERMISSIONS"] = ["rest_framework.permissions.AllowAny"]

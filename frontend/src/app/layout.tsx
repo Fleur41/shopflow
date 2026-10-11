@@ -1,8 +1,13 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { connection } from "next/server";
 
 import "./globals.css";
 import { Providers } from "./providers";
+
+// Downloaded at build time and served from our own origin: no request ever
+// goes to Google, and the CSP's font-src 'self' holds (docs/SECURITY.md §5).
+const inter = Inter({ subsets: ["latin"], display: "swap", variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: { default: "ShopFlow", template: "%s · ShopFlow" },
@@ -12,14 +17,15 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#0a2f27",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   // Every page renders per request so it carries this request's CSP nonce.
   await connection();
   return (
-    <html lang="en" className="h-full antialiased">
-      <body className="min-h-full bg-slate-50 text-slate-900">
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <body className="min-h-full bg-canvas font-sans text-slate-900">
         <Providers>{children}</Providers>
       </body>
     </html>

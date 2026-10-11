@@ -1,15 +1,134 @@
 @import "tailwindcss";
 
+/*
+ * ShopFlow design tokens.
+ * - Brand: Tailwind's emerald (700 on white is 5.5:1), with a deep "ledger"
+ *   green for the navigation, so the app reads as money-grade at a glance.
+ * - Text: slate-900 body, slate-600 secondary (7.5:1); nothing lighter for text.
+ * - Numbers: Inter with tabular figures wherever amounts line up.
+ */
 @theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "JetBrains Mono", Menlo, monospace;
+
+  --color-ledger-950: #04211b;
+  --color-ledger-900: #0a2f27;
+  --color-ledger-800: #0f3d33;
+  --color-ledger-700: #165244;
+
+  --color-canvas: #f5f7f6;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.04), 0 1px 1px rgb(15 23 42 / 0.03);
+  --shadow-raised: 0 10px 30px -12px rgb(4 33 27 / 0.25), 0 2px 6px rgb(15 23 42 / 0.06);
 }
 
-/* Visible focus for keyboard users everywhere (WCAG 2.4.7). */
-:focus-visible {
-  outline: 3px solid var(--color-emerald-600);
-  outline-offset: 2px;
+@layer base {
+  html {
+    font-feature-settings: "cv11", "ss01";
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* Visible focus for keyboard users everywhere (WCAG 2.4.7). */
+  :focus-visible {
+    outline: 3px solid var(--color-emerald-600);
+    outline-offset: 2px;
+  }
+
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline-offset: 0;
+  }
+
+  dialog::backdrop {
+    background: rgb(4 33 27 / 0.45);
+    backdrop-filter: blur(2px);
+  }
 }
 
-dialog::backdrop {
-  background: rgb(15 23 42 / 0.5);
+@layer components {
+  /* Amounts, quantities and codes: figures of equal width so columns line up. */
+  .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: "tnum", "lnum", "cv11";
+  }
+
+  /* Shared table look; pages add only what's specific to their columns. */
+  .table-card {
+    overflow-x: auto;
+    border-radius: var(--radius-xl);
+    background: white;
+    box-shadow: var(--shadow-card);
+    outline: 1px solid var(--color-slate-200);
+    outline-offset: -1px;
+  }
+  .table-card table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: left;
+    font-size: var(--text-sm);
+  }
+  .table-card thead th {
+    background: var(--color-slate-50);
+    border-bottom: 1px solid var(--color-slate-200);
+    padding: 0.625rem 1rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-slate-600);
+    white-space: nowrap;
+  }
+  .table-card tbody td {
+    border-bottom: 1px solid var(--color-slate-100);
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+  }
+  .table-card tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .table-card tbody tr {
+    transition: background-color 120ms ease;
+  }
+  .table-card tbody tr:hover {
+    background: rgb(236 253 245 / 0.45);
+  }
+  .table-card .num {
+    text-align: right;
+  }
+
+  /* Selects get the same chevron everywhere (a data: image, which the CSP allows). */
+  .select-chevron {
+    appearance: none;
+    padding-right: 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23475569' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+    background-position: right 0.75rem center;
+    background-repeat: no-repeat;
+    background-size: 1.125rem;
+  }
+
+  .meter {
+    display: block;
+    width: 100%;
+    height: 0.5rem;
+    appearance: none;
+    border: 0;
+    border-radius: 9999px;
+    overflow: hidden;
+    background: var(--color-slate-100);
+    color: var(--color-emerald-600);
+  }
+  .meter::-webkit-progress-bar {
+    background: var(--color-slate-100);
+  }
+  .meter::-webkit-progress-value {
+    background: var(--color-emerald-600);
+    border-radius: 9999px;
+    transition: width 300ms ease;
+  }
+  .meter::-moz-progress-bar {
+    background: var(--color-emerald-600);
+    border-radius: 9999px;
+  }
 }

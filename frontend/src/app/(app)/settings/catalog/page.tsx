@@ -23,7 +23,7 @@ export default function CatalogSetupPage() {
 
   return (
     <>
-      <PageHeader title="Catalog setup" description="The lists your products are organised and taxed with." />
+      <PageHeader eyebrow="Catalog" title="Catalog setup" description="The lists your products are organised and taxed with." />
       <div className="flex flex-col gap-10">
         <LookupSection
           title="Categories"
@@ -50,7 +50,7 @@ export default function CatalogSetupPage() {
           query={useUnits()}
           canManage={canManage}
           columns={[
-            { header: "Code", cell: (u) => <span className="font-mono">{u.code}</span> },
+            { header: "Code", cell: (u) => <span className="tabular font-mono">{u.code}</span> },
             { header: "Name", cell: (u) => u.name },
             { header: "Fractions", cell: (u) => (u.allows_fraction ? "Allowed" : "—") },
             { header: "KRA unit", cell: (u) => u.etims_quantity_unit || "Not set" },
@@ -64,7 +64,7 @@ export default function CatalogSetupPage() {
           canManage={canManage}
           columns={[
             { header: "Name", cell: (t) => t.name },
-            { header: "Rate", cell: (t) => formatRate(t.rate) },
+            { header: "Rate", cell: (t) => <span className="tabular">{formatRate(t.rate)}</span> },
             { header: "KRA tax type", cell: (t) => (t.etims_tax_type ? TAX_TYPE_LABELS[t.etims_tax_type] : "Not set") },
           ]}
           form={(entry, onDone) => <TaxRateForm entry={entry} onDone={onDone} />}
@@ -111,21 +111,21 @@ function LookupSection<T extends Entry & { name: string }>({
       {query.isSuccess && rows.length === 0 && <EmptyState title={`No ${title.toLowerCase()} yet`} />}
       {query.data?.next && <Notice>Showing the first {rows.length}.</Notice>}
       {rows.length > 0 && (
-        <div className="overflow-x-auto rounded-lg bg-white ring-1 ring-slate-200">
-          <table className="w-full text-left text-sm">
+        <div className="table-card">
+          <table>
             <caption className="sr-only">{title}</caption>
-            <thead className="border-b border-slate-200 bg-slate-50">
+            <thead>
               <tr>
                 {columns.map((column) => (
-                  <th key={column.header} scope="col" className="px-4 py-3">
+                  <th key={column.header} scope="col">
                     {column.header}
                   </th>
                 ))}
-                <th scope="col" className="px-4 py-3">
+                <th scope="col">
                   Status
                 </th>
                 {canManage && (
-                  <th scope="col" className="px-4 py-3">
+                  <th scope="col">
                     <span className="sr-only">Actions</span>
                   </th>
                 )}
@@ -133,15 +133,15 @@ function LookupSection<T extends Entry & { name: string }>({
             </thead>
             <tbody>
               {rows.map((row) => (
-                <tr key={row.id} className="border-b border-slate-100 last:border-0">
+                <tr key={row.id}>
                   {columns.map((column) => (
-                    <td key={column.header} className="px-4 py-3">
+                    <td key={column.header}>
                       {column.cell(row)}
                     </td>
                   ))}
-                  <td className="px-4 py-3">{row.is_active ? <Badge tone="success">Active</Badge> : <Badge>Inactive</Badge>}</td>
+                  <td>{row.is_active ? <Badge tone="success">Active</Badge> : <Badge>Inactive</Badge>}</td>
                   {canManage && (
-                    <td className="px-4 py-3 text-right">
+                    <td className="text-right">
                       <Button variant="secondary" onClick={() => setEditing(row)} aria-label={`Edit ${row.name}`}>
                         Edit
                       </Button>

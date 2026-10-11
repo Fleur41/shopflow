@@ -126,7 +126,7 @@ describe("ProductForm", () => {
     expect(sent[0]).toMatchObject({
       method: "POST",
       path: "/api/v1/products/",
-      body: { name: "Sugar 1kg", selling_price: "150", unit: "u1", tax_rate: "t-vat", category: null, identifiers: [{ value: "5901234123457" }] },
+      body: { name: "Sugar 1kg", selling_price: "150.00", unit: "u1", tax_rate: "t-vat", category: null, identifiers: [{ value: "5901234123457" }] },
     });
   });
 });
