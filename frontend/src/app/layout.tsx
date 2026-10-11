@@ -18,6 +18,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: "#0a2f27",
+  // The on-screen keyboard shrinks the page instead of covering it, so forms
+  // and dialogs keep their buttons reachable while typing.
+  interactiveWidget: "resizes-content",
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

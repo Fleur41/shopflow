@@ -6,6 +6,9 @@ import { type ReactNode, useEffect, useId, useRef } from "react";
 /**
  * Modal dialog on the native <dialog> element: the browser provides focus
  * trapping, Escape to close and inertness of the page behind it.
+ *
+ * Its height follows the *dynamic* viewport (dvh): on phones, 100vh is taller
+ * than what's visible, which pushed the title and the submit button off screen.
  */
 export function Dialog({
   open,
@@ -35,7 +38,7 @@ export function Dialog({
       ref={ref}
       aria-labelledby={titleId}
       onClose={onClose}
-      className="m-auto max-h-[calc(100vh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl bg-white p-0 shadow-raised ring-1 ring-slate-900/5"
+      className="m-auto max-h-[calc(100dvh-2rem)] w-[min(36rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl bg-white p-0 shadow-raised ring-1 ring-slate-900/5"
     >
       <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-100 bg-white/95 px-6 py-4 backdrop-blur">
         <div>
