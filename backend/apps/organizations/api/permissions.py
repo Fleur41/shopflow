@@ -1,15 +1,13 @@
 from collections.abc import Mapping
 from typing import Any, ClassVar
 
-from django.conf import settings
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import BasePermission, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.views import APIView
 
-from ..catalog import SENSITIVE_CODES
+from ..access import require_permission
 from ..context import RequestContext, get_request_context
-from ..errors import MFAEnrollmentRequired, MissingPermission
 
 
 class TenantPermission(BasePermission):
@@ -26,23 +24,7 @@ class TenantPermission(BasePermission):
         if method == "OPTIONS":
             return True
         required: Mapping[str, str] = getattr(view, "required_permissions", {})
-        code = required.get(method)
-        if code is None or not ctx.has_perm(code):
-            raise MissingPermission(
-                "You don't have permission to do this. Ask the business owner for access.",
-                errors=[
-                    {
-                        "pointer": "",
-                        "code": "MISSING_PERMISSION",
-                        "meta": {"permission": code or f"undeclared:{method}"},
-                    }
-                ],
-            )
-        if code in SENSITIVE_CODES and settings.MFA_ENFORCEMENT and not ctx.mfa_verified:
-            raise MFAEnrollmentRequired(
-                "Turn on two-step verification in your account settings to do this.",
-                errors=[{"pointer": "", "code": "MFA_REQUIRED", "meta": {"permission": code}}],
-            )
+        require_permission(ctx, required.get(method), method=method)
         return True
 
 

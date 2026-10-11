@@ -1,16 +1,34 @@
-"""Catalog master-data rules beyond the generic ones in ``master_data``: the category tree."""
+"""Catalog master-data rules beyond the generic ones in ``master_data``: the
+category tree, and the units and tax rates every new business starts with."""
 
 import uuid
+from decimal import Decimal
 from typing import Any
 
 from django.db import connection, transaction
 from rest_framework import status
 
+from apps.audit.services import AuditActor, record_audit
 from apps.common.errors import ApplicationError
 from apps.organizations import master_data
 from apps.organizations.context import RequestContext
+from apps.organizations.models import Organization
 
-from .models import Category
+from .models import Category, TaxRate, UnitOfMeasure
+
+# code, name, allows fraction, KRA unit of quantity
+DEFAULT_UNITS = [
+    ("PCS", "Pieces", False, "U"),
+    ("KG", "Kilogram", True, "KG"),
+    ("L", "Litre", True, "LTR"),
+]
+# Kenya-first defaults (Q-1), only for businesses trading in KES. Name, rate, eTIMS type.
+KENYA_TAX_RATES = [
+    ("VAT 16%", Decimal("0.16"), "B"),
+    ("VAT 8%", Decimal("0.08"), "E"),
+    ("Zero-rated", Decimal("0"), "C"),
+    ("Exempt", Decimal("0"), "A"),
+]
 
 
 class CategoryCycle(ApplicationError):
@@ -56,4 +74,35 @@ def _require_valid_parent(category: Category, changes: dict[str, Any]) -> None:
             .filter(pk=ancestor_id)
             .values_list("parent_id", flat=True)
             .get()
+        )
+
+
+def create_default_catalog(organization: Organization, actor: AuditActor) -> None:
+    """Called by sign-up, inside its transaction. Other currencies get a single
+    "No tax" rate: we don't guess another country's taxes."""
+    entries: list[UnitOfMeasure | TaxRate] = [
+        UnitOfMeasure(
+            organization=organization,
+            code=code,
+            name=name,
+            allows_fraction=fraction,
+            etims_quantity_unit=kra_unit,
+        )
+        for code, name, fraction, kra_unit in DEFAULT_UNITS
+    ]
+    rates = (
+        KENYA_TAX_RATES if organization.base_currency == "KES" else [("No tax", Decimal("0"), "")]
+    )
+    entries += [
+        TaxRate(organization=organization, name=name, rate=rate, etims_tax_type=tax_type)
+        for name, rate, tax_type in rates
+    ]
+    for entry in entries:
+        entry.save()
+        record_audit(
+            actor,
+            action=f"{entry.audit_name}.created",
+            entity_type=entry.audit_name,
+            entity_id=entry.pk,
+            changes={"name": [None, entry.name]},
         )

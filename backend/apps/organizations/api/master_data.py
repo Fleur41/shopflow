@@ -55,6 +55,8 @@ class MasterDataSerializer[E: MasterData](serializers.ModelSerializer[E]):
         errors: dict[str, list[str]] = {}
         for field in self.unique_fields:
             value = attrs.get(field, getattr(self.instance, field, None))
+            if value in (None, ""):
+                continue  # required-ness is the field's job; blank may mean "generate one"
             if entries.filter(**{f"{field}__iexact": value}).exists():
                 errors[field] = [self.taken_messages.get(field, "This is already in use.")]
         if errors:
@@ -106,11 +108,14 @@ class MasterDataListView(mixins.ListModelMixin, TenantAPIView):
         if is_active is not None:
             entries = entries.filter(is_active=is_active)
         if search := self.request.query_params.get("search", "").strip():
-            matches = Q()
-            for field in self.search_fields:
-                matches |= Q(**{f"{field}__icontains": search})
-            entries = entries.filter(matches)
+            entries = self.filter_search(entries, search)
         return entries
+
+    def filter_search(self, entries: QuerySet[Any], search: str) -> QuerySet[Any]:
+        matches = Q()
+        for field in self.search_fields:
+            matches |= Q(**{f"{field}__icontains": search})
+        return entries.filter(matches)
 
     def create_entry(self, fields: dict[str, Any]) -> MasterData:
         return create_entry(self.ctx, self.model, **fields)

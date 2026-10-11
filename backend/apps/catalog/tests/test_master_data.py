@@ -23,8 +23,8 @@ def _create(client, path, body):
     [
         ("categories", {"name": "Drinks"}, "category.created"),
         ("brands", {"name": "Kensalt"}, "brand.created"),
-        ("units", {"code": "kg", "name": "Kilogram", "allows_fraction": True}, "unit.created"),
-        ("tax-rates", {"name": "VAT 16%", "rate": "0.16"}, "tax_rate.created"),
+        ("units", {"code": "mtr", "name": "Metre", "allows_fraction": True}, "unit.created"),
+        ("tax-rates", {"name": "Standard VAT", "rate": "0.16"}, "tax_rate.created"),
     ],
 )
 def test_owner_creates_entries_and_each_is_audited(owner_client, biz, path, body, action):
@@ -37,7 +37,7 @@ def test_owner_creates_entries_and_each_is_audited(owner_client, biz, path, body
 
 
 def test_unit_codes_are_upper_cased_and_must_be_short_codes(owner_client):
-    assert _create(owner_client, "units", {"code": " pcs ", "name": "Pieces"})["code"] == "PCS"
+    assert _create(owner_client, "units", {"code": " dzn ", "name": "Dozen"})["code"] == "DZN"
 
     response = owner_client.post("/api/v1/units/", {"code": "per-kg", "name": "X"})
     assert response.status_code == 400
@@ -59,7 +59,7 @@ def test_tax_rates_are_fractions_below_one(owner_client, rate):
     ("path", "first", "second", "field"),
     [
         ("brands", {"name": "Kensalt"}, {"name": "KENSALT"}, "name"),
-        ("units", {"code": "KG", "name": "Kilogram"}, {"code": "kg", "name": "Kilo"}, "code"),
+        ("units", {"code": "MTR", "name": "Metre"}, {"code": "mtr", "name": "Meter"}, "code"),
         ("tax-rates", {"name": "VAT", "rate": "0.16"}, {"name": "vat", "rate": "0.08"}, "name"),
         ("categories", {"name": "Drinks"}, {"name": "drinks"}, "name"),
     ],
@@ -138,7 +138,7 @@ def test_an_update_that_changes_nothing_keeps_the_version_and_is_not_audited(own
 
 
 def test_entries_are_deactivated_not_deleted(owner_client):
-    unit = _create(owner_client, "units", {"code": "PCS", "name": "Pieces"})
+    unit = _create(owner_client, "units", {"code": "DZN", "name": "Dozen"})
     url = f"/api/v1/units/{unit['id']}/"
 
     assert owner_client.delete(url).status_code == 403  # no such action: fails closed
@@ -243,13 +243,12 @@ def test_lists_filter_by_active_state_search_and_parent(owner_client):
 
 
 def test_units_are_listed_by_code_and_searchable_by_code_or_name(owner_client):
-    _create(owner_client, "units", {"code": "PCS", "name": "Pieces"})
-    _create(owner_client, "units", {"code": "KG", "name": "Kilogram"})
+    _create(owner_client, "units", {"code": "DZN", "name": "Dozen"})
 
     listed = owner_client.get("/api/v1/units/").json()["results"]
-    assert [u["code"] for u in listed] == ["KG", "PCS"]
-    searched = owner_client.get("/api/v1/units/?search=piece").json()["results"]
-    assert [u["code"] for u in searched] == ["PCS"]
+    assert [u["code"] for u in listed] == ["DZN", "KG", "L", "PCS"]  # with the defaults
+    searched = owner_client.get("/api/v1/units/?search=dozen").json()["results"]
+    assert [u["code"] for u in searched] == ["DZN"]
 
 
 # --- Permissions --------------------------------------------------------------------------
@@ -297,13 +296,13 @@ def test_the_tax_type_can_be_set_later_and_is_checked_against_the_fixed_rate(own
 
 
 def test_units_take_a_kra_quantity_unit_from_the_list(owner_client):
-    kg = _create(
-        owner_client, "units", {"code": "KG", "name": "Kilogram", "etims_quantity_unit": "KG"}
+    box = _create(
+        owner_client, "units", {"code": "BOX", "name": "Box", "etims_quantity_unit": "BX"}
     )
-    assert kg["etims_quantity_unit"] == "KG"
+    assert box["etims_quantity_unit"] == "BX"
 
     response = owner_client.post(
-        "/api/v1/units/", {"code": "BOX", "name": "Box", "etims_quantity_unit": "BOXES"}
+        "/api/v1/units/", {"code": "CTN", "name": "Carton", "etims_quantity_unit": "BOXES"}
     )
     assert response.status_code == 400
     assert response.json()["errors"][0]["pointer"] == "/etims_quantity_unit"

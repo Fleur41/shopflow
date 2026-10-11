@@ -136,11 +136,11 @@ Implemented in Phase 1.6 unless marked otherwise. Every change is audited.
 
 | Method | Path | perm | Notes |
 |---|---|---|---|
-| GET | `/products/` | `products.view` | `search`, `sku`, `barcode`, `category`, `brand`, `supplier`, `is_active`, `updated_since_cursor` |
-| POST | `/products/` | `products.manage` | Can include initial identifiers and supplier links |
-| GET/PATCH | `/products/{id}/` | `products.view` / `products.manage` | Price changes need `products.change_price`, are audited and write price history |
-| POST | `/products/{id}/deactivate/` · `/activate/` | `products.manage` | |
-| GET/POST | `/products/{id}/identifiers/` | `products.manage` | Barcode/QR/SKU aliases; `pack_quantity` |
+| GET | `/products/` | `products.view` | `search` (part of the name, a near miss such as "suger", or an exact SKU/code), `sku`, `barcode`, `category`, `brand`, `is_active`. `supplier` arrives with 2.3, `updated_since_cursor` with sync (rows carry `row_version`) |
+| POST | `/products/` | `products.manage` | Can include initial `identifiers`. A blank `sku` is generated (`P000001`, …). Supplier links arrive with 2.3 |
+| GET/PATCH | `/products/{id}/` | `products.view` / `products.manage` | PATCH needs `version`. Price changes also need `products.change_price` (two-step verification), are audited and write price history. Deactivate with `is_active` (no DELETE) |
+| GET | `/products/{id}/price-history/` | `products.view` | Newest first |
+| GET/POST | `/products/{id}/identifiers/` | `products.view` / `products.manage` | Barcode/QR/other codes; `pack_quantity`; the first code is primary. Barcodes with a GTIN check digit (8/12/13/14 digits) are checked |
 | DELETE | `/products/{id}/identifiers/{iid}/` | `products.manage` | Identifiers are master data, so removal is allowed and audited |
 | POST | `/products/{id}/image/` | `products.manage` | multipart; image validation (SECURITY §7) |
 | GET/POST/PATCH | `/categories/`, `/brands/`, `/units/`, `/tax-rates/` | `products.view` / `products.manage` | |

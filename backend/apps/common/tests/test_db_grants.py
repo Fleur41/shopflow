@@ -93,3 +93,11 @@ def test_app_role_can_do_normal_row_work(as_app_role):
         ["Renamed", business.organization.pk],
     )
     as_app_role.execute("SELECT nextval(pg_get_serial_sequence('django_admin_log', 'id'))")
+
+
+@requires_app_role
+def test_app_role_can_advance_the_sync_cursor_but_not_rewrite_price_history(as_app_role):
+    # Every product save runs the row_version trigger, which needs the sequence.
+    assert as_app_role.execute("SELECT nextval('shopflow_row_version')").fetchone()[0] > 0
+    _refused(as_app_role, "UPDATE catalog_productpricehistory SET new_price = 0")
+    _refused(as_app_role, "DELETE FROM catalog_productpricehistory")

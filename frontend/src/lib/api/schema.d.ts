@@ -599,6 +599,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["products_list"];
+        put?: never;
+        post: operations["products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description PATCH changing ``selling_price`` also needs ``products.change_price``. */
+        get: operations["products_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description PATCH changing ``selling_price`` also needs ``products.change_price``. */
+        patch: operations["products_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/products/{product_id}/identifiers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["products_identifiers_list"];
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["products_identifiers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{product_id}/identifiers/{identifier_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        delete: operations["products_identifiers_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/products/{product_id}/price-history/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["products_price_history_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles/": {
         parameters: {
             query?: never;
@@ -806,6 +891,62 @@ export interface components {
             token: string;
         };
         /**
+         * @description * `AM` - Ampoule
+         *     * `BA` - Barrel
+         *     * `BC` - Bottle crate
+         *     * `BE` - Bundle
+         *     * `BF` - Balloon, non-protected
+         *     * `BG` - Bag
+         *     * `BJ` - Bucket
+         *     * `BK` - Basket
+         *     * `BL` - Bale
+         *     * `BQ` - Bottle, protected cylindrical
+         *     * `BR` - Bar
+         *     * `BV` - Bottle, bulbous
+         *     * `BZ` - Bag
+         *     * `CA` - Can
+         *     * `CH` - Chest
+         *     * `CJ` - Coffin
+         *     * `CL` - Coil
+         *     * `CR` - Wooden box
+         *     * `CS` - Cassette
+         *     * `CT` - Carton
+         *     * `CTN` - Container
+         *     * `CY` - Cylinder
+         *     * `DR` - Drum
+         *     * `GT` - Extra countable item
+         *     * `HH` - Hand baggage
+         *     * `IZ` - Ingots
+         *     * `JR` - Jar
+         *     * `JU` - Jug
+         *     * `JY` - Jerrycan, cylindrical
+         *     * `KZ` - Canister
+         *     * `LZ` - Logs, in bundle
+         *     * `NT` - Net
+         *     * `OU` - Non-exterior packaging unit
+         *     * `PD` - Poddon
+         *     * `PG` - Plate
+         *     * `PI` - Pipe
+         *     * `PO` - Pilot
+         *     * `PU` - Tray pack
+         *     * `RL` - Reel
+         *     * `RO` - Roll
+         *     * `RZ` - Rods, in bundle
+         *     * `SK` - Skeleton case
+         *     * `TY` - Tank, cylindrical
+         *     * `VG` - Bulk, gas
+         *     * `VL` - Bulk, liquid
+         *     * `VO` - Bulk, solid, large particles
+         *     * `VQ` - Bulk, liquefied gas
+         *     * `VR` - Bulk, solid, granular particles
+         *     * `VT` - Extra bulk item
+         *     * `VY` - Bulk, fine particles
+         *     * `ML` - Mills (cigarettes)
+         *     * `TN` - TAN (20 bags)
+         * @enum {string}
+         */
+        EtimsPackagingUnitEnum: "AM" | "BA" | "BC" | "BE" | "BF" | "BG" | "BJ" | "BK" | "BL" | "BQ" | "BR" | "BV" | "BZ" | "CA" | "CH" | "CJ" | "CL" | "CR" | "CS" | "CT" | "CTN" | "CY" | "DR" | "GT" | "HH" | "IZ" | "JR" | "JU" | "JY" | "KZ" | "LZ" | "NT" | "OU" | "PD" | "PG" | "PI" | "PO" | "PU" | "RL" | "RO" | "RZ" | "SK" | "TY" | "VG" | "VL" | "VO" | "VQ" | "VR" | "VT" | "VY" | "ML" | "TN";
+        /**
          * @description * `01` - Cash
          *     * `04` - Bank cheque
          *     * `05` - Debit or credit card
@@ -814,6 +955,13 @@ export interface components {
          * @enum {string}
          */
         EtimsPaymentType: "01" | "04" | "05" | "06" | "07";
+        /**
+         * @description * `1` - Raw material
+         *     * `2` - Finished product
+         *     * `3` - Service (no stock)
+         * @enum {string}
+         */
+        EtimsProductTypeEnum: "1" | "2" | "3";
         /**
          * @description * `4B` - Pair
          *     * `AV` - Cap
@@ -1064,6 +1212,45 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["PaymentMethod"][];
         };
+        PaginatedPriceHistoryList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["PriceHistory"][];
+        };
+        PaginatedProductIdentifierList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["ProductIdentifier"][];
+        };
+        PaginatedProductList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Product"][];
+        };
         PaginatedRoleList: {
             /**
              * Format: uri
@@ -1185,6 +1372,33 @@ export interface components {
              *     * `07` - Other
              */
             etims_payment_type?: components["schemas"]["EtimsPaymentType"];
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+        };
+        PatchedProductUpdateRequest: {
+            sku?: string;
+            name?: string;
+            /** Format: uuid */
+            category?: string | null;
+            /** Format: uuid */
+            brand?: string | null;
+            /** Format: uuid */
+            unit?: string;
+            /** Format: uuid */
+            tax_rate?: string;
+            /** Format: decimal */
+            selling_price?: string;
+            /** Format: decimal */
+            default_cost?: string | null;
+            /** Format: decimal */
+            default_reorder_level?: string | null;
+            /** @description Off for services and other items without stock. */
+            track_inventory?: boolean;
+            etims_product_type?: components["schemas"]["EtimsProductTypeEnum"];
+            /** @description From KRA's item classification list. */
+            etims_item_class_code?: string;
+            etims_packaging_unit?: components["schemas"]["EtimsPackagingUnitEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
@@ -1420,6 +1634,112 @@ export interface components {
          * @enum {string}
          */
         PermissionsEnum: "audit.view" | "cash.close_session" | "cash.correct" | "cash.open_session" | "cash.pay_in_out" | "cash.view_sessions" | "customers.create" | "customers.exceed_credit_limit" | "customers.manage" | "customers.receive_payment" | "customers.reconcile" | "customers.reverse_entry" | "customers.set_credit_limit" | "customers.view" | "customers.view_balance" | "customers.view_contact" | "inventory.adjust" | "inventory.manage_levels" | "inventory.receive" | "inventory.view" | "inventory.view_movements" | "org.manage" | "org.view" | "products.change_price" | "products.manage" | "products.view" | "purchasing.create_po" | "purchasing.pay_supplier" | "purchasing.receive" | "purchasing.return" | "purchasing.view" | "purchasing.view_payables" | "reports.view" | "reports.view_all_stores" | "reports.view_customers" | "roles.manage" | "roles.view" | "sales.create" | "sales.credit" | "sales.discount" | "sales.override_price" | "sales.return" | "sales.view_all" | "sales.view_own" | "sales.void" | "stores.manage" | "stores.manage_inventory_policy" | "stores.view" | "suppliers.manage" | "suppliers.view" | "sync.register_device" | "sync.resolve_conflicts" | "users.manage" | "users.view";
+        PriceHistory: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            store?: string | null;
+            /** Format: decimal */
+            old_price?: string | null;
+            /** Format: decimal */
+            new_price: string;
+            readonly changed_by: string;
+            /** Format: date-time */
+            readonly changed_at: string;
+        };
+        Product: {
+            /** Format: uuid */
+            readonly id: string;
+            sku?: string;
+            name: string;
+            /** Format: uuid */
+            category?: string | null;
+            /** Format: uuid */
+            brand?: string | null;
+            /** Format: uuid */
+            unit: string;
+            /** Format: uuid */
+            tax_rate: string;
+            /** Format: decimal */
+            selling_price: string;
+            /** Format: decimal */
+            default_cost?: string | null;
+            /** Format: decimal */
+            default_reorder_level?: string | null;
+            /** @description Off for services and other items without stock. */
+            track_inventory?: boolean;
+            etims_product_type?: components["schemas"]["EtimsProductTypeEnum"];
+            /** @description From KRA's item classification list. */
+            etims_item_class_code?: string;
+            etims_packaging_unit?: components["schemas"]["EtimsPackagingUnitEnum"] | components["schemas"]["BlankEnum"];
+            /** @description Assigned when registered with KRA. */
+            readonly etims_item_code: string;
+            /** @description Barcodes and other codes. On create only. */
+            identifiers?: components["schemas"]["ProductIdentifier"][];
+            readonly row_version: number;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        ProductIdentifier: {
+            /** Format: uuid */
+            readonly id: string;
+            kind?: components["schemas"]["ProductIdentifierKindEnum"];
+            value: string;
+            /**
+             * Format: decimal
+             * @description Units added per scan: 12 for a carton barcode. Default 1.
+             */
+            pack_quantity?: string;
+            is_primary?: boolean;
+        };
+        /**
+         * @description * `BARCODE` - Barcode
+         *     * `QR` - QR code
+         *     * `ALIAS` - Other code
+         * @enum {string}
+         */
+        ProductIdentifierKindEnum: "BARCODE" | "QR" | "ALIAS";
+        ProductIdentifierRequest: {
+            kind?: components["schemas"]["ProductIdentifierKindEnum"];
+            value: string;
+            /**
+             * Format: decimal
+             * @description Units added per scan: 12 for a carton barcode. Default 1.
+             */
+            pack_quantity?: string;
+            is_primary?: boolean;
+        };
+        ProductRequest: {
+            sku?: string;
+            name: string;
+            /** Format: uuid */
+            category?: string | null;
+            /** Format: uuid */
+            brand?: string | null;
+            /** Format: uuid */
+            unit: string;
+            /** Format: uuid */
+            tax_rate: string;
+            /** Format: decimal */
+            selling_price: string;
+            /** Format: decimal */
+            default_cost?: string | null;
+            /** Format: decimal */
+            default_reorder_level?: string | null;
+            /** @description Off for services and other items without stock. */
+            track_inventory?: boolean;
+            etims_product_type?: components["schemas"]["EtimsProductTypeEnum"];
+            /** @description From KRA's item classification list. */
+            etims_item_class_code?: string;
+            etims_packaging_unit?: components["schemas"]["EtimsPackagingUnitEnum"] | components["schemas"]["BlankEnum"];
+            /** @description Barcodes and other codes. On create only. */
+            identifiers?: components["schemas"]["ProductIdentifierRequest"][];
+            is_active?: boolean;
+        };
         RecoveryCodes: {
             /** @description Shown once. Each works one time. */
             recovery_codes: string[];
@@ -2788,6 +3108,213 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Permission"];
+                };
+            };
+        };
+    };
+    products_list: {
+        parameters: {
+            query?: {
+                /** @description Exact barcode or other code */
+                barcode?: string;
+                brand?: string;
+                category?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or code) */
+                search?: string;
+                /** @description Exact SKU, ignoring case */
+                sku?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedProductList"];
+                };
+            };
+        };
+    };
+    products_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    products_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    products_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProductUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    products_identifiers_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedProductIdentifierList"];
+                };
+            };
+        };
+    };
+    products_identifiers_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductIdentifierRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductIdentifier"];
+                };
+            };
+        };
+    };
+    products_identifiers_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                identifier_id: string;
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    products_price_history_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPriceHistoryList"];
                 };
             };
         };

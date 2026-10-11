@@ -1044,6 +1044,269 @@ paths:
               schema:
                 $ref: '#/components/schemas/Permission'
           description: ''
+  /api/v1/products/:
+    get:
+      operationId: products_list
+      parameters:
+      - in: query
+        name: barcode
+        schema:
+          type: string
+        description: Exact barcode or other code
+      - in: query
+        name: brand
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: category
+        schema:
+          type: string
+          format: uuid
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or code)
+      - in: query
+        name: sku
+        schema:
+          type: string
+        description: Exact SKU, ignoring case
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductList'
+          description: ''
+    post:
+      operationId: products_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/v1/products/{entry_id}/:
+    get:
+      operationId: products_retrieve
+      description: PATCH changing ``selling_price`` also needs ``products.change_price``.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    patch:
+      operationId: products_partial_update
+      description: PATCH changing ``selling_price`` also needs ``products.change_price``.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+  /api/v1/products/{product_id}/identifiers/:
+    get:
+      operationId: products_identifiers_list
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductIdentifierList'
+          description: ''
+    post:
+      operationId: products_identifiers_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductIdentifierRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductIdentifier'
+          description: ''
+  /api/v1/products/{product_id}/identifiers/{identifier_id}/:
+    delete:
+      operationId: products_identifiers_destroy
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: identifier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/products/{product_id}/price-history/:
+    get:
+      operationId: products_price_history_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPriceHistoryList'
+          description: ''
   /api/v1/roles/:
     get:
       operationId: roles_list
@@ -1643,6 +1906,114 @@ components:
           maxLength: 128
       required:
       - token
+    EtimsPackagingUnitEnum:
+      enum:
+      - AM
+      - BA
+      - BC
+      - BE
+      - BF
+      - BG
+      - BJ
+      - BK
+      - BL
+      - BQ
+      - BR
+      - BV
+      - BZ
+      - CA
+      - CH
+      - CJ
+      - CL
+      - CR
+      - CS
+      - CT
+      - CTN
+      - CY
+      - DR
+      - GT
+      - HH
+      - IZ
+      - JR
+      - JU
+      - JY
+      - KZ
+      - LZ
+      - NT
+      - OU
+      - PD
+      - PG
+      - PI
+      - PO
+      - PU
+      - RL
+      - RO
+      - RZ
+      - SK
+      - TY
+      - VG
+      - VL
+      - VO
+      - VQ
+      - VR
+      - VT
+      - VY
+      - ML
+      - TN
+      type: string
+      description: |-
+        * `AM` - Ampoule
+        * `BA` - Barrel
+        * `BC` - Bottle crate
+        * `BE` - Bundle
+        * `BF` - Balloon, non-protected
+        * `BG` - Bag
+        * `BJ` - Bucket
+        * `BK` - Basket
+        * `BL` - Bale
+        * `BQ` - Bottle, protected cylindrical
+        * `BR` - Bar
+        * `BV` - Bottle, bulbous
+        * `BZ` - Bag
+        * `CA` - Can
+        * `CH` - Chest
+        * `CJ` - Coffin
+        * `CL` - Coil
+        * `CR` - Wooden box
+        * `CS` - Cassette
+        * `CT` - Carton
+        * `CTN` - Container
+        * `CY` - Cylinder
+        * `DR` - Drum
+        * `GT` - Extra countable item
+        * `HH` - Hand baggage
+        * `IZ` - Ingots
+        * `JR` - Jar
+        * `JU` - Jug
+        * `JY` - Jerrycan, cylindrical
+        * `KZ` - Canister
+        * `LZ` - Logs, in bundle
+        * `NT` - Net
+        * `OU` - Non-exterior packaging unit
+        * `PD` - Poddon
+        * `PG` - Plate
+        * `PI` - Pipe
+        * `PO` - Pilot
+        * `PU` - Tray pack
+        * `RL` - Reel
+        * `RO` - Roll
+        * `RZ` - Rods, in bundle
+        * `SK` - Skeleton case
+        * `TY` - Tank, cylindrical
+        * `VG` - Bulk, gas
+        * `VL` - Bulk, liquid
+        * `VO` - Bulk, solid, large particles
+        * `VQ` - Bulk, liquefied gas
+        * `VR` - Bulk, solid, granular particles
+        * `VT` - Extra bulk item
+        * `VY` - Bulk, fine particles
+        * `ML` - Mills (cigarettes)
+        * `TN` - TAN (20 bags)
     EtimsPaymentType:
       enum:
       - '01'
@@ -1657,6 +2028,16 @@ components:
         * `05` - Debit or credit card
         * `06` - Mobile money
         * `07` - Other
+    EtimsProductTypeEnum:
+      enum:
+      - '1'
+      - '2'
+      - '3'
+      type: string
+      description: |-
+        * `1` - Raw material
+        * `2` - Finished product
+        * `3` - Service (no stock)
     EtimsQuantityUnitEnum:
       enum:
       - 4B
@@ -2212,6 +2593,63 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethod'
+    PaginatedPriceHistoryList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceHistory'
+    PaginatedProductIdentifierList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductIdentifier'
+    PaginatedProductList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Product'
     PaginatedRoleList:
       type: object
       required:
@@ -2438,6 +2876,67 @@ components:
             * `05` - Debit or credit card
             * `06` - Mobile money
             * `07` - Other
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
+    PatchedProductUpdateRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          maxLength: 40
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          format: uuid
+          nullable: true
+        brand:
+          type: string
+          format: uuid
+          nullable: true
+        unit:
+          type: string
+          format: uuid
+        tax_rate:
+          type: string
+          format: uuid
+        selling_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        default_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        default_reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        track_inventory:
+          type: boolean
+          description: Off for services and other items without stock.
+        etims_product_type:
+          $ref: '#/components/schemas/EtimsProductTypeEnum'
+        etims_item_class_code:
+          description: From KRA's item classification list.
+          oneOf:
+          - type: string
+            pattern: ^\d{1,10}$
+            maxLength: 10
+          - type: string
+            maxLength: 0
+        etims_packaging_unit:
+          oneOf:
+          - $ref: '#/components/schemas/EtimsPackagingUnitEnum'
+          - $ref: '#/components/schemas/BlankEnum'
         is_active:
           type: boolean
         version:
@@ -2838,6 +3337,249 @@ components:
         * `sync.resolve_conflicts` - sync.resolve_conflicts
         * `users.manage` - users.manage
         * `users.view` - users.view
+    PriceHistory:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        store:
+          type: string
+          format: uuid
+          nullable: true
+        old_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        new_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        changed_by:
+          type: string
+          readOnly: true
+        changed_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - changed_at
+      - changed_by
+      - id
+      - new_price
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        sku:
+          type: string
+          maxLength: 40
+        name:
+          type: string
+          maxLength: 200
+        category:
+          type: string
+          format: uuid
+          nullable: true
+        brand:
+          type: string
+          format: uuid
+          nullable: true
+        unit:
+          type: string
+          format: uuid
+        tax_rate:
+          type: string
+          format: uuid
+        selling_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        default_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        default_reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        track_inventory:
+          type: boolean
+          description: Off for services and other items without stock.
+        etims_product_type:
+          $ref: '#/components/schemas/EtimsProductTypeEnum'
+        etims_item_class_code:
+          description: From KRA's item classification list.
+          oneOf:
+          - type: string
+            pattern: ^\d{1,10}$
+            maxLength: 10
+          - type: string
+            maxLength: 0
+        etims_packaging_unit:
+          oneOf:
+          - $ref: '#/components/schemas/EtimsPackagingUnitEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        etims_item_code:
+          type: string
+          readOnly: true
+          description: Assigned when registered with KRA.
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductIdentifier'
+          description: Barcodes and other codes. On create only.
+        row_version:
+          type: integer
+          readOnly: true
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - etims_item_code
+      - id
+      - name
+      - row_version
+      - selling_price
+      - tax_rate
+      - unit
+      - updated_at
+      - version
+    ProductIdentifier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        kind:
+          $ref: '#/components/schemas/ProductIdentifierKindEnum'
+        value:
+          type: string
+          maxLength: 64
+        pack_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          description: 'Units added per scan: 12 for a carton barcode. Default 1.'
+        is_primary:
+          type: boolean
+      required:
+      - id
+      - value
+    ProductIdentifierKindEnum:
+      enum:
+      - BARCODE
+      - QR
+      - ALIAS
+      type: string
+      description: |-
+        * `BARCODE` - Barcode
+        * `QR` - QR code
+        * `ALIAS` - Other code
+    ProductIdentifierRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/ProductIdentifierKindEnum'
+        value:
+          type: string
+          minLength: 1
+          maxLength: 64
+        pack_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          description: 'Units added per scan: 12 for a carton barcode. Default 1.'
+        is_primary:
+          type: boolean
+      required:
+      - value
+    ProductRequest:
+      type: object
+      properties:
+        sku:
+          type: string
+          maxLength: 40
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        category:
+          type: string
+          format: uuid
+          nullable: true
+        brand:
+          type: string
+          format: uuid
+          nullable: true
+        unit:
+          type: string
+          format: uuid
+        tax_rate:
+          type: string
+          format: uuid
+        selling_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        default_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        default_reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        track_inventory:
+          type: boolean
+          description: Off for services and other items without stock.
+        etims_product_type:
+          $ref: '#/components/schemas/EtimsProductTypeEnum'
+        etims_item_class_code:
+          description: From KRA's item classification list.
+          oneOf:
+          - type: string
+            pattern: ^\d{1,10}$
+            maxLength: 10
+          - type: string
+            maxLength: 0
+        etims_packaging_unit:
+          oneOf:
+          - $ref: '#/components/schemas/EtimsPackagingUnitEnum'
+          - $ref: '#/components/schemas/BlankEnum'
+        identifiers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductIdentifierRequest'
+          description: Barcodes and other codes. On create only.
+        is_active:
+          type: boolean
+      required:
+      - name
+      - selling_price
+      - tax_rate
+      - unit
     RecoveryCodes:
       type: object
       properties:

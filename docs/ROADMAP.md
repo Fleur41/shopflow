@@ -62,6 +62,8 @@ Deferred:
 
 ## Phase 2 — Catalog, suppliers, inventory
 
+2.2 in progress (2026-10-11). Done: eTIMS codes on tax rates and units; products with generated SKUs, identifiers (check-digit validation, pack quantities, one code → one product), price changes behind `products.change_price` with append-only price history, typo-tolerant trigram search, `row_version` sync cursor; new businesses get default units and (for KES) Kenya's tax rates. **Open:** image upload pipeline, web screens. Deferred: tombstones for removed identifiers (sync, 6.2).
+
 2.1 API done (2026-10-11): categories (tree, cycle-safe), brands, units and tax rates, with names unique ignoring case at the database level, optimistic versioning and audit. Covered by the authorization and cross-tenant suites. **Still open:** the web screens to manage them.
 
 | # | Milestone | Acceptance criteria |

@@ -86,11 +86,14 @@ def update_entry[E: MasterData](
 
 
 def audit_values(entry: models.Model, fields: Any) -> dict[str, Any]:
-    """Audit-friendly values: related objects by ID, decimals as strings."""
+    """Audit-friendly values: related objects by ID, decimals as strings at the
+    field's precision (so "60.00" from a request equals the stored "60.0000")."""
     values: dict[str, Any] = {}
     for name in fields:
         field = entry._meta.get_field(name)
         value = getattr(entry, field.attname if isinstance(field, models.ForeignKey) else name)
+        if isinstance(field, models.DecimalField) and value is not None:
+            value = Decimal(value).quantize(Decimal(1).scaleb(-(field.decimal_places or 0)))
         values[name] = str(value) if isinstance(value, Decimal | uuid.UUID) else value
     return values
 
