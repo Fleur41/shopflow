@@ -1,0 +1,367 @@
+{
+  "version": 1,
+  "spec": "docs/PRICING.md",
+  "cases": [
+    {
+      "name": "API example: tax-inclusive, tax rounded per line",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "2", "unit_price": "80.00", "tax_rate": "0.16" },
+          { "quantity": "1", "unit_price": "60.00", "tax_rate": "0.16" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "160.00", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "22.07", "line_total": "160.00" },
+          { "gross_amount": "60.00", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "8.28", "line_total": "60.00" }
+        ],
+        "subtotal": "220.00",
+        "discount_total": "0.00",
+        "tax_total": "30.35",
+        "total": "220.00",
+        "taxes": [{ "rate": "0.1600", "taxable_amount": "189.65", "tax_amount": "30.35" }]
+      }
+    },
+    {
+      "name": "Same cart with tax-exclusive prices",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "EXCLUSIVE",
+        "lines": [
+          { "quantity": "2", "unit_price": "80.00", "tax_rate": "0.16" },
+          { "quantity": "1", "unit_price": "60.00", "tax_rate": "0.16" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "160.00", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "25.60", "line_total": "185.60" },
+          { "gross_amount": "60.00", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "9.60", "line_total": "69.60" }
+        ],
+        "subtotal": "220.00",
+        "discount_total": "0.00",
+        "tax_total": "35.20",
+        "total": "255.20",
+        "taxes": [{ "rate": "0.1600", "taxable_amount": "220.00", "tax_amount": "35.20" }]
+      }
+    },
+    {
+      "name": "Fractional quantities (sold by weight)",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "0.75", "unit_price": "120.00", "tax_rate": "0.16" },
+          { "quantity": "1.333", "unit_price": "99.99", "tax_rate": "0.16" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "90.00", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "12.41", "line_total": "90.00" },
+          { "gross_amount": "133.29", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "18.38", "line_total": "133.29" }
+        ],
+        "subtotal": "223.29",
+        "discount_total": "0.00",
+        "tax_total": "30.79",
+        "total": "223.29",
+        "taxes": [{ "rate": "0.1600", "taxable_amount": "192.50", "tax_amount": "30.79" }]
+      }
+    },
+    {
+      "name": "Exact halves round up; just under half rounds down",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "EXCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "0.0050", "tax_rate": "0" },
+          { "quantity": "1", "unit_price": "0.0049", "tax_rate": "0" },
+          { "quantity": "1", "unit_price": "0.50", "tax_rate": "0.01" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "0.01", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "0.00", "line_total": "0.01" },
+          { "gross_amount": "0.00", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "0.00", "line_total": "0.00" },
+          { "gross_amount": "0.50", "discount_amount": "0.00", "order_discount": "0.00", "tax_amount": "0.01", "line_total": "0.51" }
+        ],
+        "subtotal": "0.51",
+        "discount_total": "0.00",
+        "tax_total": "0.01",
+        "total": "0.52",
+        "taxes": [
+          { "rate": "0.0000", "taxable_amount": "0.01", "tax_amount": "0.00" },
+          { "rate": "0.0100", "taxable_amount": "0.50", "tax_amount": "0.01" }
+        ]
+      }
+    },
+    {
+      "name": "Line discount comes off before tax",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "3", "unit_price": "50.00", "discount_amount": "15.00", "tax_rate": "0.16" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "150.00", "discount_amount": "15.00", "order_discount": "0.00", "tax_amount": "18.62", "line_total": "135.00" }
+        ],
+        "subtotal": "150.00",
+        "discount_total": "15.00",
+        "tax_total": "18.62",
+        "total": "135.00",
+        "taxes": [{ "rate": "0.1600", "taxable_amount": "116.38", "tax_amount": "18.62" }]
+      }
+    },
+    {
+      "name": "A line discounted to zero",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "20.00", "discount_amount": "20.00", "tax_rate": "0.16" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "20.00", "discount_amount": "20.00", "order_discount": "0.00", "tax_amount": "0.00", "line_total": "0.00" }
+        ],
+        "subtotal": "20.00",
+        "discount_total": "20.00",
+        "tax_total": "0.00",
+        "total": "0.00",
+        "taxes": [{ "rate": "0.1600", "taxable_amount": "0.00", "tax_amount": "0.00" }]
+      }
+    },
+    {
+      "name": "Order discount split in proportion, mixed and zero rates",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "100.00", "tax_rate": "0.16" },
+          { "quantity": "1", "unit_price": "50.00", "tax_rate": "0" },
+          { "quantity": "1", "unit_price": "50.00", "tax_rate": "0.16" }
+        ],
+        "order_discount": "10.00"
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "100.00", "discount_amount": "0.00", "order_discount": "5.00", "tax_amount": "13.10", "line_total": "95.00" },
+          { "gross_amount": "50.00", "discount_amount": "0.00", "order_discount": "2.50", "tax_amount": "0.00", "line_total": "47.50" },
+          { "gross_amount": "50.00", "discount_amount": "0.00", "order_discount": "2.50", "tax_amount": "6.55", "line_total": "47.50" }
+        ],
+        "subtotal": "200.00",
+        "discount_total": "10.00",
+        "tax_total": "19.65",
+        "total": "190.00",
+        "taxes": [
+          { "rate": "0.0000", "taxable_amount": "47.50", "tax_amount": "0.00" },
+          { "rate": "0.1600", "taxable_amount": "122.85", "tax_amount": "19.65" }
+        ]
+      }
+    },
+    {
+      "name": "Order discount leftover cent goes to the earlier line on a tie",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "1.00", "tax_rate": "0" },
+          { "quantity": "1", "unit_price": "1.00", "tax_rate": "0" },
+          { "quantity": "1", "unit_price": "1.00", "tax_rate": "0" }
+        ],
+        "order_discount": "0.10"
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "1.00", "discount_amount": "0.00", "order_discount": "0.04", "tax_amount": "0.00", "line_total": "0.96" },
+          { "gross_amount": "1.00", "discount_amount": "0.00", "order_discount": "0.03", "tax_amount": "0.00", "line_total": "0.97" },
+          { "gross_amount": "1.00", "discount_amount": "0.00", "order_discount": "0.03", "tax_amount": "0.00", "line_total": "0.97" }
+        ],
+        "subtotal": "3.00",
+        "discount_total": "0.10",
+        "tax_total": "0.00",
+        "total": "2.90",
+        "taxes": [{ "rate": "0.0000", "taxable_amount": "2.90", "tax_amount": "0.00" }]
+      }
+    },
+    {
+      "name": "Order discount leftover cent goes to the largest remainder",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "1.00", "tax_rate": "0" },
+          { "quantity": "2", "unit_price": "1.00", "tax_rate": "0" }
+        ],
+        "order_discount": "0.10"
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "1.00", "discount_amount": "0.00", "order_discount": "0.03", "tax_amount": "0.00", "line_total": "0.97" },
+          { "gross_amount": "2.00", "discount_amount": "0.00", "order_discount": "0.07", "tax_amount": "0.00", "line_total": "1.93" }
+        ],
+        "subtotal": "3.00",
+        "discount_total": "0.10",
+        "tax_total": "0.00",
+        "total": "2.90",
+        "taxes": [{ "rate": "0.0000", "taxable_amount": "2.90", "tax_amount": "0.00" }]
+      }
+    },
+    {
+      "name": "Tax-exclusive, two rates, order discount",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "EXCLUSIVE",
+        "lines": [
+          { "quantity": "2", "unit_price": "25.00", "tax_rate": "0.16" },
+          { "quantity": "1", "unit_price": "30.00", "tax_rate": "0.08" }
+        ],
+        "order_discount": "8.00"
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "50.00", "discount_amount": "0.00", "order_discount": "5.00", "tax_amount": "7.20", "line_total": "52.20" },
+          { "gross_amount": "30.00", "discount_amount": "0.00", "order_discount": "3.00", "tax_amount": "2.16", "line_total": "29.16" }
+        ],
+        "subtotal": "80.00",
+        "discount_total": "8.00",
+        "tax_total": "9.36",
+        "total": "81.36",
+        "taxes": [
+          { "rate": "0.0800", "taxable_amount": "27.00", "tax_amount": "2.16" },
+          { "rate": "0.1600", "taxable_amount": "45.00", "tax_amount": "7.20" }
+        ]
+      }
+    },
+    {
+      "name": "Currency without minor units (UGX, 18 %)",
+      "input": {
+        "minor_units": 0,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "3", "unit_price": "1500", "tax_rate": "0.18" },
+          { "quantity": "1", "unit_price": "999.5", "tax_rate": "0.18" }
+        ]
+      },
+      "expected": {
+        "lines": [
+          { "gross_amount": "4500", "discount_amount": "0", "order_discount": "0", "tax_amount": "686", "line_total": "4500" },
+          { "gross_amount": "1000", "discount_amount": "0", "order_discount": "0", "tax_amount": "153", "line_total": "1000" }
+        ],
+        "subtotal": "5500",
+        "discount_total": "0",
+        "tax_total": "839",
+        "total": "5500",
+        "taxes": [{ "rate": "0.1800", "taxable_amount": "4661", "tax_amount": "839" }]
+      }
+    },
+    {
+      "name": "Empty cart",
+      "input": { "minor_units": 2, "tax_mode": "INCLUSIVE", "lines": [] },
+      "expected": {
+        "lines": [],
+        "subtotal": "0.00",
+        "discount_total": "0.00",
+        "tax_total": "0.00",
+        "total": "0.00",
+        "taxes": []
+      }
+    },
+    {
+      "name": "Quantity must be positive",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "10.00", "tax_rate": "0.16" },
+          { "quantity": "0", "unit_price": "10.00", "tax_rate": "0.16" }
+        ]
+      },
+      "expected_error": { "code": "QUANTITY_NOT_POSITIVE", "line": 1 }
+    },
+    {
+      "name": "Negative prices are not numbers here",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [{ "quantity": "1", "unit_price": "-1.00", "tax_rate": "0.16" }]
+      },
+      "expected_error": { "code": "INVALID_NUMBER", "line": 0 }
+    },
+    {
+      "name": "Exponent notation is refused",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [{ "quantity": "1e3", "unit_price": "1.00", "tax_rate": "0.16" }]
+      },
+      "expected_error": { "code": "INVALID_NUMBER", "line": 0 }
+    },
+    {
+      "name": "Quantity has at most 3 decimal places",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [{ "quantity": "1.2345", "unit_price": "1.00", "tax_rate": "0.16" }]
+      },
+      "expected_error": { "code": "TOO_MANY_DECIMALS", "line": 0 }
+    },
+    {
+      "name": "Discounts are whole minor units",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "1.00", "discount_amount": "0.001", "tax_rate": "0.16" }
+        ]
+      },
+      "expected_error": { "code": "TOO_MANY_DECIMALS", "line": 0 }
+    },
+    {
+      "name": "Tax rate must be below 100 %",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [{ "quantity": "1", "unit_price": "1.00", "tax_rate": "1" }]
+      },
+      "expected_error": { "code": "INVALID_TAX_RATE", "line": 0 }
+    },
+    {
+      "name": "Line discount cannot exceed the line",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "2", "unit_price": "5.00", "discount_amount": "10.01", "tax_rate": "0.16" }
+        ]
+      },
+      "expected_error": { "code": "LINE_DISCOUNT_EXCEEDS_LINE", "line": 0 }
+    },
+    {
+      "name": "Order discount cannot exceed the discounted lines",
+      "input": {
+        "minor_units": 2,
+        "tax_mode": "INCLUSIVE",
+        "lines": [
+          { "quantity": "1", "unit_price": "10.00", "discount_amount": "4.00", "tax_rate": "0.16" }
+        ],
+        "order_discount": "6.01"
+      },
+      "expected_error": { "code": "ORDER_DISCOUNT_EXCEEDS_TOTAL", "line": null }
+    },
+    {
+      "name": "Unknown tax mode",
+      "input": { "minor_units": 2, "tax_mode": "GROSS", "lines": [] },
+      "expected_error": { "code": "INVALID_SETTINGS", "line": null }
+    },
+    {
+      "name": "Minor units above 4",
+      "input": { "minor_units": 5, "tax_mode": "INCLUSIVE", "lines": [] },
+      "expected_error": { "code": "INVALID_SETTINGS", "line": null }
+    }
+  ]
+}

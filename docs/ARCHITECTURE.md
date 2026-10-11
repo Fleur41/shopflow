@@ -388,7 +388,7 @@ See §6.6 for the full flow.
 ### ADR-17 Shared client-side pricing via test vectors
 
 - **Problem:** Web, mobile (offline) and server all compute totals. The spec forbids duplicated business logic, but offline display needs local computation.
-- **Recommendation:** The server is authoritative. Clients implement only the documented display algorithm (line totals, discounts, tax-inclusive/exclusive, rounding). All three implementations must pass the same `shared/pricing-test-vectors/*.json` in CI.
+- **Recommendation:** The server is authoritative. Clients implement only the documented display algorithm (line totals, discounts, tax-inclusive/exclusive, rounding). All three implementations must pass the same `shared/pricing-test-vectors/*.json` in CI. The algorithm is specified in [PRICING.md](PRICING.md).
 - **Trade-offs:** Three implementations of roughly 100 lines each, kept honest by shared tests. A "quote" round-trip per cart change was rejected: too slow, and impossible offline.
 
 ### ADR-18 Strict nonce-based CSP over static prerendering

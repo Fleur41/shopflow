@@ -75,9 +75,11 @@ Deferred:
 
 ## Phase 3 — POS
 
+3.1 done (2026-10-11): the algorithm is specified in [PRICING.md](PRICING.md); `shared/pricing-test-vectors/v1.json` holds 22 hand-computed cases; the server (`apps/sales/pricing.py`) and web (`src/lib/pricing.ts`) implementations both pass them, using exact integer arithmetic. The Kotlin implementation joins in 6.4. The org-level tax mode setting (Q-1) arrives with the sale API in 3.3.
+
 | # | Milestone | Acceptance criteria |
 |---|---|---|
-| 3.1 | Pricing module | Server pricing engine (line discount, order discount, tax-inclusive/exclusive, rounding) + `shared/pricing-test-vectors`. TS implementation passes the same vectors. |
+| 3.1 ✅ | Pricing module | Server pricing engine (line discount, order discount, tax-inclusive/exclusive, rounding) + `shared/pricing-test-vectors`. TS implementation passes the same vectors. |
 | 3.2 | Payment methods | Configurable payment methods per org. Provider interface stub. |
 | 3.3 | Complete sale API | Atomic sale with idempotency, `client_txn_id`, receipt numbering, price check (409), stock locks (422 with friendly message), mixed tenders, audit. **Concurrency test:** two cashiers race for the last unit and exactly one succeeds. **Fault-injection test:** a failure at each step leaves no partial rows. |
 | 3.4 | POS screen (web) | Keyboard-wedge scanner detection, focused scan input, local product cache, quantity merge on rescan, keyboard shortcuts (F-keys for tenders), cart, tender dialog with change calculation, offline-tolerant error messages. Accessibility: fully keyboard-operable, screen-reader labels. E2E test with a simulated scanner. |
