@@ -12,6 +12,7 @@ from apps.organizations.api.master_data import (
 )
 from apps.organizations.api.serializers import ScopedPrimaryKeyField
 
+from .. import images
 from ..etims_codes import TAX_TYPES
 from ..models import (
     Brand,
@@ -203,6 +204,8 @@ class ProductSerializer(MasterDataSerializer[Product]):
     identifiers = ProductIdentifierSerializer(
         many=True, required=False, help_text="Barcodes and other codes. On create only."
     )
+    image_url = serializers.SerializerMethodField(help_text="Up to 1024 px, WebP.")
+    thumbnail_url = serializers.SerializerMethodField(help_text="Up to 256 px, WebP.")
     unique_fields = ("sku",)
     taken_messages: ClassVar[dict[str, str]] = {"sku": "Another product already uses this SKU."}
 
@@ -225,6 +228,8 @@ class ProductSerializer(MasterDataSerializer[Product]):
             "etims_packaging_unit",
             "etims_item_code",
             "identifiers",
+            "image_url",
+            "thumbnail_url",
             "row_version",
             *ENTRY_FIELDS,
         )
@@ -232,6 +237,12 @@ class ProductSerializer(MasterDataSerializer[Product]):
 
     def validate_sku(self, value: str) -> str:
         return value.strip()
+
+    def get_image_url(self, product: Product) -> str | None:
+        return images.url_for(product.image_key)
+
+    def get_thumbnail_url(self, product: Product) -> str | None:
+        return images.url_for(product.thumbnail_key)
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         attrs = super().validate(attrs)

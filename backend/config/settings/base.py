@@ -179,6 +179,12 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+# --- Uploaded files (product images) --------------------------------------
+# Uploads are served from a different origin than the web app (docs/SECURITY.md
+# §7): object storage or a CDN when deployed (8.2), Django's own port locally.
+MEDIA_ROOT = env("MEDIA_ROOT", default=str(BASE_DIR / "media"))
+MEDIA_URL = env("MEDIA_URL", default="/media/")
+
 # --- Admin ----------------------------------------------------------------
 # Platform-staff admin only. Production must set a non-default path.
 ADMIN_URL: str = env("DJANGO_ADMIN_URL", default="admin/")

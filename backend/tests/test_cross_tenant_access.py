@@ -51,6 +51,7 @@ TARGETS = {
         "identifier_id": a.identifier.pk,
     },
     "api/v1/products/<uuid:product_id>/price-history/": lambda a: {"product_id": a.product.pk},
+    "api/v1/products/<uuid:product_id>/image/": lambda a: {"product_id": a.product.pk},
 }
 
 # Catalog lookups of business A, compared before and after the attack.

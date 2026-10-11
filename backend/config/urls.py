@@ -23,6 +23,10 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
 ]
 
+if settings.DEBUG:
+    # Local development only: deployments serve uploads from object storage.
+    urlpatterns.append(path("media/<path:path>", common_views.serve_media, name="media"))
+
 handler400 = "apps.common.views.bad_request"
 handler403 = "apps.common.views.permission_denied"
 handler404 = "apps.common.views.not_found"

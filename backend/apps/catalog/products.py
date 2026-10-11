@@ -10,6 +10,7 @@
 from decimal import Decimal
 from typing import Any
 
+from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError, connection, transaction
 from rest_framework import status
 
@@ -19,6 +20,7 @@ from apps.organizations import master_data
 from apps.organizations.access import require_permission
 from apps.organizations.context import RequestContext
 
+from . import images
 from .models import Product, ProductIdentifier, ProductPriceHistory
 
 GENERATED_SKU_PREFIX = "P"
@@ -181,3 +183,37 @@ def _next_sku(ctx: RequestContext) -> str:
     )
     highest = max((int(sku[len(GENERATED_SKU_PREFIX) :]) for sku in generated), default=0)
     return f"{GENERATED_SKU_PREFIX}{highest + 1:06d}"
+
+
+def set_image(ctx: RequestContext, product: Product, upload: UploadedFile) -> Product:
+    """Replace the product's image. Raises ``images.InvalidImage``."""
+    stored = images.store_product_image(ctx.organization.pk, upload)
+    try:
+        return _change_image(ctx, product, stored.image_key, stored.thumbnail_key)
+    except BaseException:
+        images.delete_stored(stored.image_key, stored.thumbnail_key)  # nothing points at them
+        raise
+
+
+def remove_image(ctx: RequestContext, product: Product) -> Product:
+    return _change_image(ctx, product, "", "")
+
+
+def _change_image(
+    ctx: RequestContext, product: Product, image_key: str, thumbnail_key: str
+) -> Product:
+    with transaction.atomic():
+        product = Product.objects.for_org(ctx.organization).select_for_update().get(pk=product.pk)
+        old_keys = (product.image_key, product.thumbnail_key)
+        product.image_key, product.thumbnail_key = image_key, thumbnail_key
+        product.version += 1
+        product.save(update_fields=["image_key", "thumbnail_key", "version", "updated_at"])
+        record_audit(
+            ctx.audit_actor,
+            action="product.image_changed" if image_key else "product.image_removed",
+            entity_type=Product.audit_name,
+            entity_id=product.pk,
+        )
+        # Only once the database no longer points at the old files.
+        transaction.on_commit(lambda: images.delete_stored(*old_keys))
+    return product

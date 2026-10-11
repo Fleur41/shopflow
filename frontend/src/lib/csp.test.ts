@@ -25,6 +25,19 @@ describe("buildContentSecurityPolicy", () => {
     expect(production).toContain("upgrade-insecure-requests");
   });
 
+  it("allows product images from the media origin, and only images", () => {
+    const withMedia = buildContentSecurityPolicy("abc123", false, "https://media.example.com/products/");
+    expect(directive(withMedia, "img-src")).toBe("img-src 'self' blob: data: https://media.example.com");
+    expect(directive(withMedia, "connect-src")).toBe("connect-src 'self'");
+    expect(directive(withMedia, "script-src")).not.toContain("media.example.com");
+  });
+
+  it("ignores a media origin that isn't a URL instead of injecting it", () => {
+    const policy = buildContentSecurityPolicy("abc123", false, "x; script-src *");
+    expect(directive(policy, "img-src")).toBe("img-src 'self' blob: data:");
+    expect(policy).not.toContain("script-src *");
+  });
+
   it("relaxes only what local development needs", () => {
     const development = buildContentSecurityPolicy("abc123", true);
     expect(directive(development, "script-src")).toContain("'unsafe-eval'");

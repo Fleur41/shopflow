@@ -5,7 +5,7 @@ import { buildContentSecurityPolicy, generateNonce } from "@/lib/csp";
 /** Adds a fresh CSP nonce to every page request (docs/ARCHITECTURE.md, ADR-18). */
 export function proxy(request: NextRequest) {
   const nonce = generateNonce();
-  const policy = buildContentSecurityPolicy(nonce, process.env.NODE_ENV === "development");
+  const policy = buildContentSecurityPolicy(nonce, process.env.NODE_ENV === "development", process.env.MEDIA_ORIGIN);
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);

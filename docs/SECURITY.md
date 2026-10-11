@@ -209,6 +209,7 @@ Limits are implemented with DRF throttles backed by Redis, plus coarse per-IP li
 - Allowed types: JPEG, PNG, WebP. The type is checked by **decoding** with Pillow, not by trusting the extension or Content-Type. Max 5 MB, max 4096×4096.
 - Images are re-encoded server-side, which strips metadata and EXIF GPS data and neutralizes polyglot files. They are stored under random keys, never under user-supplied filenames.
 - Images are served from object storage or a CDN on a separate origin, with `Content-Disposition: inline`, the correct `Content-Type`, and `nosniff`. Nothing uploaded is ever executed or served from the app origin.
+- **As built (2.2):** `apps/catalog/images.py` checks size and header dimensions before decoding, fully decodes with Pillow, applies EXIF orientation, and stores two WebP renditions (1024 px, 256 px) under random keys through Django's storage API; the upload itself is never stored. Locally, Django's own port (`localhost:8000`, a different origin from the web app) serves them in DEBUG only, with `inline`, `nosniff` and `Content-Security-Policy: default-src 'none'; sandbox`. The web app allows that origin in `img-src` only (`MEDIA_ORIGIN`). Production object storage with short-lived presigned URLs is wired in 8.2.
 
 ---
 

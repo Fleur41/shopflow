@@ -1273,6 +1273,56 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/products/{product_id}/image/:
+    post:
+      operationId: products_image_create
+      description: Upload (multipart field ``image``) or remove a product's image.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+          description: ''
+    delete:
+      operationId: products_image_destroy
+      description: Upload (multipart field ``image``) or remove a product's image.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/products/{product_id}/price-history/:
     get:
       operationId: products_price_history_list
@@ -3436,6 +3486,16 @@ components:
           items:
             $ref: '#/components/schemas/ProductIdentifier'
           description: Barcodes and other codes. On create only.
+        image_url:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Up to 1024 px, WebP.
+        thumbnail_url:
+          type: string
+          nullable: true
+          readOnly: true
+          description: Up to 256 px, WebP.
         row_version:
           type: integer
           readOnly: true
@@ -3456,10 +3516,12 @@ components:
       - created_at
       - etims_item_code
       - id
+      - image_url
       - name
       - row_version
       - selling_price
       - tax_rate
+      - thumbnail_url
       - unit
       - updated_at
       - version

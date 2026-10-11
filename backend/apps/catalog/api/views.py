@@ -13,6 +13,7 @@ from django.http import Http404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, serializers, status
+from rest_framework.parsers import MultiPartParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -27,7 +28,7 @@ from apps.organizations.api.master_data import (
 from apps.organizations.api.permissions import TenantAPIView
 from apps.organizations.master_data import MasterData
 
-from .. import products, services
+from .. import images, products, services
 from ..models import (
     Brand,
     Category,
@@ -285,6 +286,41 @@ class ProductIdentifierDetailView(_ProductChildView):
             raise Http404
         products.remove_identifier(self.ctx, identifier)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ProductImageView(_ProductChildView):
+    """Upload (multipart field ``image``) or remove a product's image."""
+
+    required_permissions: ClassVar[dict[str, str]] = {
+        "POST": "products.manage",
+        "DELETE": "products.manage",
+    }
+    parser_classes = (MultiPartParser,)
+
+    @extend_schema(
+        request={
+            "multipart/form-data": {
+                "type": "object",
+                "properties": {"image": {"type": "string", "format": "binary"}},
+            }
+        },
+        responses=ProductSerializer,
+    )
+    def post(self, request: Request, product_id: uuid.UUID) -> Response:
+        product = self.get_product(product_id)  # before reading the body: 404 first
+        upload = request.FILES.get("image")
+        if upload is None:
+            raise serializers.ValidationError({"image": ["Choose an image file."]})
+        try:
+            product = products.set_image(self.ctx, product, upload)
+        except images.InvalidImage as exc:
+            raise serializers.ValidationError({"image": [str(exc)]}, code="invalid") from exc
+        return Response(ProductSerializer(product, context=self.get_serializer_context()).data)
+
+    @extend_schema(responses=ProductSerializer)
+    def delete(self, request: Request, product_id: uuid.UUID) -> Response:
+        product = products.remove_image(self.ctx, self.get_product(product_id))
+        return Response(ProductSerializer(product, context=self.get_serializer_context()).data)
 
 
 class _NewestFirst(DefaultCursorPagination):

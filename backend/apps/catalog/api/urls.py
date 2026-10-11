@@ -26,6 +26,11 @@ urlpatterns = [
         name="product-identifier-detail",
     ),
     path(
+        "products/<uuid:product_id>/image/",
+        views.ProductImageView.as_view(),
+        name="product-image",
+    ),
+    path(
         "products/<uuid:product_id>/price-history/",
         views.ProductPriceHistoryView.as_view(),
         name="product-price-history",

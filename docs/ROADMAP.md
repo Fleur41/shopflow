@@ -62,7 +62,7 @@ Deferred:
 
 ## Phase 2 — Catalog, suppliers, inventory
 
-2.2 in progress (2026-10-11). Done: eTIMS codes on tax rates and units; products with generated SKUs, identifiers (check-digit validation, pack quantities, one code → one product), price changes behind `products.change_price` with append-only price history, typo-tolerant trigram search, `row_version` sync cursor; new businesses get default units and (for KES) Kenya's tax rates. **Open:** image upload pipeline, web screens. Deferred: tombstones for removed identifiers (sync, 6.2).
+2.2 in progress (2026-10-11). Done: eTIMS codes on tax rates and units; products with generated SKUs, identifiers (check-digit validation, pack quantities, one code → one product), price changes behind `products.change_price` with append-only price history, typo-tolerant trigram search, `row_version` sync cursor; new businesses get default units and (for KES) Kenya's tax rates. Product images: validated, re-encoded WebP renditions (SECURITY.md §7). **Open:** web screens. Deferred: tombstones for removed identifiers (sync, 6.2).
 
 2.1 API done (2026-10-11): categories (tree, cycle-safe), brands, units and tax rates, with names unique ignoring case at the database level, optimistic versioning and audit. Covered by the authorization and cross-tenant suites. **Still open:** the web screens to manage them.
 
@@ -141,7 +141,7 @@ Deferred:
 | # | Milestone | Acceptance criteria |
 |---|---|---|
 | 8.1 | Database-level isolation | PostgreSQL RLS policies on all tenant tables, composite tenant FKs on financial tables, BOLA suite re-run with RLS on |
-| 8.2 | Deployment pipeline | Staging auto-deploy, production promotion by image digest, migration job, health-gated rolling deploy, documented rollback. DEPLOYMENT.md. |
+| 8.2 | Deployment pipeline | Object storage for uploads (S3-compatible, private bucket, presigned URLs, `MEDIA_ORIGIN` in the web CSP). Staging auto-deploy, production promotion by image digest, migration job, health-gated rolling deploy, documented rollback. DEPLOYMENT.md. |
 | 8.3 | Backups and DR | PITR enabled, encrypted backups, retention policy, **automated weekly restore test into staging**, RPO/RTO targets, DISASTER_RECOVERY.md runbook, game-day drill |
 | 8.4 | Observability | Dashboards and alerts for SLOs, security events, Celery, sync, integrity drift. On-call runbook. |
 | 8.5 | Performance | Load tests (k6) for lookup, sale and sync push at 10× expected peak. Query-count assertions. Index review. |

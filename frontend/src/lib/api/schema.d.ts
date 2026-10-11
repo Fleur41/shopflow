@@ -668,6 +668,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/products/{product_id}/image/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Upload (multipart field ``image``) or remove a product's image. */
+        post: operations["products_image_create"];
+        /** @description Upload (multipart field ``image``) or remove a product's image. */
+        delete: operations["products_image_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/products/{product_id}/price-history/": {
         parameters: {
             query?: never;
@@ -1676,6 +1694,10 @@ export interface components {
             readonly etims_item_code: string;
             /** @description Barcodes and other codes. On create only. */
             identifiers?: components["schemas"]["ProductIdentifier"][];
+            /** @description Up to 1024 px, WebP. */
+            readonly image_url: string | null;
+            /** @description Up to 256 px, WebP. */
+            readonly thumbnail_url: string | null;
             readonly row_version: number;
             is_active?: boolean;
             readonly version: number;
@@ -3278,6 +3300,54 @@ export interface operations {
             header?: never;
             path: {
                 identifier_id: string;
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    products_image_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    image?: string;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Product"];
+                };
+            };
+        };
+    };
+    products_image_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
                 product_id: string;
             };
             cookie?: never;

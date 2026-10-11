@@ -5,12 +5,15 @@ return the same problem-details JSON as the API instead of HTML pages.
 """
 
 import structlog
+from django.conf import settings
 from django.core.cache import cache
 from django.db import connection
 from django.db.migrations.executor import MigrationExecutor
 from django.http import HttpRequest, JsonResponse
+from django.http.response import HttpResponseBase
+from django.views import static
 from django.views.decorators.cache import never_cache
-from django.views.decorators.http import require_GET
+from django.views.decorators.http import require_GET, require_safe
 
 from .errors import PROBLEM_CONTENT_TYPE, problem, request_id_of
 
@@ -124,3 +127,18 @@ def csrf_failure(request: HttpRequest, reason: str = "") -> JsonResponse:
         "Security check failed",
         "Your session's security token is missing or invalid. Refresh the page and try again.",
     )
+
+
+@require_safe
+def serve_media(request: HttpRequest, path: str) -> HttpResponseBase:
+    """Uploaded files, in local development only (deployments use object storage).
+
+    Served as inert content: displayed inline, never sniffed as another type,
+    and sandboxed so even a crafted file can't run script on this origin.
+    """
+    response = static.serve(request, path, document_root=settings.MEDIA_ROOT)
+    response["Content-Disposition"] = "inline"
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Content-Security-Policy"] = "default-src 'none'; sandbox"
+    response["Cross-Origin-Resource-Policy"] = "cross-origin"
+    return response

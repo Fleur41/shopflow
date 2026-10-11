@@ -19,6 +19,7 @@ dependencies = [
     "pyotp>=2.9",
     "segno>=1.6",
     "cryptography>=44",
+    "pillow>=11",
 ]
 
 [dependency-groups]

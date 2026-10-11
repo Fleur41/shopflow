@@ -55,12 +55,15 @@ services:
       REDIS_URL: redis://redis:6379/0
       EMAIL_URL: smtp://mailpit:1025
       FRONTEND_URL: http://localhost:3000
+      MEDIA_ROOT: /data/media
+      MEDIA_URL: http://localhost:8000/media/
     command: >-
       sh -c "DATABASE_URL=$$MIGRATION_DATABASE_URL python manage.py migrate --noinput
       && python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./backend:/app
       - ./shared:/shared
+      - media:/data/media
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -77,6 +80,8 @@ services:
       target: dev
     environment:
       API_INTERNAL_URL: http://backend:8000
+      # Product images come straight from Django's port: a separate origin.
+      MEDIA_ORIGIN: http://localhost:8000
       WATCHPACK_POLLING: "true"
     volumes:
       - ./frontend:/app
@@ -90,3 +95,4 @@ services:
 
 volumes:
   pgdata:
+  media:

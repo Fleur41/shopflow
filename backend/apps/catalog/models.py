@@ -183,6 +183,9 @@ class Product(MasterData):
     etims_item_code = models.CharField(
         max_length=20, blank=True, editable=False, help_text="Assigned when registered with KRA."
     )
+    # Storage keys of the re-encoded renditions (apps.catalog.images), never the upload.
+    image_key = models.CharField(max_length=200, blank=True, editable=False)
+    thumbnail_key = models.CharField(max_length=200, blank=True, editable=False)
     row_version = models.BigIntegerField(default=0, editable=False)
 
     class Meta:
