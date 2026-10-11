@@ -61,6 +61,8 @@ Deferred:
 
 ## Phase 2 — Catalog, suppliers, inventory
 
+2.1 API done (2026-10-11): categories (tree, cycle-safe), brands, units and tax rates, with names unique ignoring case at the database level, optimistic versioning and audit. Covered by the authorization and cross-tenant suites. **Still open:** the web screens to manage them.
+
 | # | Milestone | Acceptance criteria |
 |---|---|---|
 | 2.1 | Catalog master data | Categories, brands, units (fraction flag), tax rates. CRUD + permissions + audit. |

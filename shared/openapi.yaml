@@ -405,6 +405,241 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
           description: ''
+  /api/v1/brands/:
+    get:
+      operationId: brands_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or unit code)
+      tags:
+      - brands
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedBrandList'
+          description: ''
+    post:
+      operationId: brands_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - brands
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brand'
+          description: ''
+  /api/v1/brands/{entry_id}/:
+    get:
+      operationId: brands_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - brands
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brand'
+          description: ''
+    patch:
+      operationId: brands_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - brands
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedBrandUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Brand'
+          description: ''
+  /api/v1/categories/:
+    get:
+      operationId: categories_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: parent
+        schema:
+          type: string
+        description: Subcategories of this category ID, or `none` for top-level ones
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or unit code)
+      tags:
+      - categories
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: categories_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /api/v1/categories/{entry_id}/:
+    get:
+      operationId: categories_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - categories
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: categories_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - categories
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategoryUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
   /api/v1/invitations/:
     get:
       operationId: invitations_list
@@ -904,6 +1139,236 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoreUpdate'
           description: ''
+  /api/v1/tax-rates/:
+    get:
+      operationId: tax_rates_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or unit code)
+      tags:
+      - tax-rates
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedTaxRateList'
+          description: ''
+    post:
+      operationId: tax_rates_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - tax-rates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TaxRateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRate'
+          description: ''
+  /api/v1/tax-rates/{entry_id}/:
+    get:
+      operationId: tax_rates_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - tax-rates
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRate'
+          description: ''
+    patch:
+      operationId: tax_rates_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - tax-rates
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTaxRateUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaxRate'
+          description: ''
+  /api/v1/units/:
+    get:
+      operationId: units_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or unit code)
+      tags:
+      - units
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUnitList'
+          description: ''
+    post:
+      operationId: units_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - units
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/units/{entry_id}/:
+    get:
+      operationId: units_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - units
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+    patch:
+      operationId: units_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - units
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
 components:
   schemas:
     AuthResponse:
@@ -920,6 +1385,106 @@ components:
       required:
       - session
       - user
+    Brand:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 80
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+      - version
+    BrandRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        is_active:
+          type: boolean
+      required:
+      - name
+    Category:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 80
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+      - version
+    CategoryRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+      required:
+      - name
     ClientEnum:
       enum:
       - web
@@ -1328,6 +1893,44 @@ components:
       - name
       - status
       - timezone
+    PaginatedBrandList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Brand'
+    PaginatedCategoryList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
     PaginatedInvitationList:
       type: object
       required:
@@ -1423,6 +2026,44 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Store'
+    PaginatedTaxRateList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaxRate'
+    PaginatedUnitList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Unit'
     PasswordChangeRequest:
       type: object
       properties:
@@ -1464,6 +2105,42 @@ components:
           maxLength: 254
       required:
       - email
+    PatchedBrandUpdateRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
+    PatchedCategoryUpdateRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 80
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
     PatchedMemberUpdateRequest:
       type: object
       properties:
@@ -1529,6 +2206,45 @@ components:
           minLength: 1
         is_active:
           type: boolean
+    PatchedTaxRateUpdateRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
+    PatchedUnitUpdateRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        allows_fraction:
+          type: boolean
+          description: Allow quantities like 0.5 (e.g. kilograms, litres).
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
     Permission:
       type: object
       properties:
@@ -2042,6 +2758,64 @@ components:
       - otpauth_uri
       - qr_code
       - secret
+    TaxRate:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 60
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,4})?$
+          description: 'A fraction: 0.16 is 16 %. Fixed once created.'
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - rate
+      - updated_at
+      - version
+    TaxRateRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,4})?$
+          description: 'A fraction: 0.16 is 16 %. Fixed once created.'
+        is_active:
+          type: boolean
+      required:
+      - name
+      - rate
     TemplateEnum:
       enum:
       - OWNER
@@ -2067,6 +2841,67 @@ components:
       - access_token
       - refresh_token
       - token_type
+    Unit:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 40
+        allows_fraction:
+          type: boolean
+          description: Allow quantities like 0.5 (e.g. kilograms, litres).
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - name
+      - updated_at
+      - version
+    UnitRequest:
+      type: object
+      description: |-
+        Rejects a name (or code) another entry in the same scope already uses,
+        ignoring case, so "Soda" and "soda" can't both exist.
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 40
+        allows_fraction:
+          type: boolean
+          description: Allow quantities like 0.5 (e.g. kilograms, litres).
+        is_active:
+          type: boolean
+      required:
+      - code
+      - name
     User:
       type: object
       properties:

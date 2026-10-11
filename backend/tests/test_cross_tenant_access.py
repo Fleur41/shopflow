@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from apps.accounts.models import AuthSession
 from apps.audit.models import AuditLog
+from apps.catalog.models import Brand, Category, TaxRate, UnitOfMeasure
 from apps.organizations.models import Invitation, Membership, Role, Store
 from apps.organizations.testing import add_staff, add_store, client_for, create_business, role
 
@@ -30,7 +31,14 @@ TARGETS = {
     "api/v1/members/<uuid:member_id>/reactivate/": lambda a: {"member_id": a.cashier.pk},
     "api/v1/auth/sessions/<uuid:session_id>/": lambda a: {"session_id": a.session.pk},
     "api/v1/invitations/<uuid:invitation_id>/revoke/": lambda a: {"invitation_id": a.invitation.pk},
+    "api/v1/categories/<uuid:entry_id>/": lambda a: {"entry_id": a.category.pk},
+    "api/v1/brands/<uuid:entry_id>/": lambda a: {"entry_id": a.brand.pk},
+    "api/v1/units/<uuid:entry_id>/": lambda a: {"entry_id": a.unit.pk},
+    "api/v1/tax-rates/<uuid:entry_id>/": lambda a: {"entry_id": a.tax_rate.pk},
 }
+
+# Catalog lookups of business A, compared before and after the attack.
+CATALOG_MODELS = (Category, Brand, UnitOfMeasure, TaxRate)
 
 # A body that passes validation for any endpoint, so lookups (not validators) decide.
 BODY = {
@@ -59,6 +67,7 @@ def world():
         token_hash="0" * 64,
         expires_at=timezone.now() + timedelta(days=7),
     )
+    org = a.organization
     return SimpleNamespace(
         a=SimpleNamespace(
             organization=a.organization,
@@ -68,6 +77,10 @@ def world():
             session=AuthSession.objects.get(user=a.user),
             invitation=invitation,
             client=session,
+            category=Category.objects.create(organization=org, name="Drinks"),
+            brand=Brand.objects.create(organization=org, name="Kensalt"),
+            unit=UnitOfMeasure.objects.create(organization=org, code="PCS", name="Pieces"),
+            tax_rate=TaxRate.objects.create(organization=org, name="VAT", rate="0.16"),
         ),
         b_client=client_for(b.user, b.organization),
     )
@@ -89,6 +102,12 @@ def _snapshot(organization):
         "invitations": sorted(
             Invitation.objects.for_org(organization).values_list("pk", "revoked_at", "accepted_at")
         ),
+        **{
+            model.audit_name: sorted(
+                model.objects.for_org(organization).values_list("pk", "is_active", "version")
+            )
+            for model in CATALOG_MODELS
+        },
     }
 
 
@@ -125,6 +144,7 @@ def test_list_endpoints_never_include_another_businesses_records(world):
             *Membership.objects.for_org(world.a.organization).values_list("pk", flat=True),
             world.a.invitation.pk,
             world.a.session.pk,
+            *(m.objects.for_org(world.a.organization).get().pk for m in CATALOG_MODELS),
             world.a.organization.pk,
         ]
     }

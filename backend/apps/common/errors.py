@@ -58,6 +58,14 @@ class ApplicationError(Exception):
         self.extra = extra or {}
 
 
+class StaleVersion(ApplicationError):
+    """An optimistic-lock check failed: the record changed since the client read it."""
+
+    status_code = status.HTTP_409_CONFLICT
+    code = "STALE_VERSION"
+    title = "Changed by someone else"
+
+
 # DRF exception class → (code, title). Looked up along the MRO, most specific first.
 _DRF_ERRORS: dict[type[exceptions.APIException], tuple[str, str]] = {
     exceptions.ValidationError: ("VALIDATION_ERROR", "Invalid request"),

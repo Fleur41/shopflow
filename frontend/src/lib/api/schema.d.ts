@@ -359,6 +359,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/brands/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["brands_list"];
+        put?: never;
+        post: operations["brands_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/brands/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["brands_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["brands_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/categories/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["categories_list"];
+        put?: never;
+        post: operations["categories_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/categories/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["categories_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["categories_partial_update"];
+        trace?: never;
+    };
     "/api/v1/invitations/": {
         parameters: {
             query?: never;
@@ -565,6 +633,74 @@ export interface paths {
         patch: operations["stores_partial_update"];
         trace?: never;
     };
+    "/api/v1/tax-rates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["tax_rates_list"];
+        put?: never;
+        post: operations["tax_rates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tax-rates/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["tax_rates_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["tax_rates_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/units/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["units_list"];
+        put?: never;
+        post: operations["units_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["units_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["units_partial_update"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -574,6 +710,56 @@ export interface components {
             session: components["schemas"]["SessionInfo"];
             /** @description Mobile clients only. Web clients receive HttpOnly cookies. */
             tokens?: components["schemas"]["TokenPair"];
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        Brand: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        BrandRequest: {
+            name: string;
+            is_active?: boolean;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        Category: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            /** Format: uuid */
+            parent?: string | null;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        CategoryRequest: {
+            name: string;
+            /** Format: uuid */
+            parent?: string | null;
+            is_active?: boolean;
         };
         /**
          * @description * `web` - web
@@ -728,6 +914,32 @@ export interface components {
             /** Format: date-time */
             readonly created_at: string;
         };
+        PaginatedBrandList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Brand"][];
+        };
+        PaginatedCategoryList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Category"][];
+        };
         PaginatedInvitationList: {
             /**
              * Format: uri
@@ -793,6 +1005,32 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Store"][];
         };
+        PaginatedTaxRateList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["TaxRate"][];
+        };
+        PaginatedUnitList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Unit"][];
+        };
         PasswordChangeRequest: {
             current_password: string;
             new_password: string;
@@ -804,6 +1042,28 @@ export interface components {
         PasswordResetRequest: {
             /** Format: email */
             email: string;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        PatchedBrandUpdateRequest: {
+            name?: string;
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        PatchedCategoryUpdateRequest: {
+            name?: string;
+            /** Format: uuid */
+            parent?: string | null;
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
         };
         PatchedMemberUpdateRequest: {
             /** @description The version you last read; the update is refused if someone changed it since. */
@@ -830,6 +1090,29 @@ export interface components {
             phone?: string;
             timezone?: string;
             is_active?: boolean;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        PatchedTaxRateUpdateRequest: {
+            name?: string;
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        PatchedUnitUpdateRequest: {
+            code?: string;
+            name?: string;
+            /** @description Allow quantities like 0.5 (e.g. kilograms, litres). */
+            allows_fraction?: boolean;
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
         };
         Permission: {
             readonly code: string;
@@ -1041,6 +1324,39 @@ export interface components {
             qr_code: string;
         };
         /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        TaxRate: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            /**
+             * Format: decimal
+             * @description A fraction: 0.16 is 16 %. Fixed once created.
+             */
+            rate: string;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        TaxRateRequest: {
+            name: string;
+            /**
+             * Format: decimal
+             * @description A fraction: 0.16 is 16 %. Fixed once created.
+             */
+            rate: string;
+            is_active?: boolean;
+        };
+        /**
          * @description * `OWNER` - Owner
          *     * `MANAGER` - Manager
          *     * `CASHIER` - Cashier
@@ -1052,6 +1368,35 @@ export interface components {
             token_type: string;
             access_token: string;
             refresh_token: string;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        Unit: {
+            /** Format: uuid */
+            readonly id: string;
+            code: string;
+            name: string;
+            /** @description Allow quantities like 0.5 (e.g. kilograms, litres). */
+            allows_fraction?: boolean;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description Rejects a name (or code) another entry in the same scope already uses,
+         *     ignoring case, so "Soda" and "soda" can't both exist.
+         */
+        UnitRequest: {
+            code: string;
+            name: string;
+            /** @description Allow quantities like 0.5 (e.g. kilograms, litres). */
+            allows_fraction?: boolean;
+            is_active?: boolean;
         };
         User: {
             /** Format: uuid */
@@ -1529,6 +1874,208 @@ export interface operations {
             };
         };
     };
+    brands_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or unit code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedBrandList"];
+                };
+            };
+        };
+    };
+    brands_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrandRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+        };
+    };
+    brands_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+        };
+    };
+    brands_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedBrandUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Brand"];
+                };
+            };
+        };
+    };
+    categories_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Subcategories of this category ID, or `none` for top-level ones */
+                parent?: string;
+                /** @description Part of the name (or unit code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCategoryList"];
+                };
+            };
+        };
+    };
+    categories_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CategoryRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+        };
+    };
+    categories_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+        };
+    };
+    categories_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCategoryUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Category"];
+                };
+            };
+        };
+    };
     invitations_list: {
         parameters: {
             query?: {
@@ -1991,6 +2538,206 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoreUpdate"];
+                };
+            };
+        };
+    };
+    tax_rates_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or unit code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedTaxRateList"];
+                };
+            };
+        };
+    };
+    tax_rates_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaxRateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+        };
+    };
+    tax_rates_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+        };
+    };
+    tax_rates_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTaxRateUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaxRate"];
+                };
+            };
+        };
+    };
+    units_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or unit code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedUnitList"];
+                };
+            };
+        };
+    };
+    units_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"];
+                };
+            };
+        };
+    };
+    units_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"];
+                };
+            };
+        };
+    };
+    units_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUnitUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"];
                 };
             };
         };

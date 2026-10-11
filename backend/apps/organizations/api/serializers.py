@@ -19,6 +19,7 @@ from ..models import (
     Permission,
     Role,
     Store,
+    TenantModel,
     store_code_validator,
     validate_timezone,
 )
@@ -41,7 +42,7 @@ class ScopedPrimaryKeyField(serializers.PrimaryKeyRelatedField):  # type: ignore
     ("does_not_exist"), so responses reveal nothing about other tenants.
     """
 
-    def __init__(self, model: type[Role] | type[Store], **kwargs: Any) -> None:
+    def __init__(self, model: type[TenantModel], **kwargs: Any) -> None:
         self.model = model
         super().__init__(**kwargs)
 

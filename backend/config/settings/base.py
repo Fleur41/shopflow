@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.common",
     "apps.accounts",
     "apps.organizations",
+    "apps.catalog",
     "apps.audit",
     "apps.idempotency",
 ]

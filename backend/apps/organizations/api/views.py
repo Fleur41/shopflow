@@ -32,7 +32,7 @@ from apps.accounts.services import (
     switch_organization,
 )
 from apps.accounts.tokens import AccessClaims
-from apps.common.errors import ApplicationError
+from apps.common.errors import StaleVersion
 from apps.common.http import client_ip
 from apps.idempotency.service import idempotent
 
@@ -62,12 +62,6 @@ from .serializers import (
     SwitchOrganizationSerializer,
 )
 from .throttles import InvitationTokenThrottle, SignupThrottle
-
-
-class StaleVersion(ApplicationError):
-    status_code = status.HTTP_409_CONFLICT
-    code = "STALE_VERSION"
-    title = "Changed by someone else"
 
 
 def _session_response(issued: IssuedTokens, *, status_code: int = 200) -> Response:
