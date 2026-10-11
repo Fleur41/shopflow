@@ -190,6 +190,14 @@ class ProductListView(_ListView):
         for name in ("category", "brand"):
             if value := params.get(name, "").strip():
                 products = products.filter(**{f"{name}_id": _uuid_param(name, value)})
+        if value := params.get("supplier", "").strip():
+            # Imported here: suppliers build on the catalog, not the other way round.
+            from apps.suppliers.models import ProductSupplier
+
+            supplied = ProductSupplier.objects.for_org(self.ctx.organization).filter(
+                product=OuterRef("pk"), supplier_id=_uuid_param("supplier", value)
+            )
+            products = products.filter(Exists(supplied))
         return products
 
     def filter_search(self, entries: QuerySet[Any], search: str) -> QuerySet[Any]:
@@ -225,6 +233,9 @@ class ProductListView(_ListView):
             ),
             OpenApiParameter("category", OpenApiTypes.UUID),
             OpenApiParameter("brand", OpenApiTypes.UUID),
+            OpenApiParameter(
+                "supplier", OpenApiTypes.UUID, description="Products this supplier supplies"
+            ),
         ]
     )
     def get(self, request: Request) -> Response:

@@ -1044,6 +1044,52 @@ paths:
               schema:
                 $ref: '#/components/schemas/Permission'
           description: ''
+  /api/v1/product-suppliers/{link_id}/:
+    patch:
+      operationId: product_suppliers_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: link_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - product-suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedProductSupplierUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSupplier'
+          description: ''
+    delete:
+      operationId: product_suppliers_destroy
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: link_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - product-suppliers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/products/:
     get:
       operationId: products_list
@@ -1090,6 +1136,12 @@ paths:
         schema:
           type: string
         description: Exact SKU, ignoring case
+      - in: query
+        name: supplier
+        schema:
+          type: string
+          format: uuid
+        description: Products this supplier supplies
       tags:
       - products
       security:
@@ -1347,6 +1399,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/PaginatedPriceHistoryList'
           description: ''
+  /api/v1/products/{product_id}/suppliers/:
+    get:
+      operationId: products_suppliers_list
+      description: The suppliers of a product, preferred first. There are only ever
+        a few.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductSupplier'
+          description: ''
+    post:
+      operationId: products_suppliers_create
+      description: The suppliers of a product, preferred first. There are only ever
+        a few.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - products
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkFromProductRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSupplier'
+          description: ''
   /api/v1/roles/:
     get:
       operationId: roles_list
@@ -1556,6 +1663,295 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StoreUpdate'
+          description: ''
+  /api/v1/suppliers/:
+    get:
+      operationId: suppliers_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or code)
+      tags:
+      - suppliers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSupplierList'
+          description: ''
+    post:
+      operationId: suppliers_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+  /api/v1/suppliers/{entry_id}/:
+    get:
+      operationId: suppliers_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+    patch:
+      operationId: suppliers_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Supplier'
+          description: ''
+  /api/v1/suppliers/{supplier_id}/contacts/:
+    get:
+      operationId: suppliers_contacts_list
+      description: A supplier's contacts, primary first. There are only ever a few.
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierContact'
+          description: ''
+    post:
+      operationId: suppliers_contacts_create
+      description: A supplier's contacts, primary first. There are only ever a few.
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupplierContactRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierContact'
+          description: ''
+  /api/v1/suppliers/{supplier_id}/contacts/{contact_id}/:
+    patch:
+      operationId: suppliers_contacts_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: contact_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSupplierContactRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierContact'
+          description: ''
+    delete:
+      operationId: suppliers_contacts_destroy
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: contact_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/suppliers/{supplier_id}/products/:
+    get:
+      operationId: suppliers_products_list
+      description: The products a supplier supplies.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProductSupplierList'
+          description: ''
+    post:
+      operationId: suppliers_products_create
+      description: The products a supplier supplies.
+      parameters:
+      - in: path
+        name: supplier_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - suppliers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkFromSupplierRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductSupplier'
           description: ''
   /api/v1/tax-rates/:
     get:
@@ -2308,6 +2704,56 @@ components:
           maxLength: 128
       required:
       - token
+    LinkFromProductRequest:
+      type: object
+      description: 'POST /products/{id}/suppliers/: the product comes from the URL.'
+      properties:
+        supplier:
+          type: string
+          format: uuid
+        supplier_sku:
+          type: string
+          description: The supplier's own code for the product.
+          maxLength: 40
+        min_order_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        lead_time_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          nullable: true
+        is_preferred:
+          type: boolean
+      required:
+      - supplier
+    LinkFromSupplierRequest:
+      type: object
+      description: 'POST /suppliers/{id}/products/: the supplier comes from the URL.'
+      properties:
+        product:
+          type: string
+          format: uuid
+        supplier_sku:
+          type: string
+          description: The supplier's own code for the product.
+          maxLength: 40
+        min_order_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        lead_time_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          nullable: true
+        is_preferred:
+          type: boolean
+      required:
+      - product
     LoginRequest:
       type: object
       properties:
@@ -2671,6 +3117,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Product'
+    PaginatedProductSupplierList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSupplier'
     PaginatedRoleList:
       type: object
       required:
@@ -2728,6 +3193,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Store'
+    PaginatedSupplierList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Supplier'
     PaginatedTaxRateList:
       type: object
       required:
@@ -2903,6 +3387,27 @@ components:
           type: integer
           description: The version you last read; the update is refused if someone
             changed it since.
+    PatchedProductSupplierUpdateRequest:
+      type: object
+      description: Which product and supplier a link joins is fixed; unlink and link
+        again instead.
+      properties:
+        supplier_sku:
+          type: string
+          description: The supplier's own code for the product.
+          maxLength: 40
+        min_order_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        lead_time_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          nullable: true
+        is_preferred:
+          type: boolean
     PatchedProductUpdateRequest:
       type: object
       properties:
@@ -2997,6 +3502,66 @@ components:
           minLength: 1
         is_active:
           type: boolean
+    PatchedSupplierContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        role_title:
+          type: string
+          maxLength: 80
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        is_primary:
+          type: boolean
+    PatchedSupplierUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        kra_pin:
+          type: string
+          description: Matches eTIMS purchase invoices to this supplier.
+          maxLength: 11
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          maxLength: 300
+        payment_terms_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          description: Days to pay an invoice; 0 means on delivery.
+        notes:
+          type: string
+          maxLength: 2000
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
     PatchedTaxRateUpdateRequest:
       type: object
       properties:
@@ -3613,6 +4178,59 @@ components:
       - selling_price
       - tax_rate
       - unit
+    ProductSupplier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+          readOnly: true
+        product_sku:
+          type: string
+          readOnly: true
+        supplier:
+          type: string
+          format: uuid
+        supplier_name:
+          type: string
+          readOnly: true
+        supplier_sku:
+          type: string
+          description: The supplier's own code for the product.
+          maxLength: 40
+        min_order_qty:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        lead_time_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          nullable: true
+        is_preferred:
+          type: boolean
+        last_purchase_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: Updated by goods receipts (Phase 5).
+      required:
+      - id
+      - last_purchase_price
+      - product
+      - product_name
+      - product_sku
+      - supplier
+      - supplier_name
     RecoveryCodes:
       type: object
       properties:
@@ -3936,6 +4554,154 @@ components:
       - created_at
       - currency
       - id
+      - name
+    Supplier:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          maxLength: 120
+        kra_pin:
+          type: string
+          description: Matches eTIMS purchase invoices to this supplier.
+          maxLength: 11
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          maxLength: 300
+        payment_terms_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          description: Days to pay an invoice; 0 means on delivery.
+        notes:
+          type: string
+          maxLength: 2000
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - name
+      - updated_at
+      - version
+    SupplierContact:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 120
+        role_title:
+          type: string
+          maxLength: 80
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        is_primary:
+          type: boolean
+      required:
+      - id
+      - name
+    SupplierContactRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        role_title:
+          type: string
+          maxLength: 80
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        is_primary:
+          type: boolean
+      required:
+      - name
+    SupplierRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 20
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        kra_pin:
+          type: string
+          description: Matches eTIMS purchase invoices to this supplier.
+          maxLength: 11
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          maxLength: 300
+        payment_terms_days:
+          type: integer
+          maximum: 365
+          minimum: 0
+          description: Days to pay an invoice; 0 means on delivery.
+        notes:
+          type: string
+          maxLength: 2000
+        is_active:
+          type: boolean
+      required:
       - name
     SuspendRequest:
       type: object

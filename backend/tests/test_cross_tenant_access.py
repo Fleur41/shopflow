@@ -25,6 +25,7 @@ from apps.catalog.models import (
 from apps.organizations.models import Invitation, Membership, Role, Store
 from apps.organizations.testing import add_staff, add_store, client_for, create_business, role
 from apps.payments.models import PaymentMethod
+from apps.suppliers.models import ProductSupplier, Supplier, SupplierContact
 
 from .routes import api_routes
 
@@ -52,11 +53,20 @@ TARGETS = {
     },
     "api/v1/products/<uuid:product_id>/price-history/": lambda a: {"product_id": a.product.pk},
     "api/v1/products/<uuid:product_id>/image/": lambda a: {"product_id": a.product.pk},
+    "api/v1/suppliers/<uuid:entry_id>/": lambda a: {"entry_id": a.supplier.pk},
+    "api/v1/suppliers/<uuid:supplier_id>/contacts/": lambda a: {"supplier_id": a.supplier.pk},
+    "api/v1/suppliers/<uuid:supplier_id>/contacts/<uuid:contact_id>/": lambda a: {
+        "supplier_id": a.supplier.pk,
+        "contact_id": a.contact.pk,
+    },
+    "api/v1/suppliers/<uuid:supplier_id>/products/": lambda a: {"supplier_id": a.supplier.pk},
+    "api/v1/products/<uuid:product_id>/suppliers/": lambda a: {"product_id": a.product.pk},
+    "api/v1/product-suppliers/<uuid:link_id>/": lambda a: {"link_id": a.link.pk},
 }
 
 # Catalog lookups of business A, compared before and after the attack.
 CATALOG_MODELS = (Category, Brand, UnitOfMeasure, TaxRate)
-MASTER_DATA_MODELS = (*CATALOG_MODELS, Product, PaymentMethod)
+MASTER_DATA_MODELS = (*CATALOG_MODELS, Product, PaymentMethod, Supplier)
 
 # A body that passes validation for any endpoint, so lookups (not validators) decide.
 BODY = {
@@ -96,6 +106,7 @@ def world():
         tax_rate=tax_rate,
         selling_price="60.00",
     )
+    supplier = Supplier.objects.create(organization=org, code="S00001", name="Mumias Sugar")
     return SimpleNamespace(
         a=SimpleNamespace(
             organization=a.organization,
@@ -110,6 +121,13 @@ def world():
             unit=unit,
             tax_rate=tax_rate,
             product=product,
+            supplier=supplier,
+            contact=SupplierContact.objects.create(
+                organization=org, supplier=supplier, name="Wanjiku", is_primary=True
+            ),
+            link=ProductSupplier.objects.create(
+                organization=org, product=product, supplier=supplier, is_preferred=True
+            ),
             identifier=ProductIdentifier.objects.create(
                 organization=org, product=product, value="6161100000123", is_primary=True
             ),
@@ -141,6 +159,14 @@ def _snapshot(organization):
             )
             for model in MASTER_DATA_MODELS
         },
+        "contacts": sorted(
+            SupplierContact.objects.for_org(organization).values_list("pk", "name", "is_primary")
+        ),
+        "links": sorted(
+            ProductSupplier.objects.for_org(organization).values_list(
+                "pk", "is_preferred", "supplier_sku", "min_order_qty"
+            )
+        ),
         "identifiers": sorted(
             ProductIdentifier.objects.for_org(organization).values_list("pk", "value", "is_primary")
         ),
@@ -182,7 +208,12 @@ def test_list_endpoints_never_include_another_businesses_records(world):
             world.a.session.pk,
             *(
                 pk
-                for model in (*MASTER_DATA_MODELS, ProductIdentifier)
+                for model in (
+                    *MASTER_DATA_MODELS,
+                    ProductIdentifier,
+                    SupplierContact,
+                    ProductSupplier,
+                )
                 for pk in model.objects.for_org(world.a.organization).values_list("pk", flat=True)
             ),
             world.a.organization.pk,

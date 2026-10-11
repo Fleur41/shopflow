@@ -642,8 +642,9 @@ Real FK columns per source type were chosen over a generic `(reference_type, ref
 
 | Table | Key constraints / indexes |
 |---|---|
-| `supplier` | `UNIQUE(organization_id, code)` |
-| `product_supplier` | `UNIQUE(product_id, supplier_id)`. Partial unique `(product_id) WHERE is_preferred`. `CHECK(min_order_qty IS NULL OR min_order_qty > 0)`. |
+| `supplier` | `UNIQUE(organization_id, lower(code))`, `UNIQUE(organization_id, lower(name))`. `CHECK(kra_pin = '' OR kra_pin ~ '^[AP][0-9]{9}[A-Z]$')`. `CHECK(payment_terms_days <= 365)`. |
+| `supplier_contact` | Partial `UNIQUE(supplier_id) WHERE is_primary`. Removable (audited). |
+| `product_supplier` | `UNIQUE(product_id, supplier_id)`. Partial unique `(product_id) WHERE is_preferred`. `CHECK(min_order_qty IS NULL OR min_order_qty > 0)`. `CHECK(lead_time_days <= 365)`. `last_purchase_price` is set by goods receipts (5.1). |
 | `purchase_order` | `UNIQUE(organization_id, number)`. `status IN ('DRAFT','ORDERED','PARTIALLY_RECEIVED','RECEIVED','CLOSED','CANCELLED')`. |
 | `purchase_order_item` | `CHECK(quantity_received <= quantity_ordered)` (over-receipt policy: Q-18) |
 | `goods_receipt` | `UNIQUE(organization_id, client_txn_id)`. `UNIQUE(store_id, number)`. |

@@ -122,6 +122,43 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
     await expectAccessible(page, "product page");
   });
 
+  await test.step("the owner adds a supplier and makes it the product's preferred source", async () => {
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Suppliers" }).click();
+    await expect(page.getByText("No suppliers yet")).toBeVisible();
+    await page.getByRole("button", { name: "Add supplier" }).click();
+    const dialog = page.getByRole("dialog", { name: "Add a supplier" });
+    await dialog.getByLabel(/^Name/).fill("Mumias Sugar");
+    await dialog.getByLabel("Phone").fill("+254 712 345 678");
+    await dialog.getByLabel("KRA PIN").fill("p051234567x");
+    await dialog.getByLabel("Payment terms (days)").fill("30");
+    await expectAccessible(page, "add-supplier dialog");
+    await dialog.getByRole("button", { name: "Add supplier" }).click();
+
+    await expect(page.getByRole("heading", { name: "Mumias Sugar" })).toBeVisible();
+    await expect(page.getByText("KRA P051234567X")).toBeVisible();
+    await expect(page.getByText("30 days")).toBeVisible();
+
+    const contacts = page.getByRole("region", { name: "Contacts" });
+    await contacts.getByLabel(/^Contact name/).fill("Wanjiku Kamau");
+    await contacts.getByLabel("Role").fill("Sales rep");
+    await contacts.getByRole("button", { name: "Add contact" }).click();
+    await expect(contacts).toContainText("Primary");
+
+    const supplied = page.getByRole("region", { name: "Products supplied" });
+    await supplied.getByLabel("Link a product").fill("sugar");
+    await supplied.getByRole("button", { name: /Sugar 1kg/ }).click();
+    await supplied.getByLabel("Minimum order").fill("50");
+    await supplied.getByLabel("Lead time (days)").fill("3");
+    await supplied.getByRole("button", { name: "Link product" }).click();
+    await expect(supplied).toContainText("Preferred");
+    await expect(supplied).toContainText("Min. order 50 · 3-day lead time");
+    await expectAccessible(page, "supplier page");
+
+    await supplied.getByRole("link", { name: "Sugar 1kg" }).click();
+    await expect(page.getByRole("region", { name: "Suppliers" })).toContainText("Mumias Sugar");
+    await expect(page.getByRole("region", { name: "Suppliers" })).toContainText("Preferred");
+  });
+
   await test.step("a typo still finds the product", async () => {
     await page.getByRole("link", { name: "All products" }).click();
     await page.getByLabel("Search products").fill("suger");
@@ -141,6 +178,7 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
     await expect(nav.getByRole("link", { name: "Roles" })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Payment methods" })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Catalog setup" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Suppliers" })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Products" })).toBeVisible();
     await expect(page.getByLabel("Store", { exact: true }).locator("option")).toHaveText(["WST · Westlands"]);
   });

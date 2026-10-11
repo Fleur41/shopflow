@@ -1,15 +1,16 @@
-import { CreditCard, LayoutDashboard, type LucideIcon, Package, Shapes, ShieldCheck, Store, Users } from "lucide-react";
+import { CreditCard, LayoutDashboard, type LucideIcon, Package, Shapes, ShieldCheck, Store, Truck, Users } from "lucide-react";
 
 import { can } from "./auth";
 import type { Me } from "./api/types";
 
-export type NavGroup = "Overview" | "Catalog" | "Business";
+export type NavGroup = "Overview" | "Catalog" | "Buying" | "Business";
 export type NavItem = { href: string; label: string; group: NavGroup; icon: LucideIcon; permission?: string };
 
 const ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", group: "Overview", icon: LayoutDashboard },
   { href: "/products", label: "Products", group: "Catalog", icon: Package, permission: "products.view" },
   { href: "/settings/catalog", label: "Catalog setup", group: "Catalog", icon: Shapes, permission: "products.manage" },
+  { href: "/suppliers", label: "Suppliers", group: "Buying", icon: Truck, permission: "suppliers.view" },
   { href: "/settings/stores", label: "Stores", group: "Business", icon: Store, permission: "stores.view" },
   { href: "/settings/staff", label: "Staff", group: "Business", icon: Users, permission: "users.view" },
   { href: "/settings/roles", label: "Roles", group: "Business", icon: ShieldCheck, permission: "roles.view" },

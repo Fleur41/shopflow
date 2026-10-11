@@ -1,13 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, ImagePlus, Package, Trash2 } from "lucide-react";
+import { ArrowLeft, ImagePlus, Package, Star, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { type FormEvent, type ReactNode, useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { TextField } from "@/components/ui/Field";
+import { SelectField, TextField } from "@/components/ui/Field";
 import { Badge, Card, ErrorAlert, Loading } from "@/components/ui/Feedback";
 import { Money, PriceChange } from "@/components/ui/Money";
 import { api } from "@/lib/api/client";
@@ -16,7 +16,9 @@ import type { Product } from "@/lib/api/types";
 import { can, useMe } from "@/lib/auth";
 import { PRODUCT_TYPE_LABELS } from "@/lib/catalog";
 import { useTaxRates, useUnits } from "@/lib/catalog-queries";
-import { PRODUCTS_KEY } from "@/lib/query-keys";
+import { PRODUCTS_KEY, SUPPLIERS_KEY } from "@/lib/query-keys";
+
+import { linkTerms } from "../../suppliers/link-terms";
 
 import { ProductForm } from "../ProductForm";
 
@@ -55,6 +57,7 @@ export default function ProductPage() {
             </Card>
             <div className="flex flex-col gap-6">
               <PriceHistoryCard productId={id} version={product.data.version} currency={currency} />
+              {can(me, "suppliers.view") && <SuppliersCard productId={id} canManage={can(me, "suppliers.manage")} />}
               <ImageCard product={product.data} canManage={canManage} />
               <CodesCard productId={id} canManage={canManage} />
             </div>
@@ -341,6 +344,108 @@ function PriceHistoryCard({ productId, version, currency }: { productId: string;
             </li>
           ))}
         </ol>
+      )}
+    </Card>
+  );
+}
+
+// --- Suppliers --------------------------------------------------------------------------
+
+function SuppliersCard({ productId, canManage }: { productId: string; canManage: boolean }) {
+  const queryClient = useQueryClient();
+  const links = useQuery({
+    queryKey: [...PRODUCTS_KEY, productId, "suppliers"],
+    queryFn: () => unwrap(api.GET("/api/v1/products/{product_id}/suppliers/", { params: { path: { product_id: productId } } })),
+  });
+  const suppliers = useQuery({
+    queryKey: [...SUPPLIERS_KEY, "active"],
+    queryFn: () => unwrap(api.GET("/api/v1/suppliers/", { params: { query: { is_active: true, page_size: 200 } } })),
+    enabled: canManage,
+  });
+  const [supplierId, setSupplierId] = useState("");
+  const refresh = () =>
+    Promise.all([queryClient.invalidateQueries({ queryKey: PRODUCTS_KEY }), queryClient.invalidateQueries({ queryKey: SUPPLIERS_KEY })]);
+  const add = useMutation({
+    mutationFn: () => unwrap(api.POST("/api/v1/products/{product_id}/suppliers/", { params: { path: { product_id: productId } }, body: { supplier: supplierId } })),
+    onSuccess: async () => {
+      setSupplierId("");
+      await refresh();
+    },
+  });
+  const prefer = useMutation({
+    mutationFn: (linkId: string) => unwrap(api.PATCH("/api/v1/product-suppliers/{link_id}/", { params: { path: { link_id: linkId } }, body: { is_preferred: true } })),
+    onSuccess: refresh,
+  });
+  const remove = useMutation({
+    mutationFn: (linkId: string) => unwrap(api.DELETE("/api/v1/product-suppliers/{link_id}/", { params: { path: { link_id: linkId } } })),
+    onSuccess: refresh,
+  });
+  const rows = links.data ?? [];
+  const linked = new Set(rows.map((link) => link.supplier));
+  const choices = (suppliers.data?.results ?? []).filter((supplier) => !linked.has(supplier.id));
+  const error = add.error ?? prefer.error ?? remove.error;
+
+  return (
+    <Card title="Suppliers" description="Where this product comes from. The preferred one is suggested when reordering.">
+      {links.error && <ErrorAlert error={links.error} />}
+      {links.isSuccess && rows.length === 0 && <p className="mb-3 text-sm text-slate-600">No suppliers linked yet.</p>}
+      {rows.length > 0 && (
+        <ul className="mb-3 divide-y divide-slate-100">
+          {rows.map((link) => (
+            <li key={link.id} className="py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <Link href={`/suppliers/${link.supplier}`} className="min-w-0 truncate font-medium text-slate-900 hover:text-emerald-800 hover:underline">
+                  {link.supplier_name}
+                </Link>
+                {link.is_preferred ? (
+                  <span className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-amber-800">
+                    <Star aria-hidden="true" className="size-3.5 fill-amber-400 text-amber-500" /> Preferred
+                  </span>
+                ) : (
+                  canManage && (
+                    <Button variant="ghost" className="min-h-9 shrink-0 px-2 text-xs" onClick={() => prefer.mutate(link.id)} aria-label={`Prefer ${link.supplier_name}`}>
+                      Make preferred
+                    </Button>
+                  )
+                )}
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <p className="tabular text-xs text-slate-600">{linkTerms(link) || "No order terms yet"}</p>
+                {canManage && (
+                  <Button variant="ghost" className="min-h-9 shrink-0 px-2 text-xs" onClick={() => remove.mutate(link.id)} aria-label={`Unlink ${link.supplier_name}`}>
+                    Unlink
+                  </Button>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && <ErrorAlert error={error} />}
+      {canManage && choices.length > 0 && (
+        <div className="flex items-end gap-2 border-t border-slate-100 pt-3">
+          <div className="min-w-0 flex-1">
+            <SelectField label="Add a supplier" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+              <option value="">Choose…</option>
+              {choices.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
+              ))}
+            </SelectField>
+          </div>
+          <Button variant="secondary" disabled={!supplierId} loading={add.isPending} onClick={() => add.mutate()}>
+            Link
+          </Button>
+        </div>
+      )}
+      {canManage && suppliers.isSuccess && suppliers.data.results.length === 0 && (
+        <p className="text-sm text-slate-600">
+          <Link href="/suppliers" className="font-medium text-emerald-800 underline">
+            Add a supplier
+          </Link>{" "}
+          first, then link it here.
+        </p>
       )}
     </Card>
   );

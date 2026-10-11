@@ -17,3 +17,6 @@ export type TaxRate = Schemas["TaxRate"];
 export type Product = Schemas["Product"];
 export type ProductIdentifier = Schemas["ProductIdentifier"];
 export type PriceHistory = Schemas["PriceHistory"];
+export type Supplier = Schemas["Supplier"];
+export type SupplierContact = Schemas["SupplierContact"];
+export type ProductSupplier = Schemas["ProductSupplier"];

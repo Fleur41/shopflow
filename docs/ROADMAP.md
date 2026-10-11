@@ -69,11 +69,13 @@ Deferred:
 - **Web:** *Products* (search, add), a product page (details, image, codes, price history) and *Settings → Catalog setup*.
 - Deferred: tombstones for removed identifiers (sync, 6.2); object storage for uploads (8.2).
 
+2.3 done (2026-10-11): suppliers with generated codes, normalised phones and checked KRA PINs, payment terms; contacts with one primary; product links with the supplier's code, minimum order, lead time and one preferred supplier per product, from either side; products filter by supplier. Web: *Suppliers* list and page (contacts, linking products by search) and a *Suppliers* card on the product page. Ledger and payments come with purchasing (Phase 5).
+
 | # | Milestone | Acceptance criteria |
 |---|---|---|
 | 2.1 ✅ | Catalog master data | Categories, brands, units (fraction flag), tax rates. CRUD + permissions + audit. |
 | 2.2 ✅ | Products | Product CRUD, multiple identifiers with uniqueness per org, image upload pipeline, price changes audited with price history, optimistic versioning, trigram search. **eTIMS groundwork:** KRA item classification, packaging and quantity unit codes on products and units, eTIMS tax type (A–E) on tax rates. |
-| 2.3 | Suppliers | Supplier, contacts, product–supplier links (preferred supplier, supplier SKU, MOQ, lead time) |
+| 2.3 ✅ | Suppliers | Supplier, contacts, product–supplier links (preferred supplier, supplier SKU, MOQ, lead time) |
 | 2.4 | Inventory core | `stock_level`, `inventory_movement` (append-only + CHECKs), the single `apply_movements()` service with ordered locks, opening balances, stock adjustments with reasons, negative-stock policy (admin, audited) |
 | 2.5 | Inventory UI and search | Inventory list with filters (low/out/active/category/supplier), movement history, adjustment form. Barcode lookup endpoint meets p95 < 100 ms with 50k products (load test). |
 | 2.6 | Integrity verifier | Celery + beat. Nightly stock verifier with alerting. Concurrency test: N threads adjusting the same product never yield a wrong final quantity. |

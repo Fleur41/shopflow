@@ -599,6 +599,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/product-suppliers/{link_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        delete: operations["product_suppliers_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["product_suppliers_partial_update"];
+        trace?: never;
+    };
     "/api/v1/products/": {
         parameters: {
             query?: never;
@@ -702,6 +720,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/products/{product_id}/suppliers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The suppliers of a product, preferred first. There are only ever a few. */
+        get: operations["products_suppliers_list"];
+        put?: never;
+        /** @description The suppliers of a product, preferred first. There are only ever a few. */
+        post: operations["products_suppliers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/roles/": {
         parameters: {
             query?: never;
@@ -768,6 +804,94 @@ export interface paths {
         head?: never;
         /** @description Base for every organization-scoped endpoint. */
         patch: operations["stores_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/suppliers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["suppliers_list"];
+        put?: never;
+        post: operations["suppliers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suppliers/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["suppliers_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["suppliers_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/suppliers/{supplier_id}/contacts/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A supplier's contacts, primary first. There are only ever a few. */
+        get: operations["suppliers_contacts_list"];
+        put?: never;
+        /** @description A supplier's contacts, primary first. There are only ever a few. */
+        post: operations["suppliers_contacts_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/suppliers/{supplier_id}/contacts/{contact_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        delete: operations["suppliers_contacts_destroy"];
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["suppliers_contacts_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/suppliers/{supplier_id}/products/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The products a supplier supplies. */
+        get: operations["suppliers_products_list"];
+        put?: never;
+        /** @description The products a supplier supplies. */
+        post: operations["suppliers_products_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/tax-rates/": {
@@ -1084,6 +1208,28 @@ export interface components {
         InvitationTokenRequest: {
             token: string;
         };
+        /** @description POST /products/{id}/suppliers/: the product comes from the URL. */
+        LinkFromProductRequest: {
+            /** Format: uuid */
+            supplier: string;
+            /** @description The supplier's own code for the product. */
+            supplier_sku?: string;
+            /** Format: decimal */
+            min_order_qty?: string | null;
+            lead_time_days?: number | null;
+            is_preferred?: boolean;
+        };
+        /** @description POST /suppliers/{id}/products/: the supplier comes from the URL. */
+        LinkFromSupplierRequest: {
+            /** Format: uuid */
+            product: string;
+            /** @description The supplier's own code for the product. */
+            supplier_sku?: string;
+            /** Format: decimal */
+            min_order_qty?: string | null;
+            lead_time_days?: number | null;
+            is_preferred?: boolean;
+        };
         LoginRequest: {
             /** Format: email */
             email: string;
@@ -1256,6 +1402,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Product"][];
         };
+        PaginatedProductSupplierList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["ProductSupplier"][];
+        };
         PaginatedRoleList: {
             /**
              * Format: uri
@@ -1294,6 +1453,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Store"][];
+        };
+        PaginatedSupplierList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Supplier"][];
         };
         PaginatedTaxRateList: {
             /**
@@ -1381,6 +1553,15 @@ export interface components {
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
         };
+        /** @description Which product and supplier a link joins is fixed; unlink and link again instead. */
+        PatchedProductSupplierUpdateRequest: {
+            /** @description The supplier's own code for the product. */
+            supplier_sku?: string;
+            /** Format: decimal */
+            min_order_qty?: string | null;
+            lead_time_days?: number | null;
+            is_preferred?: boolean;
+        };
         PatchedProductUpdateRequest: {
             sku?: string;
             name?: string;
@@ -1420,6 +1601,27 @@ export interface components {
             phone?: string;
             timezone?: string;
             is_active?: boolean;
+        };
+        PatchedSupplierContactRequest: {
+            name?: string;
+            role_title?: string;
+            phone?: string;
+            email?: string;
+            is_primary?: boolean;
+        };
+        PatchedSupplierUpdateRequest: {
+            name?: string;
+            /** @description Matches eTIMS purchase invoices to this supplier. */
+            kra_pin?: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            /** @description Days to pay an invoice; 0 means on delivery. */
+            payment_terms_days?: number;
+            notes?: string;
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
         };
         PatchedTaxRateUpdateRequest: {
             name?: string;
@@ -1749,6 +1951,28 @@ export interface components {
             identifiers?: components["schemas"]["ProductIdentifierRequest"][];
             is_active?: boolean;
         };
+        ProductSupplier: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            product: string;
+            readonly product_name: string;
+            readonly product_sku: string;
+            /** Format: uuid */
+            supplier: string;
+            readonly supplier_name: string;
+            /** @description The supplier's own code for the product. */
+            supplier_sku?: string;
+            /** Format: decimal */
+            min_order_qty?: string | null;
+            lead_time_days?: number | null;
+            is_preferred?: boolean;
+            /**
+             * Format: decimal
+             * @description Updated by goods receipts (Phase 5).
+             */
+            readonly last_purchase_price: string | null;
+        };
         RecoveryCodes: {
             /** @description Shown once. Each works one time. */
             recovery_codes: string[];
@@ -1871,6 +2095,55 @@ export interface components {
             is_active?: boolean;
             /** Format: date-time */
             readonly created_at: string;
+        };
+        Supplier: {
+            /** Format: uuid */
+            readonly id: string;
+            code?: string;
+            name: string;
+            /** @description Matches eTIMS purchase invoices to this supplier. */
+            kra_pin?: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            /** @description Days to pay an invoice; 0 means on delivery. */
+            payment_terms_days?: number;
+            notes?: string;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        SupplierContact: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            role_title?: string;
+            phone?: string;
+            email?: string;
+            is_primary?: boolean;
+        };
+        SupplierContactRequest: {
+            name: string;
+            role_title?: string;
+            phone?: string;
+            email?: string;
+            is_primary?: boolean;
+        };
+        SupplierRequest: {
+            code?: string;
+            name: string;
+            /** @description Matches eTIMS purchase invoices to this supplier. */
+            kra_pin?: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            /** @description Days to pay an invoice; 0 means on delivery. */
+            payment_terms_days?: number;
+            notes?: string;
+            is_active?: boolean;
         };
         SuspendRequest: {
             reason: string;
@@ -3121,6 +3394,51 @@ export interface operations {
             };
         };
     };
+    product_suppliers_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    product_suppliers_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedProductSupplierUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSupplier"];
+                };
+            };
+        };
+    };
     products_list: {
         parameters: {
             query?: {
@@ -3138,6 +3456,8 @@ export interface operations {
                 search?: string;
                 /** @description Exact SKU, ignoring case */
                 sku?: string;
+                /** @description Products this supplier supplies */
+                supplier?: string;
             };
             header?: never;
             path?: never;
@@ -3371,6 +3691,52 @@ export interface operations {
             };
         };
     };
+    products_suppliers_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSupplier"][];
+                };
+            };
+        };
+    };
+    products_suppliers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkFromProductRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSupplier"];
+                };
+            };
+        };
+    };
     roles_list: {
         parameters: {
             query?: {
@@ -3559,6 +3925,250 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoreUpdate"];
+                };
+            };
+        };
+    };
+    suppliers_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSupplierList"];
+                };
+            };
+        };
+    };
+    suppliers_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplierRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Supplier"];
+                };
+            };
+        };
+    };
+    suppliers_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Supplier"];
+                };
+            };
+        };
+    };
+    suppliers_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSupplierUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Supplier"];
+                };
+            };
+        };
+    };
+    suppliers_contacts_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierContact"][];
+                };
+            };
+        };
+    };
+    suppliers_contacts_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupplierContactRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierContact"];
+                };
+            };
+        };
+    };
+    suppliers_contacts_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    suppliers_contacts_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                contact_id: string;
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedSupplierContactRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupplierContact"];
+                };
+            };
+        };
+    };
+    suppliers_products_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedProductSupplierList"];
+                };
+            };
+        };
+    };
+    suppliers_products_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                supplier_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LinkFromSupplierRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProductSupplier"];
                 };
             };
         };

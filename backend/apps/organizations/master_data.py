@@ -11,7 +11,7 @@ from contextlib import contextmanager
 from decimal import Decimal
 from typing import Any, ClassVar
 
-from django.db import IntegrityError, models, transaction
+from django.db import IntegrityError, connection, models, transaction
 from rest_framework import status
 
 from apps.audit.services import diff, record_audit
@@ -83,6 +83,29 @@ def update_entry[E: MasterData](
                 changes=changed,
             )
     return entry
+
+
+def next_code(
+    ctx: RequestContext, model: type[MasterData], *, field: str, prefix: str, width: int = 6
+) -> str:
+    """The next generated code for this business: ``P000001``, ``P000002``, …
+
+    Serialized per business and model with an advisory lock (held until the
+    transaction ends), so codes created at the same moment never clash.
+    Hand-entered codes in the same format are counted too.
+    """
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+            [f"{model._meta.label}.{field}:{ctx.organization.pk}"],
+        )
+    generated = (
+        model.objects.for_org(ctx.organization)
+        .filter(**{f"{field}__regex": rf"^{prefix}[0-9]{{{width},}}$"})
+        .values_list(field, flat=True)
+    )
+    highest = max((int(code[len(prefix) :]) for code in generated), default=0)
+    return f"{prefix}{highest + 1:0{width}d}"
 
 
 def audit_values(entry: models.Model, fields: Any) -> dict[str, Any]:

@@ -11,7 +11,7 @@ from decimal import Decimal
 from typing import Any
 
 from django.core.files.uploadedfile import UploadedFile
-from django.db import IntegrityError, connection, transaction
+from django.db import IntegrityError, transaction
 from rest_framework import status
 
 from apps.audit.services import record_audit
@@ -37,7 +37,9 @@ def create_product(
 ) -> Product:
     with transaction.atomic():
         if not fields.get("sku"):
-            fields["sku"] = _next_sku(ctx)
+            fields["sku"] = master_data.next_code(
+                ctx, Product, field="sku", prefix=GENERATED_SKU_PREFIX
+            )
         _require_code_free(ctx, fields["sku"], pointer="/sku")
         product = master_data.create_entry(ctx, Product, **fields)
         _record_price(ctx, product, old=None, new=product.selling_price)
@@ -166,23 +168,6 @@ def _code_in_use(pointer: str, product_name: str) -> CodeInUse:
             }
         ],
     )
-
-
-def _next_sku(ctx: RequestContext) -> str:
-    """The next ``P`` number for this business. Serialized per business, so
-    two products created at once never get the same SKU."""
-    with connection.cursor() as cursor:
-        cursor.execute(
-            "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
-            [f"catalog.sku:{ctx.organization.pk}"],
-        )
-    generated = (
-        Product.objects.for_org(ctx.organization)
-        .filter(sku__regex=rf"^{GENERATED_SKU_PREFIX}[0-9]{{6,}}$")
-        .values_list("sku", flat=True)
-    )
-    highest = max((int(sku[len(GENERATED_SKU_PREFIX) :]) for sku in generated), default=0)
-    return f"{GENERATED_SKU_PREFIX}{highest + 1:06d}"
 
 
 def set_image(ctx: RequestContext, product: Product, upload: UploadedFile) -> Product:

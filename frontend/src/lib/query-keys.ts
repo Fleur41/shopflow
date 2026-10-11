@@ -8,3 +8,4 @@ export const BRANDS_KEY = ["brands"] as const;
 export const UNITS_KEY = ["units"] as const;
 export const TAX_RATES_KEY = ["tax-rates"] as const;
 export const PRODUCTS_KEY = ["products"] as const;
+export const SUPPLIERS_KEY = ["suppliers"] as const;

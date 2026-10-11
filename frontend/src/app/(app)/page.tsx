@@ -15,6 +15,7 @@ import { MEMBERS_KEY, PRODUCTS_KEY } from "@/lib/query-keys";
 const DESCRIPTIONS: Record<string, string> = {
   "/products": "Prices, barcodes and photos for everything you sell.",
   "/settings/catalog": "Categories, brands, units and tax rates.",
+  "/suppliers": "Who you buy from, their contacts and what they supply.",
   "/settings/stores": "Your shop locations and their tills.",
   "/settings/staff": "Who works where, and what they may do.",
   "/settings/roles": "Permission sets for owners, managers and cashiers.",

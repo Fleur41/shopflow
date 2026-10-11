@@ -136,7 +136,7 @@ Implemented in Phase 1.6 unless marked otherwise. Every change is audited.
 
 | Method | Path | perm | Notes |
 |---|---|---|---|
-| GET | `/products/` | `products.view` | `search` (part of the name, a near miss such as "suger", or an exact SKU/code), `sku`, `barcode`, `category`, `brand`, `is_active`. `supplier` arrives with 2.3, `updated_since_cursor` with sync (rows carry `row_version`) |
+| GET | `/products/` | `products.view` | `search` (part of the name, a near miss such as "suger", or an exact SKU/code), `sku`, `barcode`, `category`, `brand`, `is_active`. `supplier` (products it supplies), `updated_since_cursor` with sync (rows carry `row_version`) |
 | POST | `/products/` | `products.manage` | Can include initial `identifiers`. A blank `sku` is generated (`P000001`, …). Supplier links arrive with 2.3 |
 | GET/PATCH | `/products/{id}/` | `products.view` / `products.manage` | PATCH needs `version`. Price changes also need `products.change_price` (two-step verification), are audited and write price history. Deactivate with `is_active` (no DELETE) |
 | GET | `/products/{id}/price-history/` | `products.view` | Newest first |
@@ -259,15 +259,17 @@ Sales, customer payments and refunds with a cash tender accept an optional `cash
 
 ### 4.8 Suppliers
 
-| Method | Path | perm |
-|---|---|---|
-| GET/POST | `/suppliers/` | `suppliers.view` / `suppliers.manage` |
-| GET/PATCH | `/suppliers/{id}/` | same |
-| POST | `/suppliers/{id}/deactivate/` | `suppliers.manage` |
-| GET/POST/PATCH | `/suppliers/{id}/contacts/` · `/{cid}/` | `suppliers.manage` |
-| GET/POST/PATCH | `/suppliers/{id}/products/` · `/products/{id}/suppliers/` | `suppliers.manage` (product_supplier link) |
-| GET | `/suppliers/{id}/ledger/` | `purchasing.view_payables` |
-| POST 🔑 | `/suppliers/{id}/payments/` | `purchasing.pay_supplier` |
+| Method | Path | perm | Notes |
+|---|---|---|---|
+| GET/POST | `/suppliers/` | `suppliers.view` / `suppliers.manage` | `search` (name, code, phone, KRA PIN), `is_active`. A blank `code` is generated (`S00001`, …); phone numbers and KRA PINs are normalised and checked |
+| GET/PATCH | `/suppliers/{id}/` | same | PATCH needs `version`; `code` is fixed. Deactivate with `is_active` (no DELETE) |
+| GET/POST | `/suppliers/{id}/contacts/` | `suppliers.view` / `suppliers.manage` | Primary first; the first contact is primary |
+| PATCH/DELETE | `/suppliers/{id}/contacts/{cid}/` | `suppliers.manage` | Making one primary moves the flag; removal is audited |
+| GET/POST | `/suppliers/{id}/products/` | `suppliers.view` / `suppliers.manage` | The products a supplier supplies (paginated). POST `{product, supplier_sku?, min_order_qty?, lead_time_days?, is_preferred?}` |
+| GET/POST | `/products/{id}/suppliers/` | `suppliers.view` / `suppliers.manage` | A product's suppliers, preferred first. POST `{supplier, …}`; a product's only supplier is preferred |
+| PATCH/DELETE | `/product-suppliers/{link_id}/` | `suppliers.manage` | Edit terms or make preferred (moves the flag); which product and supplier is fixed |
+| GET | `/suppliers/{id}/ledger/` | `purchasing.view_payables` | Phase 5 |
+| POST 🔑 | `/suppliers/{id}/payments/` | `purchasing.pay_supplier` | Phase 5 |
 
 ### 4.9 Purchasing — `/stores/{store_id}/…`
 
