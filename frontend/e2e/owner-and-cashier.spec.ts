@@ -71,6 +71,19 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
     await expectAccessible(page, "roles");
   });
 
+  await test.step("payment methods start with cash, M-Pesa and card; the owner adds one", async () => {
+    await page.getByRole("link", { name: "Payment methods" }).click();
+    await expect(page.getByRole("cell", { name: "MPESA" })).toBeVisible();
+    await expectAccessible(page, "payment methods");
+    await page.getByRole("button", { name: "Add payment method" }).click();
+    const dialog = page.getByRole("dialog", { name: "Add a payment method" });
+    await dialog.getByLabel(/^Name/).fill("Airtel Money");
+    await dialog.getByLabel(/^Code/).fill("airtel");
+    await expectAccessible(page, "add-payment-method dialog");
+    await dialog.getByRole("button", { name: "Add payment method" }).click();
+    await expect(page.getByRole("row", { name: /Airtel Money/ })).toContainText("06 · Mobile money");
+  });
+
   await test.step("cashier signs in and sees only their store and sections", async () => {
     await signOut(page, "Ada Wanjiru");
     await page.getByLabel("Email").fill(cashier);
@@ -81,6 +94,7 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
     const nav = page.getByRole("navigation", { name: "Main" });
     await expect(nav.getByRole("link", { name: "Staff" })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Roles" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Payment methods" })).toHaveCount(0);
     await expect(page.getByLabel("Store", { exact: true }).locator("option")).toHaveText(["WST · Westlands"]);
   });
 

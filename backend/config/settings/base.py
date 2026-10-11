@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     "apps.accounts",
     "apps.organizations",
     "apps.catalog",
+    "apps.payments",
     "apps.audit",
     "apps.idempotency",
 ]
@@ -224,6 +225,12 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
+    # Explicit names for enums whose field names are too generic to stay unique.
+    "ENUM_NAME_OVERRIDES": {
+        "PaymentMethodKind": "apps.payments.models.PaymentMethod.Kind",
+        "EtimsPaymentType": "apps.payments.models.PaymentMethod.EtimsPaymentType",
+        "PaymentProvider": "apps.payments.models.PROVIDER_CHOICES",
+    },
 }
 
 # --- Logging --------------------------------------------------------------

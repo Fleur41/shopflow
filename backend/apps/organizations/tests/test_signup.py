@@ -50,7 +50,7 @@ def test_signup_creates_owner_business_store_and_roles(browser):
     )
     assert AuthSession.objects.get().organization == organization
     actions = set(AuditLog.objects.values_list("action", flat=True))
-    assert actions == {"organization.created", "store.created"}
+    assert actions == {"organization.created", "store.created", "payment_method.created"}
 
 
 def test_new_owner_is_immediately_working_in_their_business(browser):

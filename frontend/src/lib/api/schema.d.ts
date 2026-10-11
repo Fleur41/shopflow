@@ -548,6 +548,40 @@ export interface paths {
         patch: operations["organization_partial_update"];
         trace?: never;
     };
+    "/api/v1/payment-methods/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["payment_methods_list"];
+        put?: never;
+        post: operations["payment_methods_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/payment-methods/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["payment_methods_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["payment_methods_partial_update"];
+        trace?: never;
+    };
     "/api/v1/permissions/": {
         parameters: {
             query?: never;
@@ -711,10 +745,6 @@ export interface components {
             /** @description Mobile clients only. Web clients receive HttpOnly cookies. */
             tokens?: components["schemas"]["TokenPair"];
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         Brand: {
             /** Format: uuid */
             readonly id: string;
@@ -726,18 +756,10 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         BrandRequest: {
             name: string;
             is_active?: boolean;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         Category: {
             /** Format: uuid */
             readonly id: string;
@@ -751,10 +773,6 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         CategoryRequest: {
             name: string;
             /** Format: uuid */
@@ -785,6 +803,15 @@ export interface components {
         EmailVerifyRequest: {
             token: string;
         };
+        /**
+         * @description * `01` - Cash
+         *     * `04` - Bank cheque
+         *     * `05` - Debit or credit card
+         *     * `06` - Mobile money
+         *     * `07` - Other
+         * @enum {string}
+         */
+        EtimsPaymentType: "01" | "04" | "05" | "06" | "07";
         Invitation: {
             /** Format: uuid */
             readonly id: string;
@@ -966,6 +993,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Member"][];
         };
+        PaginatedPaymentMethodList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["PaymentMethod"][];
+        };
         PaginatedRoleList: {
             /**
              * Format: uri
@@ -1043,20 +1083,12 @@ export interface components {
             /** Format: email */
             email: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         PatchedBrandUpdateRequest: {
             name?: string;
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         PatchedCategoryUpdateRequest: {
             name?: string;
             /** Format: uuid */
@@ -1078,6 +1110,27 @@ export interface components {
             timezone?: string;
             locale?: string;
         };
+        PatchedPaymentMethodUpdateRequest: {
+            name?: string;
+            provider?: components["schemas"]["PaymentProvider"];
+            /** @description The cashier must enter a reference, e.g. the M-Pesa code. */
+            requires_reference?: boolean;
+            /** @description Defaults to after the others. */
+            position?: number;
+            /**
+             * @description KRA eTIMS payment type. Defaults from the kind.
+             *
+             *     * `01` - Cash
+             *     * `04` - Bank cheque
+             *     * `05` - Debit or credit card
+             *     * `06` - Mobile money
+             *     * `07` - Other
+             */
+            etims_payment_type?: components["schemas"]["EtimsPaymentType"];
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+        };
         PatchedRoleRequest: {
             name?: string;
             /** @default  */
@@ -1091,20 +1144,12 @@ export interface components {
             timezone?: string;
             is_active?: boolean;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         PatchedTaxRateUpdateRequest: {
             name?: string;
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         PatchedUnitUpdateRequest: {
             code?: string;
             name?: string;
@@ -1114,6 +1159,87 @@ export interface components {
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
         };
+        PaymentMethod: {
+            /** Format: uuid */
+            readonly id: string;
+            code: string;
+            name: string;
+            /**
+             * @description Cash tenders give change and count towards the till. Fixed once created.
+             *
+             *     * `CASH` - Cash
+             *     * `CARD` - Card
+             *     * `MOBILE_MONEY` - Mobile money
+             *     * `BANK_TRANSFER` - Bank transfer
+             *     * `OTHER` - Other
+             */
+            kind: components["schemas"]["PaymentMethodKind"];
+            provider?: components["schemas"]["PaymentProvider"];
+            /** @description The cashier must enter a reference, e.g. the M-Pesa code. */
+            requires_reference?: boolean;
+            /** @description Defaults to after the others. */
+            position?: number;
+            /**
+             * @description KRA eTIMS payment type. Defaults from the kind.
+             *
+             *     * `01` - Cash
+             *     * `04` - Bank cheque
+             *     * `05` - Debit or credit card
+             *     * `06` - Mobile money
+             *     * `07` - Other
+             */
+            etims_payment_type?: components["schemas"]["EtimsPaymentType"];
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description * `CASH` - Cash
+         *     * `CARD` - Card
+         *     * `MOBILE_MONEY` - Mobile money
+         *     * `BANK_TRANSFER` - Bank transfer
+         *     * `OTHER` - Other
+         * @enum {string}
+         */
+        PaymentMethodKind: "CASH" | "CARD" | "MOBILE_MONEY" | "BANK_TRANSFER" | "OTHER";
+        PaymentMethodRequest: {
+            code: string;
+            name: string;
+            /**
+             * @description Cash tenders give change and count towards the till. Fixed once created.
+             *
+             *     * `CASH` - Cash
+             *     * `CARD` - Card
+             *     * `MOBILE_MONEY` - Mobile money
+             *     * `BANK_TRANSFER` - Bank transfer
+             *     * `OTHER` - Other
+             */
+            kind: components["schemas"]["PaymentMethodKind"];
+            provider?: components["schemas"]["PaymentProvider"];
+            /** @description The cashier must enter a reference, e.g. the M-Pesa code. */
+            requires_reference?: boolean;
+            /** @description Defaults to after the others. */
+            position?: number;
+            /**
+             * @description KRA eTIMS payment type. Defaults from the kind.
+             *
+             *     * `01` - Cash
+             *     * `04` - Bank cheque
+             *     * `05` - Debit or credit card
+             *     * `06` - Mobile money
+             *     * `07` - Other
+             */
+            etims_payment_type?: components["schemas"]["EtimsPaymentType"];
+            is_active?: boolean;
+        };
+        /**
+         * @description * `MANUAL` - Recorded by the cashier
+         * @enum {string}
+         */
+        PaymentProvider: "MANUAL";
         Permission: {
             readonly code: string;
             readonly description: string;
@@ -1323,10 +1449,6 @@ export interface components {
             /** @description PNG QR code as a data: URI. */
             qr_code: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         TaxRate: {
             /** Format: uuid */
             readonly id: string;
@@ -1343,10 +1465,6 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         TaxRateRequest: {
             name: string;
             /**
@@ -1369,10 +1487,6 @@ export interface components {
             access_token: string;
             refresh_token: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         Unit: {
             /** Format: uuid */
             readonly id: string;
@@ -1387,10 +1501,6 @@ export interface components {
             /** Format: date-time */
             readonly updated_at: string;
         };
-        /**
-         * @description Rejects a name (or code) another entry in the same scope already uses,
-         *     ignoring case, so "Soda" and "soda" can't both exist.
-         */
         UnitRequest: {
             code: string;
             name: string;
@@ -1883,7 +1993,7 @@ export interface operations {
                 is_active?: boolean;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description Part of the name (or unit code) */
+                /** @description Part of the name (or code) */
                 search?: string;
             };
             header?: never;
@@ -1985,7 +2095,7 @@ export interface operations {
                 page_size?: number;
                 /** @description Subcategories of this category ID, or `none` for top-level ones */
                 parent?: string;
-                /** @description Part of the name (or unit code) */
+                /** @description Part of the name (or code) */
                 search?: string;
             };
             header?: never;
@@ -2331,6 +2441,106 @@ export interface operations {
             };
         };
     };
+    payment_methods_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedPaymentMethodList"];
+                };
+            };
+        };
+    };
+    payment_methods_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentMethodRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethod"];
+                };
+            };
+        };
+    };
+    payment_methods_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethod"];
+                };
+            };
+        };
+    };
+    payment_methods_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPaymentMethodUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentMethod"];
+                };
+            };
+        };
+    };
     permissions_retrieve: {
         parameters: {
             query?: never;
@@ -2551,7 +2761,7 @@ export interface operations {
                 is_active?: boolean;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description Part of the name (or unit code) */
+                /** @description Part of the name (or code) */
                 search?: string;
             };
             header?: never;
@@ -2651,7 +2861,7 @@ export interface operations {
                 is_active?: boolean;
                 /** @description Number of results to return per page. */
                 page_size?: number;
-                /** @description Part of the name (or unit code) */
+                /** @description Part of the name (or code) */
                 search?: string;
             };
             header?: never;

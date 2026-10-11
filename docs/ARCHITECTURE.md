@@ -81,7 +81,8 @@ shopflow/
 │   │   │                        idempotency, tenancy context, document numbering
 │   │   ├── accounts/            User, login/refresh/logout, sessions & devices, MFA,
 │   │   │                        password reset, verification
-│   │   ├── organizations/       Organization, Store, Membership, Role, Permission
+│   │   ├── organizations/       Organization, Store, Membership, Role, Permission,
+│   │   │                        shared master-data base (versioned, audited lookups)
 │   │   ├── catalog/             Product, Category, Brand, UoM, TaxRate, identifiers
 │   │   ├── suppliers/           Supplier, SupplierContact, ProductSupplier
 │   │   ├── inventory/           StockLevel, InventoryMovement, adjustments, counts, transfers

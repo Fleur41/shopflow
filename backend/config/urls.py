@@ -11,6 +11,7 @@ api_v1_patterns: list[URLPattern | URLResolver] = [
     path("auth/", include((tenancy_urls.auth_urlpatterns, "tenancy-auth"))),
     path("", include("apps.organizations.api.urls")),
     path("", include("apps.catalog.api.urls")),
+    path("", include("apps.payments.api.urls")),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     path("docs/", SpectacularSwaggerView.as_view(url_name="api-v1:schema"), name="docs"),
 ]

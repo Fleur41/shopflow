@@ -430,7 +430,7 @@ paths:
         name: search
         schema:
           type: string
-        description: Part of the name (or unit code)
+        description: Part of the name (or code)
       tags:
       - brands
       security:
@@ -550,7 +550,7 @@ paths:
         name: search
         schema:
           type: string
-        description: Part of the name (or unit code)
+        description: Part of the name (or code)
       tags:
       - categories
       security:
@@ -913,6 +913,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/Organization'
           description: ''
+  /api/v1/payment-methods/:
+    get:
+      operationId: payment_methods_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or code)
+      tags:
+      - payment-methods
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentMethodList'
+          description: ''
+    post:
+      operationId: payment_methods_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentMethodRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+  /api/v1/payment-methods/{entry_id}/:
+    get:
+      operationId: payment_methods_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - payment-methods
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
+    patch:
+      operationId: payment_methods_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - payment-methods
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPaymentMethodUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentMethod'
+          description: ''
   /api/v1/permissions/:
     get:
       operationId: permissions_retrieve
@@ -1164,7 +1279,7 @@ paths:
         name: search
         schema:
           type: string
-        description: Part of the name (or unit code)
+        description: Part of the name (or code)
       tags:
       - tax-rates
       security:
@@ -1279,7 +1394,7 @@ paths:
         name: search
         schema:
           type: string
-        description: Part of the name (or unit code)
+        description: Part of the name (or code)
       tags:
       - units
       security:
@@ -1387,9 +1502,6 @@ components:
       - user
     Brand:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         id:
           type: string
@@ -1419,9 +1531,6 @@ components:
       - version
     BrandRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         name:
           type: string
@@ -1433,9 +1542,6 @@ components:
       - name
     Category:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         id:
           type: string
@@ -1469,9 +1575,6 @@ components:
       - version
     CategoryRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         name:
           type: string
@@ -1537,6 +1640,20 @@ components:
           maxLength: 128
       required:
       - token
+    EtimsPaymentType:
+      enum:
+      - '01'
+      - '04'
+      - '05'
+      - '06'
+      - '07'
+      type: string
+      description: |-
+        * `01` - Cash
+        * `04` - Bank cheque
+        * `05` - Debit or credit card
+        * `06` - Mobile money
+        * `07` - Other
     Invitation:
       type: object
       properties:
@@ -1969,6 +2086,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Member'
+    PaginatedPaymentMethodList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentMethod'
     PaginatedRoleList:
       type: object
       required:
@@ -2107,9 +2243,6 @@ components:
       - email
     PatchedBrandUpdateRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         name:
           type: string
@@ -2123,9 +2256,6 @@ components:
             changed it since.
     PatchedCategoryUpdateRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         name:
           type: string
@@ -2173,6 +2303,40 @@ components:
           type: string
           minLength: 1
           maxLength: 16
+    PatchedPaymentMethodUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        provider:
+          $ref: '#/components/schemas/PaymentProvider'
+        requires_reference:
+          type: boolean
+          description: The cashier must enter a reference, e.g. the M-Pesa code.
+        position:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          description: Defaults to after the others.
+        etims_payment_type:
+          allOf:
+          - $ref: '#/components/schemas/EtimsPaymentType'
+          description: |-
+            KRA eTIMS payment type. Defaults from the kind.
+
+            * `01` - Cash
+            * `04` - Bank cheque
+            * `05` - Debit or credit card
+            * `06` - Mobile money
+            * `07` - Other
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
     PatchedRoleRequest:
       type: object
       properties:
@@ -2208,9 +2372,6 @@ components:
           type: boolean
     PatchedTaxRateUpdateRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         name:
           type: string
@@ -2224,9 +2385,6 @@ components:
             changed it since.
     PatchedUnitUpdateRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         code:
           type: string
@@ -2245,6 +2403,140 @@ components:
           type: integer
           description: The version you last read; the update is refused if someone
             changed it since.
+    PaymentMethod:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          maxLength: 30
+        name:
+          type: string
+          maxLength: 60
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethodKind'
+          description: |-
+            Cash tenders give change and count towards the till. Fixed once created.
+
+            * `CASH` - Cash
+            * `CARD` - Card
+            * `MOBILE_MONEY` - Mobile money
+            * `BANK_TRANSFER` - Bank transfer
+            * `OTHER` - Other
+        provider:
+          $ref: '#/components/schemas/PaymentProvider'
+        requires_reference:
+          type: boolean
+          description: The cashier must enter a reference, e.g. the M-Pesa code.
+        position:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          description: Defaults to after the others.
+        etims_payment_type:
+          allOf:
+          - $ref: '#/components/schemas/EtimsPaymentType'
+          description: |-
+            KRA eTIMS payment type. Defaults from the kind.
+
+            * `01` - Cash
+            * `04` - Bank cheque
+            * `05` - Debit or credit card
+            * `06` - Mobile money
+            * `07` - Other
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - code
+      - created_at
+      - id
+      - kind
+      - name
+      - updated_at
+      - version
+    PaymentMethodKind:
+      enum:
+      - CASH
+      - CARD
+      - MOBILE_MONEY
+      - BANK_TRANSFER
+      - OTHER
+      type: string
+      description: |-
+        * `CASH` - Cash
+        * `CARD` - Card
+        * `MOBILE_MONEY` - Mobile money
+        * `BANK_TRANSFER` - Bank transfer
+        * `OTHER` - Other
+    PaymentMethodRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          maxLength: 30
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/PaymentMethodKind'
+          description: |-
+            Cash tenders give change and count towards the till. Fixed once created.
+
+            * `CASH` - Cash
+            * `CARD` - Card
+            * `MOBILE_MONEY` - Mobile money
+            * `BANK_TRANSFER` - Bank transfer
+            * `OTHER` - Other
+        provider:
+          $ref: '#/components/schemas/PaymentProvider'
+        requires_reference:
+          type: boolean
+          description: The cashier must enter a reference, e.g. the M-Pesa code.
+        position:
+          type: integer
+          maximum: 32767
+          minimum: 0
+          description: Defaults to after the others.
+        etims_payment_type:
+          allOf:
+          - $ref: '#/components/schemas/EtimsPaymentType'
+          description: |-
+            KRA eTIMS payment type. Defaults from the kind.
+
+            * `01` - Cash
+            * `04` - Bank cheque
+            * `05` - Debit or credit card
+            * `06` - Mobile money
+            * `07` - Other
+        is_active:
+          type: boolean
+      required:
+      - code
+      - kind
+      - name
+    PaymentProvider:
+      enum:
+      - MANUAL
+      type: string
+      description: '* `MANUAL` - Recorded by the cashier'
     Permission:
       type: object
       properties:
@@ -2760,9 +3052,6 @@ components:
       - secret
     TaxRate:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         id:
           type: string
@@ -2798,9 +3087,6 @@ components:
       - version
     TaxRateRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         name:
           type: string
@@ -2843,9 +3129,6 @@ components:
       - token_type
     Unit:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         id:
           type: string
@@ -2882,9 +3165,6 @@ components:
       - version
     UnitRequest:
       type: object
-      description: |-
-        Rejects a name (or code) another entry in the same scope already uses,
-        ignoring case, so "Soda" and "soda" can't both exist.
       properties:
         code:
           type: string

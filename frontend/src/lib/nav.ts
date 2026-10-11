@@ -8,6 +8,7 @@ const ITEMS: NavItem[] = [
   { href: "/settings/stores", label: "Stores", permission: "stores.view" },
   { href: "/settings/staff", label: "Staff", permission: "users.view" },
   { href: "/settings/roles", label: "Roles", permission: "roles.view" },
+  { href: "/settings/payment-methods", label: "Payment methods", permission: "org.manage" },
 ];
 
 /** Only show what the user may open; the server enforces it regardless. */

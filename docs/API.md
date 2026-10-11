@@ -282,10 +282,13 @@ Sales, customer payments and refunds with a cash tender accept an optional `cash
 
 ### 4.10 Payment methods
 
-| Method | Path | perm |
-|---|---|---|
-| GET | `/payment-methods/` | authenticated member |
-| POST/PATCH | `/payment-methods/` · `/{id}/` | `org.manage` |
+| Method | Path | perm | Notes |
+|---|---|---|---|
+| GET | `/payment-methods/` · `/{id}/` | `org.view` (every member: the till needs them) | In till order (`position`, then name). Filters: `is_active`, `search` |
+| POST | `/payment-methods/` | `org.manage` | `{code, name, kind, provider?, requires_reference?, position?, etims_payment_type?}`. The eTIMS type defaults from the kind; a new method goes last |
+| PATCH | `/payment-methods/{id}/` | `org.manage` | Needs `version`. `code` and `kind` are fixed once created. No DELETE: deactivate with `is_active` |
+
+New businesses start with Cash, M-Pesa (reference required, Q-22) and Card. Codes and names are unique per business ignoring case, and there is at most one `CASH` method.
 
 ### 4.11 Reports and dashboard
 

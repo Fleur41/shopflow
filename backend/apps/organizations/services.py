@@ -22,6 +22,7 @@ from django.utils.text import slugify
 from apps.accounts.models import User, normalize_email_address
 from apps.accounts.services import revoke_organization_sessions
 from apps.audit.services import AuditActor, diff, record_audit
+from apps.payments.services import create_default_payment_methods
 
 from .catalog import OWNER_ROLE_DESCRIPTION, OWNER_ROLE_NAME, ROLE_TEMPLATES
 from .context import RequestContext, invalidate_membership, invalidate_role, role_permissions
@@ -103,6 +104,7 @@ def register_business(
             store_id=store.pk,
             changes={"code": [None, store.code], "name": [None, store.name]},
         )
+        create_default_payment_methods(organization, actor)
     return RegisteredBusiness(
         user=user, organization=organization, store=store, membership=membership
     )

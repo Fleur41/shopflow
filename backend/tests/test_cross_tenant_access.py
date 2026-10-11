@@ -17,6 +17,7 @@ from apps.audit.models import AuditLog
 from apps.catalog.models import Brand, Category, TaxRate, UnitOfMeasure
 from apps.organizations.models import Invitation, Membership, Role, Store
 from apps.organizations.testing import add_staff, add_store, client_for, create_business, role
+from apps.payments.models import PaymentMethod
 
 from .routes import api_routes
 
@@ -35,10 +36,12 @@ TARGETS = {
     "api/v1/brands/<uuid:entry_id>/": lambda a: {"entry_id": a.brand.pk},
     "api/v1/units/<uuid:entry_id>/": lambda a: {"entry_id": a.unit.pk},
     "api/v1/tax-rates/<uuid:entry_id>/": lambda a: {"entry_id": a.tax_rate.pk},
+    "api/v1/payment-methods/<uuid:entry_id>/": lambda a: {"entry_id": a.payment_method.pk},
 }
 
 # Catalog lookups of business A, compared before and after the attack.
 CATALOG_MODELS = (Category, Brand, UnitOfMeasure, TaxRate)
+MASTER_DATA_MODELS = (*CATALOG_MODELS, PaymentMethod)
 
 # A body that passes validation for any endpoint, so lookups (not validators) decide.
 BODY = {
@@ -81,6 +84,7 @@ def world():
             brand=Brand.objects.create(organization=org, name="Kensalt"),
             unit=UnitOfMeasure.objects.create(organization=org, code="PCS", name="Pieces"),
             tax_rate=TaxRate.objects.create(organization=org, name="VAT", rate="0.16"),
+            payment_method=PaymentMethod.objects.for_org(org).get(code="MPESA"),
         ),
         b_client=client_for(b.user, b.organization),
     )
@@ -106,7 +110,7 @@ def _snapshot(organization):
             model.audit_name: sorted(
                 model.objects.for_org(organization).values_list("pk", "is_active", "version")
             )
-            for model in CATALOG_MODELS
+            for model in MASTER_DATA_MODELS
         },
     }
 
@@ -145,6 +149,7 @@ def test_list_endpoints_never_include_another_businesses_records(world):
             world.a.invitation.pk,
             world.a.session.pk,
             *(m.objects.for_org(world.a.organization).get().pk for m in CATALOG_MODELS),
+            *PaymentMethod.objects.for_org(world.a.organization).values_list("pk", flat=True),
             world.a.organization.pk,
         ]
     }
