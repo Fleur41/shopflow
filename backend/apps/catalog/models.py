@@ -1,8 +1,7 @@
 """Catalog master data: categories, brands, units of measure and tax rates.
 
 Products (Phase 2.2) reference these. Like all master data they are never
-deleted, only deactivated, and carry a ``version`` for optimistic locking
-(docs/DATABASE.md §1).
+deleted, only deactivated, and carry a ``version`` for optimistic locking.
 """
 
 from typing import ClassVar
@@ -11,29 +10,18 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 
-from apps.organizations.models import TenantManager, TenantModel
+from apps.organizations.master_data import MasterData
+from apps.organizations.models import TenantManager
 
 unit_code_validator = RegexValidator(
     regex=r"^[A-Z0-9]{1,10}$", message="Use 1-10 capital letters or digits, e.g. PCS or KG."
 )
 
 
-class CatalogEntry(TenantModel):
-    """Common shape of the catalog lookups."""
-
-    # ``entity_type`` in the audit log.
-    audit_name: ClassVar[str]
-
-    is_active = models.BooleanField(default=True)
-    version = models.PositiveIntegerField(default=1)
-
-    class Meta:
-        abstract = True
-
-
-class Category(CatalogEntry):
+class Category(MasterData):
     objects: ClassVar[TenantManager["Category"]]
     audit_name = "category"
+    unique_fields: ClassVar[dict[str, str]] = {"catalog_category_name_unique": "name"}
 
     name = models.CharField(max_length=80)
     parent = models.ForeignKey(
@@ -60,9 +48,10 @@ class Category(CatalogEntry):
         return self.name
 
 
-class Brand(CatalogEntry):
+class Brand(MasterData):
     objects: ClassVar[TenantManager["Brand"]]
     audit_name = "brand"
+    unique_fields: ClassVar[dict[str, str]] = {"catalog_brand_name_unique": "name"}
 
     name = models.CharField(max_length=80)
 
@@ -77,11 +66,12 @@ class Brand(CatalogEntry):
         return self.name
 
 
-class UnitOfMeasure(CatalogEntry):
+class UnitOfMeasure(MasterData):
     """How a product is counted. Fractional quantities need ``allows_fraction``."""
 
     objects: ClassVar[TenantManager["UnitOfMeasure"]]
     audit_name = "unit"
+    unique_fields: ClassVar[dict[str, str]] = {"catalog_unit_code_unique": "code"}
 
     code = models.CharField(max_length=10, validators=[unit_code_validator])
     name = models.CharField(max_length=40)
@@ -105,7 +95,7 @@ class UnitOfMeasure(CatalogEntry):
         return self.code
 
 
-class TaxRate(CatalogEntry):
+class TaxRate(MasterData):
     """A tax rate as a fraction (0.1600 is 16 %).
 
     The rate is fixed once created: to change it, create a new rate and move
@@ -114,6 +104,7 @@ class TaxRate(CatalogEntry):
 
     objects: ClassVar[TenantManager["TaxRate"]]
     audit_name = "tax_rate"
+    unique_fields: ClassVar[dict[str, str]] = {"catalog_tax_rate_name_unique": "name"}
 
     name = models.CharField(max_length=60)
     rate = models.DecimalField(max_digits=5, decimal_places=4)

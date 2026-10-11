@@ -10,6 +10,7 @@ from rest_framework.test import APIClient
 from apps.accounts.models import AuthSession, User
 from apps.accounts.services import start_session
 
+from .context import RequestContext, role_permissions
 from .models import Membership, MembershipStore, Organization, Role, Store
 from .services import RegisteredBusiness, register_business
 
@@ -83,3 +84,20 @@ def client_for(user: User, organization: Organization | None, *, mfa: bool = Tru
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {issued.access_token}")
     return client
+
+
+def context_for(membership: Membership) -> RequestContext:
+    """The request context of ``membership``, for calling services directly."""
+    return RequestContext(
+        user=membership.user,
+        organization=membership.organization,
+        membership=membership,
+        role=membership.role,
+        permissions=role_permissions(membership.role),
+        store_ids=frozenset(membership.stores.values_list("pk", flat=True)),
+        session_id=membership.pk,
+        mfa_verified=True,
+        request_id="",
+        ip_address=None,
+        user_agent="",
+    )

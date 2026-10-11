@@ -1,9 +1,9 @@
 import pytest
 
 from apps.audit.models import AuditLog
-from apps.catalog import services
 from apps.catalog.models import Brand, Category, TaxRate, UnitOfMeasure
 from apps.common.errors import ApplicationError
+from apps.organizations import master_data
 from apps.organizations.testing import client_for, create_business
 
 pytestmark = pytest.mark.django_db
@@ -95,10 +95,10 @@ def test_another_business_may_reuse_the_same_names(owner_client):
 
 def test_a_duplicate_that_slips_past_validation_is_still_refused_cleanly(owner_ctx):
     """Two requests racing with the same name: the database constraint decides."""
-    services.create_entry(owner_ctx, Brand, name="Kensalt")
+    master_data.create_entry(owner_ctx, Brand, name="Kensalt")
 
     with pytest.raises(ApplicationError) as raised:
-        services.create_entry(owner_ctx, Brand, name="kensalt")
+        master_data.create_entry(owner_ctx, Brand, name="kensalt")
 
     assert (raised.value.status_code, raised.value.code) == (400, "VALIDATION_ERROR")
     assert raised.value.errors[0]["pointer"] == "/name"
