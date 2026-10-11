@@ -6,6 +6,7 @@ This follows the phase order in the spec, with three deliberate changes:
 1. **CI, security baseline and observability start in Phase 1**, not Phase 8. Phase 8 is hardening, not introduction (spec §33).
 2. **Idempotency and audit frameworks are built in Phase 1**, so every later financial endpoint uses them from day one.
 3. **Suppliers (basic CRUD) move into Phase 2**, where the spec also lists them. Phase 5 adds purchasing on top.
+4. **KRA eTIMS fiscal invoicing** (added 2026-10-11, Q-23): data groundwork in 2.2, integration in 3.8.
 
 The sync API contract (`client_txn_id`, `occurred_at`, `origin`) is designed into the sales and payments endpoints from Phase 3, so Phase 6 (mobile) needs no backend rework.
 
@@ -66,7 +67,7 @@ Deferred:
 | # | Milestone | Acceptance criteria |
 |---|---|---|
 | 2.1 | Catalog master data | Categories, brands, units (fraction flag), tax rates. CRUD + permissions + audit. |
-| 2.2 | Products | Product CRUD, multiple identifiers with uniqueness per org, image upload pipeline, price changes audited with price history, optimistic versioning, trigram search |
+| 2.2 | Products | Product CRUD, multiple identifiers with uniqueness per org, image upload pipeline, price changes audited with price history, optimistic versioning, trigram search. **eTIMS groundwork:** KRA item classification, packaging and quantity unit codes on products and units, eTIMS tax type (A–E) on tax rates. |
 | 2.3 | Suppliers | Supplier, contacts, product–supplier links (preferred supplier, supplier SKU, MOQ, lead time) |
 | 2.4 | Inventory core | `stock_level`, `inventory_movement` (append-only + CHECKs), the single `apply_movements()` service with ordered locks, opening balances, stock adjustments with reasons, negative-stock policy (admin, audited) |
 | 2.5 | Inventory UI and search | Inventory list with filters (low/out/active/category/supplier), movement history, adjustment form. Barcode lookup endpoint meets p95 < 100 ms with 50k products (load test). |
@@ -83,8 +84,9 @@ Deferred:
 | 3.5 | Receipts | Receipt JSON/HTML (printable 58/80 mm CSS), reprint, delivery interface stub |
 | 3.6 | Voids and returns | Void (same day, permissioned, reason) and returns with restock option, all via reversal movements |
 | 3.7 | Cash sessions | Tills, open session with float, pay-in/pay-out/drop, blind close-out count, expected vs counted variance, X/Z reports, variance alerts, void allowed only while the session is open. Mobile: per-device till, synced as `cash_session.*` ops. |
+| 3.8 | eTIMS fiscal invoicing | Org KRA PIN and store-to-branch mapping, device initialization per store. `FiscalProvider` interface with an eTIMS OSCU adapter (Q-26) and a no-op provider. Sales and returns (credit notes) submitted via a transactional outbox with retries; each sale records the solution and KRA invoice number that signed it. Item registration and stock movements reported. Receipts show the KRA invoice number, signature and QR, including reprints. "Unsigned invoices" queue with alerts (Q-28). Tests against recorded sandbox responses, plus a sandbox run before release. |
 
-**Demo:** open the till, scan products with a USB scanner, complete a mixed cash/mobile-money sale, print the receipt, see stock decrease and the movement history, void the sale, then close the till with a blind count and see the variance.
+**Demo:** open the till, scan products with a USB scanner, complete a mixed cash/mobile-money sale, print the receipt (signed by the eTIMS sandbox), see stock decrease and the movement history, void the sale, then close the till with a blind count and see the variance.
 
 ## Phase 4 — Customers and credit
 
@@ -114,7 +116,7 @@ Deferred:
 | 6.2 | Local data | Room + SQLCipher. Pull sync of products, identifiers, stock, customers and payment methods, with a cursor. Repository tests. |
 | 6.3 | Camera scanning | CameraX + ML Kit, format restrictions, debounce, haptic feedback, lookup against Room. Scanner workflow tests with recorded frames/fakes. |
 | 6.4 | Mobile POS | Cart, pricing (passes shared vectors), tenders, credit sale, receipt view, offline indicator |
-| 6.5 | Outbox and push sync | Outbox in the same Room transaction as the local sale. WorkManager sync with backoff, ordered ops, dependency handling, result mapping, conflict display. Server `/sync/push` and the conflict queue in web admin. **Tests:** duplicate push never creates duplicates; kill the app mid-sync and retry; clock skew. |
+| 6.5 | Outbox and push sync | Outbox in the same Room transaction as the local sale. WorkManager sync with backoff, ordered ops, dependency handling, result mapping, conflict display. Server `/sync/push` and the conflict queue in web admin. Offline sales are submitted to eTIMS when they sync (Q-26). **Tests:** duplicate push never creates duplicates; kill the app mid-sync and retry; clock skew. |
 | 6.6 | Other mobile flows | Customer payments, customer lookup, stock adjustment (if permitted), goods receipt, quick-action dashboard |
 | 6.7 | Device security | Revocation and quarantine, offline time limit, backup exclusion, release signing, Play internal track |
 
@@ -138,7 +140,7 @@ Deferred:
 | 8.4 | Observability | Dashboards and alerts for SLOs, security events, Celery, sync, integrity drift. On-call runbook. |
 | 8.5 | Performance | Load tests (k6) for lookup, sale and sync push at 10× expected peak. Query-count assertions. Index review. |
 | 8.6 | Security assurance | ZAP scans, dependency and image scanning gates, audit hash chain (optional), step-up MFA, external penetration test with findings closed |
-| 8.7 | Launch readiness | Privacy review (Kenya DPA if applicable), terms, data retention jobs, support tooling |
+| 8.7 | Launch readiness | Privacy review (Kenya DPA if applicable), terms, data retention jobs, support tooling, KRA eTIMS certification for production (Q-27) |
 
 ---
 

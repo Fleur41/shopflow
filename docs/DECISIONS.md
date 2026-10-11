@@ -28,7 +28,7 @@ The spec (§52) asks that ambiguous business behaviour be identified rather than
 | Q-20 | **Cash drawer / shift management** (opening float, cash-up, variances) isn't in the spec. Include it? | **Adopted.** Tills, cash sessions, pay-in/pay-out, blind close-out count, variance. See ARCHITECTURE §6.8. | Without it there's no way to reconcile the cash in the drawer against cash sales. In practice that's the most important daily control in a shop. | Phase 3 |
 | Q-21 | Batch/lot and expiry-date tracking? | **Not in the MVP.** `EXPIRED` and `DAMAGED` movements are supported; lot tracking is a later extension. | Significant complexity. Needed mainly for pharmacies and food wholesale. | — |
 | Q-22 | M-Pesa in the MVP? | Mobile money payments with a **manual transaction code** entry. Daraja API (STK push, C2B confirmation) via the provider interface later. | Spec §44 lists M-Pesa as a future feature. | — |
-| Q-23 | eTIMS / fiscal device integration (KRA)? | Not in scope. Receipt numbering and the immutable sale record are designed so it can be added. | Possibly legally required for VAT-registered businesses. **Worth confirming early.** | — |
+| Q-23 | eTIMS / fiscal device integration (KRA)? | **Adopted 2026-10-11** as milestone 3.8, with groundwork in 2.2. Optional per organization (KRA PIN), each store mapped to a KRA branch. Sales and returns are submitted through a `FiscalProvider` interface (eTIMS adapter; a no-op provider for businesses that don't use it). See Q-26 to Q-28. | KRA requires eTIMS invoices well beyond VAT-registered businesses, so a Kenyan POS without it is hard to sell. | 3.8 |
 
 ## Open questions raised during Phase 1.6
 
@@ -37,3 +37,12 @@ The spec (§52) asks that ambiguous business behaviour be identified rather than
 | Q-24 | Do cashiers have email addresses? Many shop staff may only have a phone. | **Default applied in 1.8:** email sign-in. Every account needs an email; owners create staff accounts with an initial password. Phone/PIN sign-in can be added without reworking the web shell. | If staff lack email, we need phone-number sign-in and/or a quick till PIN, which is common on POS devices. Changes the `User` model and sign-in flow. | 1.8 / 1.9 |
 | Q-25 | May an owner add someone who already has a ShopFlow account (e.g. staff working at two shops)? | **Resolved in 1.9:** by invitation only. The person accepts while signed in as that account. The person must accept, so one business can't silently attach itself to another's account. | Adding them directly would let any business probe accounts and see real names. | 1.9 |
 
+## Open questions raised with eTIMS (2026-10-11)
+
+Confirm field-level details against KRA's current OSCU/VSCU specifications, which come with sandbox registration.
+
+| # | Question | Default (until decided) | Why it matters | Blocks |
+|---|---|---|---|---|
+| Q-26 | Which eTIMS mode: **OSCU** (online signing) or **VSCU** (virtual control unit, for bulk invoicing and connections that aren't always online)? | **OSCU from the server**, which is always online. A sale commits first; signing happens straight after through an outbox with retries, and the receipt shows KRA's signature and QR once signed. Offline mobile sales (Phase 6) are signed when they sync and are flagged until then. | KRA must accept invoices signed shortly after the sale. If it doesn't, offline selling needs VSCU instead. **Confirm with KRA or a tax advisor before 3.8.** | 3.8, 6.5 |
+| Q-27 | Who certifies the integration: ShopFlow as a KRA-verified integrator, or each business through a certified third party? | Build and test against the KRA sandbox behind the `FiscalProvider` interface. The certification route is a business decision and doesn't block development. | Certification takes paperwork (company documents, tax compliance, at least three technical staff) and a KRA review. Production use needs it. | 8.7 |
+| Q-28 | What happens to a sale KRA rejects, or one that stays unsigned for a long time? | The sale stands (goods and money already moved). It goes to an "unsigned invoices" queue with alerts. Corrections go through a credit note from the same solution that issued the invoice. | A credit note must come from the solution that issued the original invoice, so each sale records which solution signed it. | 3.8 |
