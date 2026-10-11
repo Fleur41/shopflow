@@ -1182,20 +1182,8 @@ paths:
   /api/v1/products/{product_id}/identifiers/:
     get:
       operationId: products_identifiers_list
-      description: Base for every organization-scoped endpoint.
+      description: 'All of a product''s codes at once: there are only ever a few.'
       parameters:
-      - name: cursor
-        required: false
-        in: query
-        description: The pagination cursor value.
-        schema:
-          type: string
-      - name: page_size
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
       - in: path
         name: product_id
         schema:
@@ -1212,11 +1200,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedProductIdentifierList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductIdentifier'
           description: ''
     post:
       operationId: products_identifiers_create
-      description: Base for every organization-scoped endpoint.
+      description: 'All of a product''s codes at once: there are only ever a few.'
       parameters:
       - in: header
         name: Idempotency-Key
@@ -2662,25 +2652,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PriceHistory'
-    PaginatedProductIdentifierList:
-      type: object
-      required:
-      - results
-      properties:
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/ProductIdentifier'
     PaginatedProductList:
       type: object
       required:

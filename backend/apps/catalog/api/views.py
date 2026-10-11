@@ -253,8 +253,11 @@ class _ProductChildView(TenantAPIView):
 
 
 class ProductIdentifiersView(_ProductChildView):
+    """All of a product's codes at once: there are only ever a few."""
+
     required_permissions: ClassVar[dict[str, str]] = _LIST_PERMISSIONS
     serializer_class = ProductIdentifierSerializer
+    pagination_class = None
 
     @extend_schema(responses=ProductIdentifierSerializer(many=True))
     def get(self, request: Request, product_id: uuid.UUID) -> Response:

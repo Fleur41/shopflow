@@ -62,14 +62,17 @@ Deferred:
 
 ## Phase 2 — Catalog, suppliers, inventory
 
-2.2 in progress (2026-10-11). Done: eTIMS codes on tax rates and units; products with generated SKUs, identifiers (check-digit validation, pack quantities, one code → one product), price changes behind `products.change_price` with append-only price history, typo-tolerant trigram search, `row_version` sync cursor; new businesses get default units and (for KES) Kenya's tax rates. Product images: validated, re-encoded WebP renditions (SECURITY.md §7). **Open:** web screens. Deferred: tombstones for removed identifiers (sync, 6.2).
-
-2.1 API done (2026-10-11): categories (tree, cycle-safe), brands, units and tax rates, with names unique ignoring case at the database level, optimistic versioning and audit. Covered by the authorization and cross-tenant suites. **Still open:** the web screens to manage them.
+2.1 and 2.2 done (2026-10-11):
+- **Lookups:** categories (tree, cycle-safe), brands, units and tax rates, with names unique ignoring case in the database, optimistic versioning, audit, and eTIMS codes (tax type checked against the rate, KRA unit of quantity). New businesses get Pieces/Kilogram/Litre and, in KES, Kenya's tax rates.
+- **Products:** generated SKUs, identifiers with check-digit validation and pack quantities (one code → one product), price changes behind `products.change_price` with append-only price history, typo-tolerant trigram search, `row_version` sync cursor, eTIMS fields.
+- **Images:** validated, re-encoded WebP renditions (SECURITY.md §7), served from a separate origin.
+- **Web:** *Products* (search, add), a product page (details, image, codes, price history) and *Settings → Catalog setup*.
+- Deferred: tombstones for removed identifiers (sync, 6.2); object storage for uploads (8.2).
 
 | # | Milestone | Acceptance criteria |
 |---|---|---|
-| 2.1 | Catalog master data | Categories, brands, units (fraction flag), tax rates. CRUD + permissions + audit. |
-| 2.2 | Products | Product CRUD, multiple identifiers with uniqueness per org, image upload pipeline, price changes audited with price history, optimistic versioning, trigram search. **eTIMS groundwork:** KRA item classification, packaging and quantity unit codes on products and units, eTIMS tax type (A–E) on tax rates. |
+| 2.1 ✅ | Catalog master data | Categories, brands, units (fraction flag), tax rates. CRUD + permissions + audit. |
+| 2.2 ✅ | Products | Product CRUD, multiple identifiers with uniqueness per org, image upload pipeline, price changes audited with price history, optimistic versioning, trigram search. **eTIMS groundwork:** KRA item classification, packaging and quantity unit codes on products and units, eTIMS tax type (A–E) on tax rates. |
 | 2.3 | Suppliers | Supplier, contacts, product–supplier links (preferred supplier, supplier SKU, MOQ, lead time) |
 | 2.4 | Inventory core | `stock_level`, `inventory_movement` (append-only + CHECKs), the single `apply_movements()` service with ordered locks, opening balances, stock adjustments with reasons, negative-stock policy (admin, audited) |
 | 2.5 | Inventory UI and search | Inventory list with filters (low/out/active/category/supplier), movement history, adjustment form. Barcode lookup endpoint meets p95 < 100 ms with 50k products (load test). |

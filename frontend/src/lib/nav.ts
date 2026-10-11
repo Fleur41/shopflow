@@ -5,9 +5,11 @@ export type NavItem = { href: string; label: string; permission?: string };
 
 const ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard" },
+  { href: "/products", label: "Products", permission: "products.view" },
   { href: "/settings/stores", label: "Stores", permission: "stores.view" },
   { href: "/settings/staff", label: "Staff", permission: "users.view" },
   { href: "/settings/roles", label: "Roles", permission: "roles.view" },
+  { href: "/settings/catalog", label: "Catalog setup", permission: "products.manage" },
   { href: "/settings/payment-methods", label: "Payment methods", permission: "org.manage" },
 ];
 

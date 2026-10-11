@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 
 import { enableTwoStep, expectAccessible, PASSWORD, signOut, signUpOwner, unique, watchCsp } from "./helpers";
 
+// A 1×1 PNG, as a phone or scanner app might upload.
+const PNG_1PX = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
 test("an owner sets up a business; a cashier sees only their store", async ({ page }) => {
   const csp = watchCsp(page);
   const id = unique();
@@ -84,6 +87,48 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
     await expect(page.getByRole("row", { name: /Airtel Money/ })).toContainText("06 · Mobile money");
   });
 
+  await test.step("the catalog starts with units and Kenya's tax rates", async () => {
+    await page.getByRole("link", { name: "Catalog setup" }).click();
+    await expect(page.getByRole("row", { name: /VAT 16%/ })).toContainText("B · VAT 16%");
+    await expect(page.getByRole("row", { name: /Pieces/ })).toContainText("U");
+    await expectAccessible(page, "catalog setup");
+  });
+
+  await test.step("the owner adds a product with a barcode, an image and a new price", async () => {
+    await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Products" }).click();
+    await expect(page.getByText("No products yet")).toBeVisible();
+    await page.getByRole("button", { name: "Add product" }).click();
+    const dialog = page.getByRole("dialog", { name: "Add a product" });
+    await dialog.getByLabel(/^Name/).fill("Sugar 1kg");
+    await dialog.getByLabel(/^Selling price/).fill("150");
+    await dialog.getByLabel(/^Unit/).selectOption({ label: "Kilogram (KG)" });
+    await dialog.getByLabel(/^Tax rate/).selectOption({ label: "VAT 16% (16%)" });
+    await dialog.getByLabel(/^Barcode/).fill("5901234123457");
+    await expectAccessible(page, "add-product dialog");
+    await dialog.getByRole("button", { name: "Add product" }).click();
+
+    await expect(page.getByRole("heading", { name: "Sugar 1kg" })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Barcodes and codes" })).toContainText("5901234123457");
+
+    await page.getByLabel("Upload image").setInputFiles({ name: "sugar.png", mimeType: "image/png", buffer: Buffer.from(PNG_1PX, "base64") });
+    const image = page.getByRole("img", { name: "Sugar 1kg" });
+    await expect(image).toHaveAttribute("src", /^http:\/\/localhost:8000\/media\/products\/.+\.webp$/);
+    // Loaded, so the page's CSP allows the media origin and the file is served.
+    await expect.poll(() => image.evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth)).toBeGreaterThan(0);
+
+    await page.getByLabel(/^Selling price/).fill("155");
+    await page.getByRole("button", { name: "Save changes" }).click();
+    await expect(page.getByRole("region", { name: "Price history" })).toContainText(/150\.00 → .*155\.00/);
+    await expectAccessible(page, "product page");
+  });
+
+  await test.step("a typo still finds the product", async () => {
+    await page.getByRole("link", { name: "← All products" }).click();
+    await page.getByLabel("Search products").fill("suger");
+    await expect(page.getByRole("link", { name: "Sugar 1kg" })).toBeVisible();
+    await expectAccessible(page, "products");
+  });
+
   await test.step("cashier signs in and sees only their store and sections", async () => {
     await signOut(page, "Ada Wanjiru");
     await page.getByLabel("Email").fill(cashier);
@@ -95,6 +140,8 @@ test("an owner sets up a business; a cashier sees only their store", async ({ pa
     await expect(nav.getByRole("link", { name: "Staff" })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Roles" })).toHaveCount(0);
     await expect(nav.getByRole("link", { name: "Payment methods" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Catalog setup" })).toHaveCount(0);
+    await expect(nav.getByRole("link", { name: "Products" })).toBeVisible();
     await expect(page.getByLabel("Store", { exact: true }).locator("option")).toHaveText(["WST · Westlands"]);
   });
 

@@ -640,10 +640,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** @description Base for every organization-scoped endpoint. */
+        /** @description All of a product's codes at once: there are only ever a few. */
         get: operations["products_identifiers_list"];
         put?: never;
-        /** @description Base for every organization-scoped endpoint. */
+        /** @description All of a product's codes at once: there are only ever a few. */
         post: operations["products_identifiers_create"];
         delete?: never;
         options?: never;
@@ -1242,19 +1242,6 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["PriceHistory"][];
-        };
-        PaginatedProductIdentifierList: {
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
-             */
-            next?: string | null;
-            /**
-             * Format: uri
-             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
-             */
-            previous?: string | null;
-            results: components["schemas"]["ProductIdentifier"][];
         };
         PaginatedProductList: {
             /**
@@ -3242,12 +3229,7 @@ export interface operations {
     };
     products_identifiers_list: {
         parameters: {
-            query?: {
-                /** @description The pagination cursor value. */
-                cursor?: string;
-                /** @description Number of results to return per page. */
-                page_size?: number;
-            };
+            query?: never;
             header?: never;
             path: {
                 product_id: string;
@@ -3261,7 +3243,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PaginatedProductIdentifierList"];
+                    "application/json": components["schemas"]["ProductIdentifier"][];
                 };
             };
         };
