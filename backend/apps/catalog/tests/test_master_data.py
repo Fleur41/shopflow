@@ -267,3 +267,43 @@ def test_cashiers_can_read_the_catalog_but_not_change_it(owner_client, cashier_c
         ).status_code
         == 403
     )
+
+
+# --- eTIMS codes ------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("rate", "tax_type", "ok"),
+    [("0.16", "B", True), ("0", "A", True), ("0", "C", True), ("0.08", "E", True),
+     ("0.16", "E", False), ("0", "B", False)],
+)  # fmt: skip
+def test_a_tax_type_must_match_its_rate(owner_client, rate, tax_type, ok):
+    response = owner_client.post(
+        "/api/v1/tax-rates/", {"name": "VAT", "rate": rate, "etims_tax_type": tax_type}
+    )
+
+    assert response.status_code == (201 if ok else 400)
+    if not ok:
+        assert response.json()["errors"][0]["pointer"] == "/etims_tax_type"
+
+
+def test_the_tax_type_can_be_set_later_and_is_checked_against_the_fixed_rate(owner_client):
+    vat = _create(owner_client, "tax-rates", {"name": "VAT", "rate": "0.16"})
+    url = f"/api/v1/tax-rates/{vat['id']}/"
+
+    assert owner_client.patch(url, {"etims_tax_type": "A", "version": 1}).status_code == 400
+    response = owner_client.patch(url, {"etims_tax_type": "B", "version": 1})
+    assert response.json()["etims_tax_type"] == "B"
+
+
+def test_units_take_a_kra_quantity_unit_from_the_list(owner_client):
+    kg = _create(
+        owner_client, "units", {"code": "KG", "name": "Kilogram", "etims_quantity_unit": "KG"}
+    )
+    assert kg["etims_quantity_unit"] == "KG"
+
+    response = owner_client.post(
+        "/api/v1/units/", {"code": "BOX", "name": "Box", "etims_quantity_unit": "BOXES"}
+    )
+    assert response.status_code == 400
+    assert response.json()["errors"][0]["pointer"] == "/etims_quantity_unit"

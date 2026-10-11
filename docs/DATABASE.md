@@ -597,8 +597,8 @@ Only non-obvious constraints are listed. Every tenant table also has `organizati
 | `product_identifier` | **`UNIQUE(organization_id, value)`**, so one barcode maps to exactly one product per org (the hot lookup path). `CHECK(pack_quantity > 0)`. Partial unique `(product_id) WHERE is_primary`. |
 | `category` | `UNIQUE NULLS NOT DISTINCT (organization_id, parent_id, lower(name))`. `CHECK(parent_id <> id)`. Service prevents cycles (re-parenting serialized per org by an advisory lock). |
 | `brand` | `UNIQUE(organization_id, lower(name))`. |
-| `unit_of_measure` | `UNIQUE(organization_id, code)`. `CHECK(code ~ '^[A-Z0-9]{1,10}$')`, so codes are stored upper-case. Has `allows_fraction bool`. |
-| `tax_rate` | `UNIQUE(organization_id, lower(name))`. `CHECK(rate >= 0 AND rate < 1)`. Rates are never edited once used: create a new rate and repoint products. |
+| `unit_of_measure` | `UNIQUE(organization_id, code)`. `CHECK(code ~ '^[A-Z0-9]{1,10}$')`, so codes are stored upper-case. Has `allows_fraction bool` and an optional `etims_quantity_unit` (KRA code list). |
+| `tax_rate` | `UNIQUE(organization_id, lower(name))`. `CHECK(rate >= 0 AND rate < 1)`. Rates are never edited once used: create a new rate and repoint products. Optional `etims_tax_type` (A–E), checked against the rate by the API (not the DB, since rates change by law). |
 | `product_price_history` | Append-only: `(product_id, store_id NULL, old_price, new_price, changed_by, changed_at)`. Feeds the price-history reports. |
 
 ### Inventory

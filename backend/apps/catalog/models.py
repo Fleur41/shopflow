@@ -13,6 +13,8 @@ from django.db.models.functions import Lower
 from apps.organizations.master_data import MasterData
 from apps.organizations.models import TenantManager
 
+from .etims_codes import QUANTITY_UNITS, TAX_TYPE_CHOICES
+
 unit_code_validator = RegexValidator(
     regex=r"^[A-Z0-9]{1,10}$", message="Use 1-10 capital letters or digits, e.g. PCS or KG."
 )
@@ -78,6 +80,12 @@ class UnitOfMeasure(MasterData):
     allows_fraction = models.BooleanField(
         default=False, help_text="Allow quantities like 0.5 (e.g. kilograms, litres)."
     )
+    etims_quantity_unit = models.CharField(
+        max_length=5,
+        blank=True,
+        choices=QUANTITY_UNITS,
+        help_text="KRA eTIMS unit of quantity, e.g. KG or U (pieces). Needed for eTIMS.",
+    )
 
     class Meta:
         verbose_name = "unit of measure"
@@ -108,6 +116,12 @@ class TaxRate(MasterData):
 
     name = models.CharField(max_length=60)
     rate = models.DecimalField(max_digits=5, decimal_places=4)
+    etims_tax_type = models.CharField(
+        max_length=1,
+        blank=True,
+        choices=TAX_TYPE_CHOICES,
+        help_text="KRA eTIMS tax type (A-E). Needed for eTIMS.",
+    )
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [

@@ -12,6 +12,7 @@ from apps.organizations.api.master_data import (
 )
 from apps.organizations.api.serializers import ScopedPrimaryKeyField
 
+from ..etims_codes import TAX_TYPES
 from ..models import Brand, Category, TaxRate, UnitOfMeasure, unit_code_validator
 
 # --- Categories ---------------------------------------------------------------------
@@ -72,7 +73,7 @@ class UnitSerializer(MasterDataSerializer[UnitOfMeasure]):
 
     class Meta:
         model = UnitOfMeasure
-        fields = ("id", "code", "name", "allows_fraction", *ENTRY_FIELDS)
+        fields = ("id", "code", "name", "allows_fraction", "etims_quantity_unit", *ENTRY_FIELDS)
         read_only_fields = READ_ONLY_FIELDS
 
     def validate_code(self, value: str) -> str:
@@ -103,8 +104,19 @@ class TaxRateSerializer(MasterDataSerializer[TaxRate]):
 
     class Meta:
         model = TaxRate
-        fields = ("id", "name", "rate", *ENTRY_FIELDS)
+        fields = ("id", "name", "rate", "etims_tax_type", *ENTRY_FIELDS)
         read_only_fields = READ_ONLY_FIELDS
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        attrs = super().validate(attrs)
+        tax_type = attrs.get("etims_tax_type")
+        rate = attrs.get("rate", getattr(self.instance, "rate", None))
+        if tax_type and rate is not None and TAX_TYPES[tax_type][1] != rate:
+            label, expected = TAX_TYPES[tax_type]
+            raise serializers.ValidationError(
+                {"etims_tax_type": [f"{label} is for a rate of {expected:.2%}."]}, code="mismatch"
+            )
+        return attrs
 
 
 class TaxRateUpdateSerializer(VersionedUpdateMixin, TaxRateSerializer):

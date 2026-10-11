@@ -745,6 +745,8 @@ export interface components {
             /** @description Mobile clients only. Web clients receive HttpOnly cookies. */
             tokens?: components["schemas"]["TokenPair"];
         };
+        /** @enum {unknown} */
+        BlankEnum: "";
         Brand: {
             /** Format: uuid */
             readonly id: string;
@@ -812,6 +814,62 @@ export interface components {
          * @enum {string}
          */
         EtimsPaymentType: "01" | "04" | "05" | "06" | "07";
+        /**
+         * @description * `4B` - Pair
+         *     * `AV` - Cap
+         *     * `BA` - Barrel
+         *     * `BE` - Bundle
+         *     * `BG` - Bag
+         *     * `BL` - Block
+         *     * `BLL` - Barrel (petroleum)
+         *     * `BX` - Box
+         *     * `CA` - Can
+         *     * `CEL` - Cell
+         *     * `CMT` - Centimetre
+         *     * `CR` - Carat
+         *     * `DR` - Drum
+         *     * `DZ` - Dozen
+         *     * `GLL` - Gallon
+         *     * `GRM` - Gram
+         *     * `GRO` - Gross
+         *     * `KG` - Kilogram
+         *     * `KTM` - Kilometre
+         *     * `KWT` - Kilowatt
+         *     * `L` - Litre
+         *     * `LBR` - Pound
+         *     * `LK` - Link
+         *     * `LTR` - Litre
+         *     * `M` - Metre
+         *     * `M2` - Square metre
+         *     * `M3` - Cubic metre
+         *     * `MGM` - Milligram
+         *     * `MTR` - Metre
+         *     * `MWT` - Megawatt hour
+         *     * `NO` - Number
+         *     * `NX` - Part per thousand
+         *     * `PA` - Packet
+         *     * `PG` - Plate
+         *     * `PR` - Pair
+         *     * `RL` - Reel
+         *     * `RO` - Roll
+         *     * `SET` - Set
+         *     * `ST` - Sheet
+         *     * `TNE` - Tonne
+         *     * `TU` - Tube
+         *     * `U` - Pieces / items
+         *     * `YRD` - Yard
+         * @enum {string}
+         */
+        EtimsQuantityUnitEnum: "4B" | "AV" | "BA" | "BE" | "BG" | "BL" | "BLL" | "BX" | "CA" | "CEL" | "CMT" | "CR" | "DR" | "DZ" | "GLL" | "GRM" | "GRO" | "KG" | "KTM" | "KWT" | "L" | "LBR" | "LK" | "LTR" | "M" | "M2" | "M3" | "MGM" | "MTR" | "MWT" | "NO" | "NX" | "PA" | "PG" | "PR" | "RL" | "RO" | "SET" | "ST" | "TNE" | "TU" | "U" | "YRD";
+        /**
+         * @description * `A` - A · Exempt
+         *     * `B` - B · VAT 16%
+         *     * `C` - C · Zero-rated
+         *     * `D` - D · Non-VAT
+         *     * `E` - E · VAT 8%
+         * @enum {string}
+         */
+        EtimsTaxTypeEnum: "A" | "B" | "C" | "D" | "E";
         Invitation: {
             /** Format: uuid */
             readonly id: string;
@@ -1146,6 +1204,16 @@ export interface components {
         };
         PatchedTaxRateUpdateRequest: {
             name?: string;
+            /**
+             * @description KRA eTIMS tax type (A-E). Needed for eTIMS.
+             *
+             *     * `A` - A · Exempt
+             *     * `B` - B · VAT 16%
+             *     * `C` - C · Zero-rated
+             *     * `D` - D · Non-VAT
+             *     * `E` - E · VAT 8%
+             */
+            etims_tax_type?: components["schemas"]["EtimsTaxTypeEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
@@ -1155,6 +1223,54 @@ export interface components {
             name?: string;
             /** @description Allow quantities like 0.5 (e.g. kilograms, litres). */
             allows_fraction?: boolean;
+            /**
+             * @description KRA eTIMS unit of quantity, e.g. KG or U (pieces). Needed for eTIMS.
+             *
+             *     * `4B` - Pair
+             *     * `AV` - Cap
+             *     * `BA` - Barrel
+             *     * `BE` - Bundle
+             *     * `BG` - Bag
+             *     * `BL` - Block
+             *     * `BLL` - Barrel (petroleum)
+             *     * `BX` - Box
+             *     * `CA` - Can
+             *     * `CEL` - Cell
+             *     * `CMT` - Centimetre
+             *     * `CR` - Carat
+             *     * `DR` - Drum
+             *     * `DZ` - Dozen
+             *     * `GLL` - Gallon
+             *     * `GRM` - Gram
+             *     * `GRO` - Gross
+             *     * `KG` - Kilogram
+             *     * `KTM` - Kilometre
+             *     * `KWT` - Kilowatt
+             *     * `L` - Litre
+             *     * `LBR` - Pound
+             *     * `LK` - Link
+             *     * `LTR` - Litre
+             *     * `M` - Metre
+             *     * `M2` - Square metre
+             *     * `M3` - Cubic metre
+             *     * `MGM` - Milligram
+             *     * `MTR` - Metre
+             *     * `MWT` - Megawatt hour
+             *     * `NO` - Number
+             *     * `NX` - Part per thousand
+             *     * `PA` - Packet
+             *     * `PG` - Plate
+             *     * `PR` - Pair
+             *     * `RL` - Reel
+             *     * `RO` - Roll
+             *     * `SET` - Set
+             *     * `ST` - Sheet
+             *     * `TNE` - Tonne
+             *     * `TU` - Tube
+             *     * `U` - Pieces / items
+             *     * `YRD` - Yard
+             */
+            etims_quantity_unit?: components["schemas"]["EtimsQuantityUnitEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
@@ -1458,6 +1574,16 @@ export interface components {
              * @description A fraction: 0.16 is 16 %. Fixed once created.
              */
             rate: string;
+            /**
+             * @description KRA eTIMS tax type (A-E). Needed for eTIMS.
+             *
+             *     * `A` - A · Exempt
+             *     * `B` - B · VAT 16%
+             *     * `C` - C · Zero-rated
+             *     * `D` - D · Non-VAT
+             *     * `E` - E · VAT 8%
+             */
+            etims_tax_type?: components["schemas"]["EtimsTaxTypeEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
             readonly version: number;
             /** Format: date-time */
@@ -1472,6 +1598,16 @@ export interface components {
              * @description A fraction: 0.16 is 16 %. Fixed once created.
              */
             rate: string;
+            /**
+             * @description KRA eTIMS tax type (A-E). Needed for eTIMS.
+             *
+             *     * `A` - A · Exempt
+             *     * `B` - B · VAT 16%
+             *     * `C` - C · Zero-rated
+             *     * `D` - D · Non-VAT
+             *     * `E` - E · VAT 8%
+             */
+            etims_tax_type?: components["schemas"]["EtimsTaxTypeEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
         };
         /**
@@ -1494,6 +1630,54 @@ export interface components {
             name: string;
             /** @description Allow quantities like 0.5 (e.g. kilograms, litres). */
             allows_fraction?: boolean;
+            /**
+             * @description KRA eTIMS unit of quantity, e.g. KG or U (pieces). Needed for eTIMS.
+             *
+             *     * `4B` - Pair
+             *     * `AV` - Cap
+             *     * `BA` - Barrel
+             *     * `BE` - Bundle
+             *     * `BG` - Bag
+             *     * `BL` - Block
+             *     * `BLL` - Barrel (petroleum)
+             *     * `BX` - Box
+             *     * `CA` - Can
+             *     * `CEL` - Cell
+             *     * `CMT` - Centimetre
+             *     * `CR` - Carat
+             *     * `DR` - Drum
+             *     * `DZ` - Dozen
+             *     * `GLL` - Gallon
+             *     * `GRM` - Gram
+             *     * `GRO` - Gross
+             *     * `KG` - Kilogram
+             *     * `KTM` - Kilometre
+             *     * `KWT` - Kilowatt
+             *     * `L` - Litre
+             *     * `LBR` - Pound
+             *     * `LK` - Link
+             *     * `LTR` - Litre
+             *     * `M` - Metre
+             *     * `M2` - Square metre
+             *     * `M3` - Cubic metre
+             *     * `MGM` - Milligram
+             *     * `MTR` - Metre
+             *     * `MWT` - Megawatt hour
+             *     * `NO` - Number
+             *     * `NX` - Part per thousand
+             *     * `PA` - Packet
+             *     * `PG` - Plate
+             *     * `PR` - Pair
+             *     * `RL` - Reel
+             *     * `RO` - Roll
+             *     * `SET` - Set
+             *     * `ST` - Sheet
+             *     * `TNE` - Tonne
+             *     * `TU` - Tube
+             *     * `U` - Pieces / items
+             *     * `YRD` - Yard
+             */
+            etims_quantity_unit?: components["schemas"]["EtimsQuantityUnitEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
             readonly version: number;
             /** Format: date-time */
@@ -1506,6 +1690,54 @@ export interface components {
             name: string;
             /** @description Allow quantities like 0.5 (e.g. kilograms, litres). */
             allows_fraction?: boolean;
+            /**
+             * @description KRA eTIMS unit of quantity, e.g. KG or U (pieces). Needed for eTIMS.
+             *
+             *     * `4B` - Pair
+             *     * `AV` - Cap
+             *     * `BA` - Barrel
+             *     * `BE` - Bundle
+             *     * `BG` - Bag
+             *     * `BL` - Block
+             *     * `BLL` - Barrel (petroleum)
+             *     * `BX` - Box
+             *     * `CA` - Can
+             *     * `CEL` - Cell
+             *     * `CMT` - Centimetre
+             *     * `CR` - Carat
+             *     * `DR` - Drum
+             *     * `DZ` - Dozen
+             *     * `GLL` - Gallon
+             *     * `GRM` - Gram
+             *     * `GRO` - Gross
+             *     * `KG` - Kilogram
+             *     * `KTM` - Kilometre
+             *     * `KWT` - Kilowatt
+             *     * `L` - Litre
+             *     * `LBR` - Pound
+             *     * `LK` - Link
+             *     * `LTR` - Litre
+             *     * `M` - Metre
+             *     * `M2` - Square metre
+             *     * `M3` - Cubic metre
+             *     * `MGM` - Milligram
+             *     * `MTR` - Metre
+             *     * `MWT` - Megawatt hour
+             *     * `NO` - Number
+             *     * `NX` - Part per thousand
+             *     * `PA` - Packet
+             *     * `PG` - Plate
+             *     * `PR` - Pair
+             *     * `RL` - Reel
+             *     * `RO` - Roll
+             *     * `SET` - Set
+             *     * `ST` - Sheet
+             *     * `TNE` - Tonne
+             *     * `TU` - Tube
+             *     * `U` - Pieces / items
+             *     * `YRD` - Yard
+             */
+            etims_quantity_unit?: components["schemas"]["EtimsQuantityUnitEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
         };
         User: {
