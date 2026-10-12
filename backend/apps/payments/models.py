@@ -170,6 +170,17 @@ class Payment(TenantModel):
     sale = models.ForeignKey(
         "sales.Sale", on_delete=models.PROTECT, null=True, blank=True, related_name="payments"
     )
+    sale_return = models.ForeignKey(
+        "sales.SaleReturn", on_delete=models.PROTECT, null=True, blank=True, related_name="refunds"
+    )
+    cash_session = models.ForeignKey(
+        "cash.CashSession",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        help_text="The till session cash went in or out of.",
+    )
     customer_account = models.ForeignKey(
         "customers.CustomerAccount",
         on_delete=models.PROTECT,
@@ -203,7 +214,10 @@ class Payment(TenantModel):
                 | models.Q(
                     purpose="ACCOUNT_SETTLEMENT", customer_account__isnull=False, sale__isnull=True
                 )
-                | models.Q(purpose__in=["SALE_REFUND", "SUPPLIER_PAYMENT"]),
+                # A refund pays back a voided sale, or a return.
+                | models.Q(purpose="SALE_REFUND", direction="OUT", sale__isnull=False)
+                | models.Q(purpose="SALE_REFUND", direction="OUT", sale_return__isnull=False)
+                | models.Q(purpose="SUPPLIER_PAYMENT"),
                 name="payments_purpose_source",
             ),
             models.UniqueConstraint(

@@ -53,6 +53,7 @@ def test_a_cash_sale_prices_on_the_server_gives_change_and_moves_stock(shop):
             "method": "CASH",
             "method_name": "Cash",
             "kind": "CASH",
+            "direction": "IN",
             "amount": "220.0000",
             "tendered": "500.0000",
             "reference": "",

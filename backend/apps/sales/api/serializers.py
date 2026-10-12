@@ -9,7 +9,7 @@ from apps.customers.models import Customer
 from apps.organizations.api.serializers import ScopedPrimaryKeyField
 from apps.payments.models import Payment, PaymentMethod
 
-from ..models import Sale, SaleItem
+from ..models import Sale, SaleItem, SaleReturn, SaleReturnItem
 
 
 def _money(**kwargs: Any) -> serializers.DecimalField:
@@ -59,6 +59,32 @@ class SaleCreateSerializer(serializers.Serializer[Any]):
     tenders = _TenderInput(many=True, required=False, default=list)
     credit_amount = _money(required=False, default=Decimal(0), min_value=Decimal(0))
     notes = serializers.CharField(max_length=500, required=False, allow_blank=True, default="")
+    cash_session_id = serializers.UUIDField(
+        required=False, allow_null=True, default=None, help_text="Default: your open till session."
+    )
+
+
+class VoidSerializer(serializers.Serializer[Any]):
+    reason = serializers.CharField(max_length=300)
+
+
+class _ReturnLineInput(serializers.Serializer[Any]):
+    line_no = serializers.IntegerField(min_value=1)
+    quantity = _quantity()
+    restock = serializers.BooleanField(
+        default=True, help_text="Back on the shelf; false for damaged goods."
+    )
+
+
+class ReturnCreateSerializer(serializers.Serializer[Any]):
+    client_txn_id = serializers.UUIDField()
+    reason = serializers.CharField(max_length=300)
+    items = _ReturnLineInput(many=True, allow_empty=False)
+    refund_to = serializers.ChoiceField(choices=SaleReturn.RefundTo.choices)
+    payment_method_id = ScopedPrimaryKeyField(
+        PaymentMethod, source="payment_method", required=False, allow_null=True, default=None
+    )
+    cash_session_id = serializers.UUIDField(required=False, allow_null=True, default=None)
 
 
 # --- Read ------------------------------------------------------------------------------------
@@ -66,6 +92,7 @@ class SaleCreateSerializer(serializers.Serializer[Any]):
 
 class SaleItemSerializer(serializers.ModelSerializer[SaleItem]):
     product_id = serializers.UUIDField()
+    returned_quantity = serializers.SerializerMethodField(help_text="Already brought back.")
 
     class Meta:
         model = SaleItem
@@ -86,8 +113,13 @@ class SaleItemSerializer(serializers.ModelSerializer[SaleItem]):
             "tax_name",
             "tax_amount",
             "line_total",
+            "returned_quantity",
         )
         read_only_fields = fields
+
+    def get_returned_quantity(self, item: SaleItem) -> str:
+        returned = sum((r.quantity for r in item.returned.all()), Decimal(0))
+        return f"{returned:.3f}"
 
 
 class SalePaymentSerializer(serializers.ModelSerializer[Payment]):
@@ -98,12 +130,57 @@ class SalePaymentSerializer(serializers.ModelSerializer[Payment]):
 
     class Meta:
         model = Payment
-        fields = ("method", "method_name", "kind", "amount", "tendered", "reference", "status")
+        fields = (
+            "method",
+            "method_name",
+            "kind",
+            "direction",
+            "amount",
+            "tendered",
+            "reference",
+            "status",
+        )
 
 
 class _PersonSerializer(serializers.Serializer[Any]):
     id = serializers.UUIDField()
     name = serializers.CharField()
+
+
+class SaleReturnItemSerializer(serializers.ModelSerializer[SaleReturnItem]):
+    line_no = serializers.IntegerField(source="sale_item.line_no")
+    product_name = serializers.CharField(source="sale_item.product_name")
+
+    class Meta:
+        model = SaleReturnItem
+        fields = ("line_no", "product_name", "quantity", "amount", "restock")
+        read_only_fields = fields
+
+
+class SaleReturnSerializer(serializers.ModelSerializer[SaleReturn]):
+    created_by = serializers.CharField(source="created_by.full_name")
+    items = SaleReturnItemSerializer(many=True)
+    refund_method = serializers.SerializerMethodField()
+
+    class Meta:
+        model = SaleReturn
+        fields = (
+            "id",
+            "return_number",
+            "refund_to",
+            "refund_method",
+            "currency",
+            "total",
+            "reason",
+            "items",
+            "created_by",
+            "occurred_at",
+        )
+        read_only_fields = fields
+
+    def get_refund_method(self, sale_return: SaleReturn) -> str | None:
+        payment = next(iter(getattr(sale_return, "refunds_list", [])), None)
+        return payment.payment_method.name if payment else None
 
 
 class SaleSerializer(serializers.ModelSerializer[Sale]):
@@ -112,6 +189,8 @@ class SaleSerializer(serializers.ModelSerializer[Sale]):
     customer = serializers.SerializerMethodField()
     items = SaleItemSerializer(many=True)
     payments = SalePaymentSerializer(many=True)
+    returns = SaleReturnSerializer(many=True)
+    voided_by = serializers.SerializerMethodField()
 
     class Meta:
         model = Sale
@@ -136,10 +215,21 @@ class SaleSerializer(serializers.ModelSerializer[Sale]):
             "cashier",
             "notes",
             "origin",
+            "cash_session_id",
             "occurred_at",
             "recorded_at",
+            "voided_at",
+            "voided_by",
+            "void_reason",
+            "returns",
         )
         read_only_fields = fields
+
+    @extend_schema_field(_PersonSerializer(allow_null=True))
+    def get_voided_by(self, sale: Sale) -> dict[str, Any] | None:
+        if sale.voided_by is None:
+            return None
+        return {"id": str(sale.voided_by_id), "name": sale.voided_by.full_name}
 
     @extend_schema_field(_PersonSerializer)
     def get_cashier(self, sale: Sale) -> dict[str, Any]:

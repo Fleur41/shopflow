@@ -12,6 +12,8 @@ from typing import Any
 from django.db import transaction
 from rest_framework.test import APIClient
 
+from apps.cash import services as cash
+from apps.cash.models import Till
 from apps.catalog.models import Product, TaxRate, UnitOfMeasure
 from apps.customers import services as customer_services
 from apps.inventory import services as inventory
@@ -93,6 +95,18 @@ def build_shop() -> SimpleNamespace:
                 inventory.AdjustmentLineInput(product=shop.bread, counted_quantity=Decimal(5)),
                 inventory.AdjustmentLineInput(product=shop.rice, counted_quantity=Decimal(20)),
             ],
+        )
+    # Cash needs an open till (store.require_cash_session): everyone who sells gets one.
+    shop.sessions = {}
+    for name, ctx in (
+        ("owner", shop.owner_ctx),
+        ("manager", context_for(manager)),
+        ("cashier", shop.cashier_ctx),
+        ("cashier2", shop.cashier2_ctx),
+    ):
+        till = Till.objects.create(organization=org, store=shop.store, name=f"Till {name}")
+        shop.sessions[name] = cash.open_session(
+            ctx, shop.store, till=till, opening_float=Decimal(1000), client_txn_id=uuid.uuid4()
         )
     shop.customer = customer_services.create_customer(
         shop.owner_ctx, name="Mama Mboga", phone="+254712345678", credit_limit=Decimal(500)

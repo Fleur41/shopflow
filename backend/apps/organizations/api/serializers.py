@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, ClassVar
 
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
@@ -111,9 +111,10 @@ class StoreSerializer(serializers.ModelSerializer[Store]):
         model = Store
         fields = (
             "id", "code", "name", "address", "phone", "currency", "timezone", "is_active",
-            "created_at",
+            "require_cash_session", "cash_variance_threshold", "created_at",
         )  # fmt: skip
         read_only_fields: tuple[str, ...] = ("id", "created_at")
+        extra_kwargs: ClassVar[dict[str, Any]] = {"cash_variance_threshold": {"min_value": 0}}
 
     def validate_code(self, value: str) -> str:
         code = value.strip().upper()

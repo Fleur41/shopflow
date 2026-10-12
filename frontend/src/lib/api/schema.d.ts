@@ -925,6 +925,107 @@ export interface paths {
         patch: operations["stores_partial_update"];
         trace?: never;
     };
+    "/api/v1/stores/{store_id}/cash-sessions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stores_cash_sessions_list"];
+        put?: never;
+        post: operations["stores_cash_sessions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/cash-sessions/{session_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["stores_cash_sessions_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/cash-sessions/{session_id}/close/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["stores_cash_sessions_close_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/cash-sessions/{session_id}/corrections/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["stores_cash_sessions_corrections_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/cash-sessions/{session_id}/movements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["stores_cash_sessions_movements_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/cash-sessions/current/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The caller's open session here, without expected cash (the count is blind). */
+        get: operations["stores_cash_sessions_current_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/stores/{store_id}/inventory/": {
         parameters: {
             query?: never;
@@ -1090,6 +1191,76 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/sales/{sale_id}/returns/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["stores_sales_returns_list"];
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["stores_sales_returns_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/sales/{sale_id}/void/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Undo today's sale while its till is still open: stock, money and credit go back. */
+        post: operations["stores_sales_void_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/tills/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["stores_tills_list"];
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["stores_tills_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/tills/{till_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["stores_tills_partial_update"];
         trace?: never;
     };
     "/api/v1/suppliers/": {
@@ -1330,6 +1501,79 @@ export interface components {
             name: string;
             is_active?: boolean;
         };
+        CashMovement: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly movement_type: components["schemas"]["CashMovementType"];
+            /**
+             * Format: decimal
+             * @description Positive. Corrections are signed: + found, - missing.
+             */
+            readonly amount: string;
+            readonly reason: string;
+            created_by: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+        };
+        /**
+         * @description * `PAY_IN` - Pay in
+         *     * `PAY_OUT` - Pay out
+         *     * `DROP` - Safe drop
+         *     * `CORRECTION` - Correction
+         * @enum {string}
+         */
+        CashMovementType: "PAY_IN" | "PAY_OUT" | "DROP" | "CORRECTION";
+        /**
+         * @description A session as the person at the till sees it: no expected cash while open
+         *     (the close-out count is blind).
+         */
+        CashSession: {
+            /** Format: uuid */
+            readonly id: string;
+            till: components["schemas"]["Till"];
+            /** @default OPEN */
+            readonly status: components["schemas"]["CashSessionStatus"];
+            /** Format: decimal */
+            readonly opening_float: string;
+            readonly opened_by: components["schemas"]["_TillUser"];
+            /** Format: date-time */
+            readonly opened_at: string;
+            readonly closed_by: components["schemas"]["_TillUser"] | null;
+            /** Format: date-time */
+            readonly closed_at: string | null;
+        };
+        /**
+         * @description * `OPEN` - Open
+         *     * `CLOSED` - Closed
+         * @enum {string}
+         */
+        CashSessionStatus: "OPEN" | "CLOSED";
+        /** @description For managers: the result of the count too. */
+        CashSessionSummary: {
+            /** Format: uuid */
+            readonly id: string;
+            till: components["schemas"]["Till"];
+            /** @default OPEN */
+            readonly status: components["schemas"]["CashSessionStatus"];
+            /** Format: decimal */
+            readonly opening_float: string;
+            readonly opened_by: components["schemas"]["_TillUser"];
+            /** Format: date-time */
+            readonly opened_at: string;
+            readonly closed_by: components["schemas"]["_TillUser"] | null;
+            /** Format: date-time */
+            readonly closed_at: string | null;
+            /** Format: decimal */
+            readonly expected_cash: string | null;
+            /** Format: decimal */
+            readonly counted_cash: string | null;
+            /**
+             * Format: decimal
+             * @description Counted minus expected.
+             */
+            readonly variance: string | null;
+            readonly variance_reason: string;
+        };
         Category: {
             /** Format: uuid */
             readonly id: string;
@@ -1361,6 +1605,25 @@ export interface components {
          * @enum {string}
          */
         ClientTypeEnum: "WEB" | "MOBILE";
+        CloseSessionRequest: {
+            /** Format: decimal */
+            counted_cash: string;
+            denomination_count?: {
+                [key: string]: number;
+            } | null;
+            /** @default  */
+            variance_reason: string;
+        };
+        CorrectionRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            /**
+             * Format: decimal
+             * @description Found (+) or missing (-).
+             */
+            amount: string;
+            reason: string;
+        };
         CsrfToken: {
             csrf_token: string;
         };
@@ -1369,6 +1632,9 @@ export interface components {
             permissions: string[];
             all_stores: boolean;
             stores: components["schemas"]["StoreSummary"][];
+        };
+        CurrentSession: {
+            session: components["schemas"]["CashSession"] | null;
         };
         Customer: {
             /** Format: uuid */
@@ -1428,6 +1694,12 @@ export interface components {
             credit_limit?: string | null;
             is_active?: boolean;
         };
+        /**
+         * @description * `IN` - In
+         *     * `OUT` - Out
+         * @enum {string}
+         */
+        DirectionEnum: "IN" | "OUT";
         EmailVerifyRequest: {
             token: string;
         };
@@ -1770,7 +2042,7 @@ export interface components {
             /** Format: uuid */
             readonly id: string;
             product: components["schemas"]["_ProductRef"];
-            readonly movement_type: components["schemas"]["MovementTypeEnum"];
+            readonly movement_type: components["schemas"]["MovementMovementTypeEnum"];
             /** Format: decimal */
             readonly quantity: string;
             /** Format: decimal */
@@ -1790,6 +2062,21 @@ export interface components {
             readonly document: components["schemas"]["_Document"] | null;
         };
         /**
+         * @description * `PAY_IN` - PAY_IN
+         *     * `PAY_OUT` - PAY_OUT
+         *     * `DROP` - DROP
+         * @enum {string}
+         */
+        MovementCreateMovementTypeEnum: "PAY_IN" | "PAY_OUT" | "DROP";
+        MovementCreateRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            movement_type: components["schemas"]["MovementCreateMovementTypeEnum"];
+            /** Format: decimal */
+            amount: string;
+            reason: string;
+        };
+        /**
          * @description * `PURCHASE` - Purchase
          *     * `SALE` - Sale
          *     * `SALE_RETURN` - Sale return
@@ -1802,7 +2089,15 @@ export interface components {
          *     * `OPENING` - Opening stock
          * @enum {string}
          */
-        MovementTypeEnum: "PURCHASE" | "SALE" | "SALE_RETURN" | "PURCHASE_RETURN" | "ADJUSTMENT" | "DAMAGED" | "EXPIRED" | "TRANSFER_IN" | "TRANSFER_OUT" | "OPENING";
+        MovementMovementTypeEnum: "PURCHASE" | "SALE" | "SALE_RETURN" | "PURCHASE_RETURN" | "ADJUSTMENT" | "DAMAGED" | "EXPIRED" | "TRANSFER_IN" | "TRANSFER_OUT" | "OPENING";
+        OpenSessionRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            /** Format: uuid */
+            till_id: string;
+            /** Format: decimal */
+            opening_float: string;
+        };
         OpeningBalanceRequest: {
             /** Format: uuid */
             client_txn_id: string;
@@ -1861,6 +2156,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Brand"][];
+        };
+        PaginatedCashSessionSummaryList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["CashSessionSummary"][];
         };
         PaginatedCategoryList: {
             /**
@@ -2017,6 +2325,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["SaleList"][];
+        };
+        PaginatedSaleReturnList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["SaleReturn"][];
         };
         PaginatedSessionList: {
             /**
@@ -2240,6 +2561,13 @@ export interface components {
             phone?: string;
             timezone?: string;
             is_active?: boolean;
+            /** @description Cash sales need an open till session (docs/ARCHITECTURE.md §6.8). */
+            require_cash_session?: boolean;
+            /**
+             * Format: decimal
+             * @description Closing a till further out than this needs a reason and raises an alert.
+             */
+            cash_variance_threshold?: string;
         };
         PatchedSupplierContactRequest: {
             name?: string;
@@ -2276,6 +2604,11 @@ export interface components {
             etims_tax_type?: components["schemas"]["EtimsTaxTypeEnum"] | components["schemas"]["BlankEnum"];
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+        };
+        PatchedTillUpdateRequest: {
+            name?: string;
+            is_active?: boolean;
             version?: number;
         };
         PatchedUnitUpdateRequest: {
@@ -2350,6 +2683,11 @@ export interface components {
             reference: string;
             /** Format: date-time */
             occurred_at?: string;
+            /**
+             * Format: uuid
+             * @description Default: your open till session.
+             */
+            cash_session_id?: string | null;
         };
         PaymentMethod: {
             /** Format: uuid */
@@ -2649,6 +2987,60 @@ export interface components {
             /** @description Shown once. Each works one time. */
             recovery_codes: string[];
         };
+        /**
+         * @description * `PAYMENT` - Paid back (cash, M-Pesa...)
+         *     * `ACCOUNT` - Taken off the customer's account
+         * @enum {string}
+         */
+        RefundToEnum: "PAYMENT" | "ACCOUNT";
+        /** @description X report while open, Z report once closed. */
+        Report: {
+            /** Format: decimal */
+            opening_float: string;
+            sales_count: number;
+            /** Format: decimal */
+            sales_total: string;
+            /** Format: decimal */
+            on_credit: string;
+            voids_count: number;
+            /** Format: decimal */
+            voids_total: string;
+            returns_count: number;
+            /** Format: decimal */
+            returns_total: string;
+            by_method: components["schemas"]["_MethodTotal"][];
+            /** Format: decimal */
+            cash_in: string;
+            /** Format: decimal */
+            cash_out: string;
+            /** Format: decimal */
+            pay_ins: string;
+            /** Format: decimal */
+            pay_outs: string;
+            /** Format: decimal */
+            drops: string;
+            /** Format: decimal */
+            expected_cash: string;
+            /** Format: decimal */
+            counted_cash: string | null;
+            /** Format: decimal */
+            variance: string | null;
+            /** Format: decimal */
+            corrections: string;
+            /** Format: decimal */
+            variance_after_corrections: string | null;
+        };
+        ReturnCreateRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            reason: string;
+            items: components["schemas"]["_ReturnLineInputRequest"][];
+            refund_to: components["schemas"]["RefundToEnum"];
+            /** Format: uuid */
+            payment_method_id?: string | null;
+            /** Format: uuid */
+            cash_session_id?: string | null;
+        };
         ReverseRequest: {
             reason: string;
         };
@@ -2707,6 +3099,8 @@ export interface components {
             readonly cashier: components["schemas"]["_Person"];
             readonly notes: string;
             readonly origin: components["schemas"]["OriginEnum"];
+            /** Format: uuid */
+            readonly cash_session_id: string | null;
             /**
              * Format: date-time
              * @description When the sale happened at the till.
@@ -2717,6 +3111,11 @@ export interface components {
              * @description When the server saved it.
              */
             readonly recorded_at: string;
+            /** Format: date-time */
+            readonly voided_at: string | null;
+            readonly voided_by: components["schemas"]["_Person"] | null;
+            readonly void_reason: string;
+            returns: components["schemas"]["SaleReturn"][];
         };
         SaleCreateRequest: {
             /** Format: uuid */
@@ -2739,6 +3138,11 @@ export interface components {
             credit_amount: string;
             /** @default  */
             notes: string;
+            /**
+             * Format: uuid
+             * @description Default: your open till session.
+             */
+            cash_session_id?: string | null;
         };
         SaleItem: {
             readonly line_no: number;
@@ -2769,6 +3173,8 @@ export interface components {
             readonly tax_amount: string;
             /** Format: decimal */
             readonly line_total: string;
+            /** @description Already brought back. */
+            readonly returned_quantity: string;
         };
         SaleList: {
             /** Format: uuid */
@@ -2794,6 +3200,7 @@ export interface components {
             method: string;
             method_name: string;
             kind: string;
+            direction?: components["schemas"]["DirectionEnum"];
             /** Format: decimal */
             amount: string;
             /**
@@ -2803,6 +3210,34 @@ export interface components {
             tendered?: string | null;
             reference: string;
             status?: components["schemas"]["PaymentStatus"];
+        };
+        SaleReturn: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly return_number: string;
+            readonly refund_to: components["schemas"]["RefundToEnum"];
+            readonly refund_method: string | null;
+            readonly currency: string;
+            /** Format: decimal */
+            readonly total: string;
+            readonly reason: string;
+            items: components["schemas"]["SaleReturnItem"][];
+            created_by: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+        };
+        SaleReturnItem: {
+            line_no: number;
+            product_name: string;
+            /** Format: decimal */
+            readonly quantity: string;
+            /**
+             * Format: decimal
+             * @description Refund for this line: its share of what was paid.
+             */
+            readonly amount: string;
+            /** @description Put back on the shelf (not damaged). */
+            readonly restock: boolean;
         };
         /**
          * @description * `COMPLETED` - Completed
@@ -2841,6 +3276,11 @@ export interface components {
              * @description Absolute end of the session.
              */
             expires_at: string;
+        };
+        SessionReport: {
+            session: components["schemas"]["CashSessionSummary"];
+            report: components["schemas"]["Report"];
+            movements: components["schemas"]["CashMovement"][];
         };
         SignupRequest: {
             /** Format: email */
@@ -2912,6 +3352,13 @@ export interface components {
             currency?: string;
             timezone?: string;
             is_active?: boolean;
+            /** @description Cash sales need an open till session (docs/ARCHITECTURE.md §6.8). */
+            require_cash_session?: boolean;
+            /**
+             * Format: decimal
+             * @description Closing a till further out than this needs a reason and raises an alert.
+             */
+            cash_variance_threshold?: string;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -2923,6 +3370,13 @@ export interface components {
             currency?: string;
             timezone?: string;
             is_active?: boolean;
+            /** @description Cash sales need an open till session (docs/ARCHITECTURE.md §6.8). */
+            require_cash_session?: boolean;
+            /**
+             * Format: decimal
+             * @description Closing a till further out than this needs a reason and raises an alert.
+             */
+            cash_variance_threshold?: string;
         };
         StoreSummary: {
             /** Format: uuid */
@@ -2940,6 +3394,13 @@ export interface components {
             readonly currency: string;
             timezone?: string;
             is_active?: boolean;
+            /** @description Cash sales need an open till session (docs/ARCHITECTURE.md §6.8). */
+            require_cash_session?: boolean;
+            /**
+             * Format: decimal
+             * @description Closing a till further out than this needs a reason and raises an alert.
+             */
+            cash_variance_threshold?: string;
             /** Format: date-time */
             readonly created_at: string;
         };
@@ -3073,6 +3534,17 @@ export interface components {
          * @enum {string}
          */
         TemplateEnum: "OWNER" | "MANAGER" | "CASHIER" | "CUSTOM";
+        Till: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            is_active?: boolean;
+            readonly version: number;
+        };
+        TillRequest: {
+            name: string;
+            is_active?: boolean;
+        };
         TokenPair: {
             token_type: string;
             access_token: string;
@@ -3205,6 +3677,9 @@ export interface components {
             readonly email_verified: boolean;
             readonly mfa_enabled: boolean;
         };
+        VoidRequest: {
+            reason: string;
+        };
         _AdjustmentLineInputRequest: {
             /** Format: uuid */
             product_id: string;
@@ -3252,6 +3727,12 @@ export interface components {
             /** @default  */
             scanned_code: string;
         };
+        _MethodTotal: {
+            method: string;
+            count: number;
+            /** Format: decimal */
+            total: string;
+        };
         _OpeningLineInputRequest: {
             /** Format: uuid */
             product_id: string;
@@ -3288,6 +3769,16 @@ export interface components {
             taxable_amount: string;
             tax_amount: string;
         };
+        _ReturnLineInputRequest: {
+            line_no: number;
+            /** Format: decimal */
+            quantity: string;
+            /**
+             * @description Back on the shelf; false for damaged goods.
+             * @default true
+             */
+            restock: boolean;
+        };
         _TenderInputRequest: {
             /** Format: uuid */
             payment_method_id: string;
@@ -3303,6 +3794,11 @@ export interface components {
              * @default
              */
             reference: string;
+        };
+        _TillUser: {
+            /** Format: uuid */
+            id: string;
+            name: string;
         };
         _Unit: {
             code: string;
@@ -5145,6 +5641,190 @@ export interface operations {
             };
         };
     };
+    stores_cash_sessions_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCashSessionSummaryList"];
+                };
+            };
+        };
+    };
+    stores_cash_sessions_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenSessionRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashSession"];
+                };
+            };
+        };
+    };
+    stores_cash_sessions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionReport"];
+                };
+            };
+        };
+    };
+    stores_cash_sessions_close_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                session_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CloseSessionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionReport"];
+                };
+            };
+        };
+    };
+    stores_cash_sessions_corrections_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                session_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CorrectionRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionReport"];
+                };
+            };
+        };
+    };
+    stores_cash_sessions_movements_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                session_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MovementCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CashSession"];
+                };
+            };
+        };
+    };
+    stores_cash_sessions_current_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CurrentSession"];
+                };
+            };
+        };
+    };
     stores_inventory_list: {
         parameters: {
             query?: {
@@ -5496,6 +6176,174 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Receipt"];
+                };
+            };
+        };
+    };
+    stores_sales_returns_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                sale_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSaleReturnList"];
+                };
+            };
+        };
+    };
+    stores_sales_returns_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                sale_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnCreateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sale"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sale"];
+                };
+            };
+        };
+    };
+    stores_sales_void_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                sale_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VoidRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sale"];
+                };
+            };
+        };
+    };
+    stores_tills_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Till"][];
+                };
+            };
+        };
+    };
+    stores_tills_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TillRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Till"];
+                };
+            };
+        };
+    };
+    stores_tills_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                store_id: string;
+                till_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTillUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Till"];
                 };
             };
         };

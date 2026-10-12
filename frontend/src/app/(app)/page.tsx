@@ -16,6 +16,7 @@ const DESCRIPTIONS: Record<string, string> = {
   "/sell": "The till: scan, take cash or M-Pesa, print the receipt.",
   "/sales": "Every sale and its receipt, by day.",
   "/customers": "Regulars, credit limits and what they owe.",
+  "/cash": "Till counts, cash in and out, and what didn't add up.",
   "/products": "Prices, barcodes and photos for everything you sell.",
   "/inventory": "What's in stock, what's running low, every change.",
   "/settings/catalog": "Categories, brands, units and tax rates.",
@@ -142,7 +143,7 @@ export default function DashboardPage() {
             <h2 id="coming-heading" className="relative font-semibold">
               Coming next
             </h2>
-            <p className="relative mt-1 text-sm text-emerald-50/85">Till sessions with cash counts, voids and returns, then KRA eTIMS invoices.</p>
+            <p className="relative mt-1 text-sm text-emerald-50/85">KRA eTIMS invoices, then purchasing: orders and receiving stock from suppliers.</p>
           </section>
         </div>
       </div>

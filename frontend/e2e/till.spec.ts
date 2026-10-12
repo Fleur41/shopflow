@@ -46,6 +46,16 @@ test("a cashier scans, takes cash and M-Pesa, prints a receipt and sells on cred
     await expectAccessible(page, "stock");
   });
 
+  await test.step("open the till with a float", async () => {
+    await page.goto("/sell");
+    await expect(page.getByText("The till is closed. Open it to take cash.")).toBeVisible();
+    await page.getByRole("button", { name: "Open till" }).click();
+    const open = page.getByRole("dialog", { name: "Open the till" });
+    await open.getByLabel("Cash in the drawer now").fill("1000");
+    await open.getByRole("button", { name: "Open Till 1" }).click();
+    await expect(page.getByText(/Till 1 open since/)).toBeVisible();
+  });
+
   await test.step("scan and pay cash with change", async () => {
     await page.goto("/sell");
     await expect(page.getByRole("heading", { name: "Sell" })).toBeVisible();
@@ -142,6 +152,52 @@ test("a cashier scans, takes cash and M-Pesa, prints a receipt and sells on cred
     await expect(page.getByRole("region", { name: "Account" })).toContainText("30.00");
     await expect(page.getByRole("region", { name: "Statement" })).toContainText("Credit sale");
     await expectAccessible(page, "customer");
+  });
+
+  await test.step("return an item for cash, then void a sale", async () => {
+    await page.goto("/sales");
+    await page.getByRole("link", { name: /MAIN-\d{4}-000001/ }).click();
+    await page.getByRole("button", { name: "Return items" }).click();
+    const back = page.getByRole("dialog", { name: "Return items" });
+    await back.getByLabel("How many Milk 500ml came back").fill("1");
+    await back.getByLabel("Refund").selectOption({ label: "Cash from the till" });
+    await back.getByLabel(/^Why/).fill("Leaking pack");
+    await back.getByRole("button", { name: "Process return" }).click();
+    await expect(back).toBeHidden();
+    await expect(page.getByRole("region", { name: "Returns" })).toContainText(/MAIN-R\d{4}-000001/);
+    await expect(page.getByRole("button", { name: "Void" })).toHaveCount(0); // something came back
+
+    await page.goto("/sales");
+    await page.getByRole("link", { name: /MAIN-\d{4}-000002/ }).click();
+    await page.getByRole("button", { name: "Void" }).click();
+    const voiding = page.getByRole("dialog", { name: /Void MAIN-/ });
+    await voiding.getByLabel(/^Why/).fill("Rang up twice");
+    await voiding.getByRole("button", { name: "Void sale" }).click();
+    await expect(page.getByText("Stock, money and credit were all put back.")).toBeVisible();
+  });
+
+  await test.step("pay out cash and close the till with a blind count", async () => {
+    await page.goto("/sell");
+    await page.getByRole("button", { name: "Cash in/out" }).click();
+    const move = page.getByRole("dialog", { name: "Cash in or out" });
+    await move.getByLabel(/^Amount/).fill("50");
+    await move.getByLabel(/^Reason/).fill("Airtime");
+    await move.getByRole("button", { name: "Record pay out" }).click();
+    await expect(move).toBeHidden();
+
+    // 1000 float + 220 cash sale - 80 milk refund + 20 cash (void refunds it) - 20 - 50 pay-out = 1090
+    await page.getByRole("button", { name: "Close till" }).click();
+    const close = page.getByRole("dialog", { name: "Close the till" });
+    await close.getByLabel("How many KES 1000", { exact: true }).fill("1");
+    await close.getByLabel("How many KES 50", { exact: true }).fill("1");
+    await close.getByLabel("How many KES 20", { exact: true }).fill("2");
+    await expect(close).toContainText("1,090.00");
+    await expectAccessible(page, "close till");
+    await close.getByRole("button", { name: "Close till" }).click();
+    const report = page.getByRole("dialog", { name: "Till closed" });
+    await expect(report).toContainText("Exact");
+    await expect(report).toContainText("Voids (1)");
+    await expect(report).toContainText("Returns (1)");
   });
 
   expect(csp).toEqual([]);

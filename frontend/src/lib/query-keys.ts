@@ -12,3 +12,4 @@ export const SUPPLIERS_KEY = ["suppliers"] as const;
 export const INVENTORY_KEY = ["inventory"] as const;
 export const SALES_KEY = ["sales"] as const;
 export const CUSTOMERS_KEY = ["customers"] as const;
+export const CASH_KEY = ["cash"] as const;

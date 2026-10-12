@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.inventory",
     "apps.sales",
     "apps.customers",
+    "apps.cash",
     "apps.audit",
     "apps.idempotency",
 ]
@@ -244,6 +245,8 @@ SPECTACULAR_SETTINGS = {
         "MembershipStatus": "apps.organizations.models.Membership.Status",
         "PaymentStatus": "apps.payments.models.Payment.Status",
         "SaleStatus": "apps.sales.models.Sale.Status",
+        "CashSessionStatus": "apps.cash.models.CashSession.Status",
+        "CashMovementType": "apps.cash.models.CashMovement.Type",
         "CustomerAccountStatus": "apps.customers.models.CustomerAccount.Status",
     },
 }

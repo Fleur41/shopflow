@@ -165,9 +165,9 @@ Implemented in Phase 1.6 unless marked otherwise. Every change is audited.
 | GET | `/stores/{sid}/sales/` | `sales.view_own` (own sales only) or `sales.view_all` |
 | GET | `/stores/{sid}/sales/{id}/` | same |
 | GET | `/stores/{sid}/sales/{id}/receipt/` | same. `?format=json\|html\|pdf\|escpos` (pdf/escpos later) |
-| POST 🔑 | `/stores/{sid}/sales/{id}/void/` | `sales.void`, `{reason}` |
-| POST 🔑 | `/stores/{sid}/sales/{id}/returns/` | `sales.return` |
-| GET | `/stores/{sid}/sales/{id}/returns/` | `sales.view_all` |
+| POST 🔑 | `/stores/{sid}/sales/{id}/void/` | `sales.void`, `{reason}`. Same business day (store time zone), while the sale's till session is open, and only if nothing was returned (`422 VOID_TOO_LATE` / `BUSINESS_RULE_VIOLATION`). |
+| POST 🔑 | `/stores/{sid}/sales/{id}/returns/` | `sales.return`. `{client_txn_id, reason, items:[{line_no, quantity, restock}], refund_to: PAYMENT\|ACCOUNT, payment_method_id?, cash_session_id?}`. `422 RETURN_EXCEEDS_SOLD`, `REFUND_EXCEEDS_BALANCE` (account refunds never take a balance below zero), `NOT_ENOUGH_CASH`. Returns the sale with its `returns`. |
+| GET | `/stores/{sid}/sales/{id}/returns/` | `sales.view_own` (own sales) or `sales.view_all` |
 | POST | `/stores/{sid}/sales/{id}/receipt/send/` | `sales.view_own`, `{channel, destination}` (extension point) |
 
 **Create sale: request**
@@ -225,14 +225,14 @@ Server-side rules:
 |---|---|---|---|
 | GET/POST/PATCH | `/stores/{sid}/tills/` · `/{id}/` | `cash.view_sessions` / `stores.manage` | |
 | POST 🔑 | `/stores/{sid}/cash-sessions/` | `cash.open_session` | `{client_txn_id, till_id, opening_float}`. `409` if the till already has an open session. |
-| GET | `/stores/{sid}/cash-sessions/current/?till_id=` | `cash.open_session` | Open session for a till (no expected totals: blind count) |
+| GET | `/stores/{sid}/cash-sessions/current/` | `cash.open_session` | `{session}`: the caller's open session in this store, or `null`. No expected totals (blind count). One open session per till and per person per store. |
 | GET | `/stores/{sid}/cash-sessions/` · `/{id}/` | `cash.view_sessions` | Expected cash and variance visible here only |
 | POST 🔑 | `/stores/{sid}/cash-sessions/{id}/movements/` | `cash.pay_in_out` | `{movement_type: PAY_IN\|PAY_OUT\|DROP, amount, reason}` |
 | POST 🔑 | `/stores/{sid}/cash-sessions/{id}/close/` | `cash.close_session` | `{counted_cash, denomination_count?, variance_reason?}` → Z report with expected cash and variance |
 | GET | `/stores/{sid}/cash-sessions/{id}/report/` | `cash.view_sessions` | X report (while open) / Z report (closed) |
 | POST 🔑 | `/stores/{sid}/cash-sessions/{id}/corrections/` | `cash.correct`* | Correction movement on a closed session, with a reason. Audited. |
 
-Sales, customer payments and refunds with a cash tender accept an optional `cash_session_id`. If it's omitted, the server uses the open session of the caller's till.
+Sales, customer payments and refunds with a cash tender accept an optional `cash_session_id`. If it's omitted, the server uses the caller's open session in the store. Without one, cash is refused with `422 CASH_SESSION_REQUIRED` when the store's `require_cash_session` is on (the default). Closing: `{counted_cash, denomination_count?: {"1000": 3, ...}, variance_reason?}`; the notes must add up to the count, and a variance above the store's `cash_variance_threshold` needs a reason (`400 VARIANCE_REASON_REQUIRED`). The opener closes their own till; `cash.view_sessions` closes anyone's.
 
 ### 4.6 Customers and ledger
 

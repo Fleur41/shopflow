@@ -215,6 +215,13 @@ class InventoryMovement(TenantModel):
         blank=True,
         related_name="movements",
     )
+    sale_return_item = models.ForeignKey(
+        "sales.SaleReturnItem",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="movements",
+    )
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [
@@ -232,14 +239,31 @@ class InventoryMovement(TenantModel):
                 name="inventory_movement_type_valid",
             ),
             # Exactly one source document, of the kind the movement type expects.
+            # A voided sale's stock comes back as SALE_RETURN against its own lines.
             models.CheckConstraint(
                 condition=models.Q(
                     movement_type__in=["ADJUSTMENT", "DAMAGED", "EXPIRED", "OPENING"],
                     adjustment_line__isnull=False,
                     sale_item__isnull=True,
+                    sale_return_item__isnull=True,
                 )
                 | models.Q(
-                    movement_type="SALE", sale_item__isnull=False, adjustment_line__isnull=True
+                    movement_type="SALE",
+                    sale_item__isnull=False,
+                    adjustment_line__isnull=True,
+                    sale_return_item__isnull=True,
+                )
+                | models.Q(
+                    movement_type="SALE_RETURN",
+                    adjustment_line__isnull=True,
+                    sale_item__isnull=False,
+                    sale_return_item__isnull=True,
+                )
+                | models.Q(
+                    movement_type="SALE_RETURN",
+                    adjustment_line__isnull=True,
+                    sale_item__isnull=True,
+                    sale_return_item__isnull=False,
                 ),
                 name="inventory_movement_source",
             ),

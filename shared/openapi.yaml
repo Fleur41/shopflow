@@ -1982,6 +1982,253 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoreUpdate'
           description: ''
+  /api/v1/stores/{store_id}/cash-sessions/:
+    get:
+      operationId: stores_cash_sessions_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCashSessionSummaryList'
+          description: ''
+    post:
+      operationId: stores_cash_sessions_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenSessionRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSession'
+          description: ''
+  /api/v1/stores/{store_id}/cash-sessions/{session_id}/:
+    get:
+      operationId: stores_cash_sessions_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionReport'
+          description: ''
+  /api/v1/stores/{store_id}/cash-sessions/{session_id}/close/:
+    post:
+      operationId: stores_cash_sessions_close_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloseSessionRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionReport'
+          description: ''
+  /api/v1/stores/{store_id}/cash-sessions/{session_id}/corrections/:
+    post:
+      operationId: stores_cash_sessions_corrections_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CorrectionRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionReport'
+          description: ''
+  /api/v1/stores/{store_id}/cash-sessions/{session_id}/movements/:
+    post:
+      operationId: stores_cash_sessions_movements_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CashSession'
+          description: ''
+  /api/v1/stores/{store_id}/cash-sessions/current/:
+    get:
+      operationId: stores_cash_sessions_current_retrieve
+      description: The caller's open session here, without expected cash (the count
+        is blind).
+      parameters:
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentSession'
+          description: ''
   /api/v1/stores/{store_id}/inventory/:
     get:
       operationId: stores_inventory_list
@@ -2502,6 +2749,230 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Receipt'
+          description: ''
+  /api/v1/stores/{store_id}/sales/{sale_id}/returns/:
+    get:
+      operationId: stores_sales_returns_list
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: sale_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSaleReturnList'
+          description: ''
+    post:
+      operationId: stores_sales_returns_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: sale_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReturnCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/v1/stores/{store_id}/sales/{sale_id}/void/:
+    post:
+      operationId: stores_sales_void_create
+      description: 'Undo today''s sale while its till is still open: stock, money
+        and credit go back.'
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: sale_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VoidRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/v1/stores/{store_id}/tills/:
+    get:
+      operationId: stores_tills_list
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Till'
+          description: ''
+    post:
+      operationId: stores_tills_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TillRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Till'
+          description: ''
+  /api/v1/stores/{store_id}/tills/{till_id}/:
+    patch:
+      operationId: stores_tills_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: till_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedTillUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Till'
           description: ''
   /api/v1/suppliers/:
     get:
@@ -3200,6 +3671,181 @@ components:
           type: boolean
       required:
       - name
+    CashMovement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        movement_type:
+          allOf:
+          - $ref: '#/components/schemas/CashMovementType'
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          description: 'Positive. Corrections are signed: + found, - missing.'
+        reason:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - created_by
+      - id
+      - movement_type
+      - occurred_at
+      - reason
+    CashMovementType:
+      enum:
+      - PAY_IN
+      - PAY_OUT
+      - DROP
+      - CORRECTION
+      type: string
+      description: |-
+        * `PAY_IN` - Pay in
+        * `PAY_OUT` - Pay out
+        * `DROP` - Safe drop
+        * `CORRECTION` - Correction
+    CashSession:
+      type: object
+      description: |-
+        A session as the person at the till sees it: no expected cash while open
+        (the close-out count is blind).
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        till:
+          $ref: '#/components/schemas/Till'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CashSessionStatus'
+          readOnly: true
+          default: OPEN
+        opening_float:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        opened_by:
+          allOf:
+          - $ref: '#/components/schemas/_TillUser'
+          readOnly: true
+        opened_at:
+          type: string
+          format: date-time
+          readOnly: true
+        closed_by:
+          allOf:
+          - $ref: '#/components/schemas/_TillUser'
+          nullable: true
+          readOnly: true
+        closed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - closed_at
+      - closed_by
+      - id
+      - opened_at
+      - opened_by
+      - opening_float
+      - status
+      - till
+    CashSessionStatus:
+      enum:
+      - OPEN
+      - CLOSED
+      type: string
+      description: |-
+        * `OPEN` - Open
+        * `CLOSED` - Closed
+    CashSessionSummary:
+      type: object
+      description: 'For managers: the result of the count too.'
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        till:
+          $ref: '#/components/schemas/Till'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CashSessionStatus'
+          readOnly: true
+          default: OPEN
+        opening_float:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        opened_by:
+          allOf:
+          - $ref: '#/components/schemas/_TillUser'
+          readOnly: true
+        opened_at:
+          type: string
+          format: date-time
+          readOnly: true
+        closed_by:
+          allOf:
+          - $ref: '#/components/schemas/_TillUser'
+          nullable: true
+          readOnly: true
+        closed_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        expected_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        counted_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        variance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: Counted minus expected.
+        variance_reason:
+          type: string
+          readOnly: true
+      required:
+      - closed_at
+      - closed_by
+      - counted_cash
+      - expected_cash
+      - id
+      - opened_at
+      - opened_by
+      - opening_float
+      - status
+      - till
+      - variance
+      - variance_reason
     Category:
       type: object
       properties:
@@ -3264,6 +3910,44 @@ components:
       description: |-
         * `WEB` - Web browser
         * `MOBILE` - Mobile app
+    CloseSessionRequest:
+      type: object
+      properties:
+        counted_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        denomination_count:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 0
+          nullable: true
+        variance_reason:
+          type: string
+          default: ''
+          maxLength: 300
+      required:
+      - counted_cash
+    CorrectionRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: Found (+) or missing (-).
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+      required:
+      - amount
+      - client_txn_id
+      - reason
     CsrfToken:
       type: object
       properties:
@@ -3291,6 +3975,15 @@ components:
       - permissions
       - role
       - stores
+    CurrentSession:
+      type: object
+      properties:
+        session:
+          allOf:
+          - $ref: '#/components/schemas/CashSession'
+          nullable: true
+      required:
+      - session
     Customer:
       type: object
       properties:
@@ -3435,6 +4128,14 @@ components:
           type: boolean
       required:
       - name
+    DirectionEnum:
+      enum:
+      - IN
+      - OUT
+      type: string
+      description: |-
+        * `IN` - In
+        * `OUT` - Out
     EmailVerifyRequest:
       type: object
       properties:
@@ -4207,7 +4908,7 @@ components:
           $ref: '#/components/schemas/_ProductRef'
         movement_type:
           allOf:
-          - $ref: '#/components/schemas/MovementTypeEnum'
+          - $ref: '#/components/schemas/MovementMovementTypeEnum'
           readOnly: true
         quantity:
           type: string
@@ -4263,7 +4964,38 @@ components:
       - recorded_at
       - seq
       - unit_cost
-    MovementTypeEnum:
+    MovementCreateMovementTypeEnum:
+      enum:
+      - PAY_IN
+      - PAY_OUT
+      - DROP
+      type: string
+      description: |-
+        * `PAY_IN` - PAY_IN
+        * `PAY_OUT` - PAY_OUT
+        * `DROP` - DROP
+    MovementCreateRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        movement_type:
+          $ref: '#/components/schemas/MovementCreateMovementTypeEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+      required:
+      - amount
+      - client_txn_id
+      - movement_type
+      - reason
+    MovementMovementTypeEnum:
       enum:
       - PURCHASE
       - SALE
@@ -4287,6 +5019,23 @@ components:
         * `TRANSFER_IN` - Transfer in
         * `TRANSFER_OUT` - Transfer out
         * `OPENING` - Opening stock
+    OpenSessionRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        till_id:
+          type: string
+          format: uuid
+        opening_float:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+      required:
+      - client_txn_id
+      - opening_float
+      - till_id
     OpeningBalanceRequest:
       type: object
       properties:
@@ -4394,6 +5143,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Brand'
+    PaginatedCashSessionSummaryList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashSessionSummary'
     PaginatedCategoryList:
       type: object
       required:
@@ -4622,6 +5390,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SaleList'
+    PaginatedSaleReturnList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturn'
     PaginatedSessionList:
       type: object
       required:
@@ -5066,6 +5853,16 @@ components:
           minLength: 1
         is_active:
           type: boolean
+        require_cash_session:
+          type: boolean
+          description: Cash sales need an open till session (docs/ARCHITECTURE.md
+            §6.8).
+        cash_variance_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: Closing a till further out than this needs a reason and raises
+            an alert.
     PatchedSupplierContactRequest:
       type: object
       properties:
@@ -5151,6 +5948,17 @@ components:
           type: integer
           description: The version you last read; the update is refused if someone
             changed it since.
+    PatchedTillUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        is_active:
+          type: boolean
+        version:
+          type: integer
     PatchedUnitUpdateRequest:
       type: object
       properties:
@@ -5249,6 +6057,11 @@ components:
         occurred_at:
           type: string
           format: date-time
+        cash_session_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Default: your open till session.'
       required:
       - amount
       - client_txn_id
@@ -5875,6 +6688,140 @@ components:
           description: Shown once. Each works one time.
       required:
       - recovery_codes
+    RefundToEnum:
+      enum:
+      - PAYMENT
+      - ACCOUNT
+      type: string
+      description: |-
+        * `PAYMENT` - Paid back (cash, M-Pesa...)
+        * `ACCOUNT` - Taken off the customer's account
+    Report:
+      type: object
+      description: X report while open, Z report once closed.
+      properties:
+        opening_float:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        sales_count:
+          type: integer
+        sales_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        on_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        voids_count:
+          type: integer
+        voids_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        returns_count:
+          type: integer
+        returns_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        by_method:
+          type: array
+          items:
+            $ref: '#/components/schemas/_MethodTotal'
+        cash_in:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        cash_out:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        pay_ins:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        pay_outs:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        drops:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        expected_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        counted_cash:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        variance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        corrections:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        variance_after_corrections:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+      required:
+      - by_method
+      - cash_in
+      - cash_out
+      - corrections
+      - counted_cash
+      - drops
+      - expected_cash
+      - on_credit
+      - opening_float
+      - pay_ins
+      - pay_outs
+      - returns_count
+      - returns_total
+      - sales_count
+      - sales_total
+      - variance
+      - variance_after_corrections
+      - voids_count
+      - voids_total
+    ReturnCreateRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/_ReturnLineInputRequest'
+        refund_to:
+          $ref: '#/components/schemas/RefundToEnum'
+        payment_method_id:
+          type: string
+          format: uuid
+          nullable: true
+        cash_session_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - client_txn_id
+      - items
+      - reason
+      - refund_to
     ReverseRequest:
       type: object
       properties:
@@ -6042,6 +6989,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/OriginEnum'
           readOnly: true
+        cash_session_id:
+          type: string
+          format: uuid
+          nullable: true
+          readOnly: true
         occurred_at:
           type: string
           format: date-time
@@ -6052,9 +7004,27 @@ components:
           format: date-time
           readOnly: true
           description: When the server saved it.
+        voided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        voided_by:
+          allOf:
+          - $ref: '#/components/schemas/_Person'
+          nullable: true
+          readOnly: true
+        void_reason:
+          type: string
+          readOnly: true
+        returns:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturn'
       required:
       - amount_on_credit
       - amount_paid
+      - cash_session_id
       - cashier
       - change_given
       - client_txn_id
@@ -6069,12 +7039,16 @@ components:
       - payments
       - receipt_number
       - recorded_at
+      - returns
       - status
       - store
       - subtotal
       - tax_mode
       - tax_total
       - total
+      - void_reason
+      - voided_at
+      - voided_by
     SaleCreateRequest:
       type: object
       properties:
@@ -6110,6 +7084,11 @@ components:
           type: string
           default: ''
           maxLength: 500
+        cash_session_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 'Default: your open till session.'
       required:
       - client_txn_id
       - items
@@ -6181,6 +7160,10 @@ components:
           format: decimal
           pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
           readOnly: true
+        returned_quantity:
+          type: string
+          readOnly: true
+          description: Already brought back.
       required:
       - discount_amount
       - line_no
@@ -6192,6 +7175,7 @@ components:
       - product_id
       - product_name
       - quantity
+      - returned_quantity
       - sku
       - tax_amount
       - tax_name
@@ -6262,6 +7246,8 @@ components:
           type: string
         kind:
           type: string
+        direction:
+          $ref: '#/components/schemas/DirectionEnum'
         amount:
           type: string
           format: decimal
@@ -6282,6 +7268,84 @@ components:
       - method
       - method_name
       - reference
+    SaleReturn:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        return_number:
+          type: string
+          readOnly: true
+        refund_to:
+          allOf:
+          - $ref: '#/components/schemas/RefundToEnum'
+          readOnly: true
+        refund_method:
+          type: string
+          nullable: true
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleReturnItem'
+        created_by:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_by
+      - currency
+      - id
+      - items
+      - occurred_at
+      - reason
+      - refund_method
+      - refund_to
+      - return_number
+      - total
+    SaleReturnItem:
+      type: object
+      properties:
+        line_no:
+          type: integer
+        product_name:
+          type: string
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          description: 'Refund for this line: its share of what was paid.'
+        restock:
+          type: boolean
+          readOnly: true
+          description: Put back on the shelf (not damaged).
+      required:
+      - amount
+      - line_no
+      - product_name
+      - quantity
+      - restock
     SaleStatus:
       enum:
       - COMPLETED
@@ -6361,6 +7425,21 @@ components:
       - expires_at
       - id
       - refresh_expires_at
+    SessionReport:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/CashSessionSummary'
+        report:
+          $ref: '#/components/schemas/Report'
+        movements:
+          type: array
+          items:
+            $ref: '#/components/schemas/CashMovement'
+      required:
+      - movements
+      - report
+      - session
     SignupRequest:
       type: object
       properties:
@@ -6533,6 +7612,16 @@ components:
           type: string
         is_active:
           type: boolean
+        require_cash_session:
+          type: boolean
+          description: Cash sales need an open till session (docs/ARCHITECTURE.md
+            §6.8).
+        cash_variance_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: Closing a till further out than this needs a reason and raises
+            an alert.
         created_at:
           type: string
           format: date-time
@@ -6568,6 +7657,16 @@ components:
           minLength: 1
         is_active:
           type: boolean
+        require_cash_session:
+          type: boolean
+          description: Cash sales need an open till session (docs/ARCHITECTURE.md
+            §6.8).
+        cash_variance_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: Closing a till further out than this needs a reason and raises
+            an alert.
       required:
       - code
       - name
@@ -6614,6 +7713,16 @@ components:
           type: string
         is_active:
           type: boolean
+        require_cash_session:
+          type: boolean
+          description: Cash sales need an open till session (docs/ARCHITECTURE.md
+            §6.8).
+        cash_variance_threshold:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: Closing a till further out than this needs a reason and raises
+            an alert.
         created_at:
           type: string
           format: date-time
@@ -6925,6 +8034,36 @@ components:
         * `MANAGER` - Manager
         * `CASHIER` - Cashier
         * `CUSTOM` - Custom
+    Till:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 60
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+      required:
+      - id
+      - name
+      - version
+    TillRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        is_active:
+          type: boolean
+      required:
+      - name
     TokenPair:
       type: object
       properties:
@@ -7123,6 +8262,15 @@ components:
       - id
       - mfa_enabled
       - phone
+    VoidRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+      required:
+      - reason
     _AdjustmentLineInputRequest:
       type: object
       properties:
@@ -7202,6 +8350,21 @@ components:
       - product_id
       - quantity
       - unit_price
+    _MethodTotal:
+      type: object
+      properties:
+        method:
+          type: string
+        count:
+          type: integer
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+      required:
+      - count
+      - method
+      - total
     _OpeningLineInputRequest:
       type: object
       properties:
@@ -7290,6 +8453,23 @@ components:
       - rate
       - tax_amount
       - taxable_amount
+    _ReturnLineInputRequest:
+      type: object
+      properties:
+        line_no:
+          type: integer
+          minimum: 1
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        restock:
+          type: boolean
+          default: true
+          description: Back on the shelf; false for damaged goods.
+      required:
+      - line_no
+      - quantity
     _TenderInputRequest:
       type: object
       properties:
@@ -7314,6 +8494,17 @@ components:
       required:
       - amount
       - payment_method_id
+    _TillUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+      - id
+      - name
     _Unit:
       type: object
       properties:

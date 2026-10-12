@@ -6,7 +6,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 
-from apps.common.fields import CurrencyField
+from apps.common.fields import CurrencyField, MoneyField
 from apps.common.models import BaseModel
 
 
@@ -128,11 +128,22 @@ class Store(TenantModel):
     currency = CurrencyField()
     timezone = models.CharField(max_length=64, validators=[validate_timezone])
     is_active = models.BooleanField(default=True)
+    require_cash_session = models.BooleanField(
+        default=True, help_text="Cash sales need an open till session (docs/ARCHITECTURE.md §6.8)."
+    )
+    cash_variance_threshold = MoneyField(
+        default=100,
+        help_text="Closing a till further out than this needs a reason and raises an alert.",
+    )
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [
             models.UniqueConstraint(
                 fields=["organization", "code"], name="organizations_store_code_unique"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(cash_variance_threshold__gte=0),
+                name="organizations_store_variance_threshold_valid",
             ),
             models.CheckConstraint(
                 condition=models.Q(code__regex=r"^[A-Z0-9]{2,10}$"),

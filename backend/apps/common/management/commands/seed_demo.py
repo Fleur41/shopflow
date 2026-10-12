@@ -19,6 +19,8 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import User
+from apps.cash import services as cash
+from apps.cash.models import Till
 from apps.catalog import products
 from apps.catalog.models import Brand, Category, Product, TaxRate, UnitOfMeasure
 from apps.customers import services as customer_services
@@ -465,6 +467,15 @@ class Command(BaseCommand):
         store = Store.objects.for_org(ctx.organization).get(code="MAIN")
         methods = {m.code: m for m in PaymentMethod.objects.for_org(ctx.organization)}
         now = timezone.now()
+        # Cash goes through a till: the owner's stays open so selling can carry on.
+        if cash.current_session(ctx, store) is None:
+            cash.open_session(
+                ctx,
+                store,
+                till=Till.objects.for_org(ctx.organization).filter(store=store).order_by("name")[0],
+                opening_float=Decimal(2000),
+                client_txn_id=uuid.uuid4(),
+            )
         for index, (lines, paid) in enumerate(SALES):
             items = [
                 sales.ItemInput(by_name[name], Decimal(quantity), by_name[name].selling_price)

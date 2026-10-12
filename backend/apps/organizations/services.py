@@ -81,6 +81,7 @@ def register_business(
             currency=currency,
             timezone=timezone,
         )
+        _add_default_till(store)
         membership = Membership.objects.create(
             organization=organization, user=user, role=owner_role, all_stores=True
         )
@@ -110,6 +111,13 @@ def register_business(
     return RegisteredBusiness(
         user=user, organization=organization, store=store, membership=membership
     )
+
+
+def _add_default_till(store: Store) -> None:
+    """Every store starts with one cash drawer, so the till can be opened straight away."""
+    from apps.cash.models import Till  # the cash app builds on this one
+
+    Till.objects.create(organization_id=store.organization_id, store=store, name="Till 1")
 
 
 def _unique_slug(name: str) -> str:
@@ -154,6 +162,7 @@ def create_store(ctx: RequestContext, **fields: Any) -> Store:
     fields.setdefault("timezone", ctx.organization.timezone)
     with transaction.atomic():
         store = Store.objects.create(organization=ctx.organization, **fields)
+        _add_default_till(store)
         record_audit(
             ctx.audit_actor,
             action="store.created",

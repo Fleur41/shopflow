@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Camera, CircleCheck, Minus, Plus, Printer, ScanBarcode, Search, ShoppingBasket, Trash2, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { type FormEvent, useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -17,11 +17,12 @@ import { can, useMe } from "@/lib/auth";
 import { type CartLine, type Tender, addToCart, priceLines, quantityProblem, removeLine, repriceLines, setQuantity, shortOfStock, stepQuantity } from "@/lib/cart";
 import { useCurrentStore } from "@/lib/current-store";
 import { formatAmount, minorUnits } from "@/lib/money";
-import { PAYMENT_METHODS_KEY } from "@/lib/query-keys";
+import { CASH_KEY, PAYMENT_METHODS_KEY } from "@/lib/query-keys";
 import { useScannerWedge } from "@/lib/scanner";
 
 import { CustomerPicker } from "./CustomerPicker";
 import { TenderForm } from "./TenderDialog";
+import { TillBar } from "./TillBar";
 import { useTillState } from "./till-state";
 
 type ScanMessage = { tone: "error" | "info"; text: string } | null;
@@ -36,6 +37,7 @@ export default function SellPage() {
   const taxMode = me?.organization?.tax_mode ?? "INCLUSIVE";
   const storageKey = me?.organization && store ? `shopflow:till:${me.organization.id}:${store.id}` : null;
   const { state, update, clear } = useTillState(storageKey);
+  const queryClient = useQueryClient();
 
   const [code, setCode] = useState("");
   const [message, setMessage] = useState<ScanMessage>(null);
@@ -160,6 +162,7 @@ export default function SellPage() {
         }),
       ),
     onSuccess: (sale) => {
+      void queryClient.invalidateQueries({ queryKey: CASH_KEY });
       setPaying(false);
       setCompleted(sale);
       setNotice(null);
@@ -206,6 +209,8 @@ export default function SellPage() {
           <kbd className="kbd">F2</kbd> scan · <kbd className="kbd">F4</kbd> customer · <kbd className="kbd">F8</kbd> pay
         </p>
       </div>
+
+      <TillBar storeId={store.id} currency={currency} />
 
       {completed && <SaleComplete sale={completed} storeId={store.id} onNext={() => { setCompleted(null); focusScan(); }} />}
 

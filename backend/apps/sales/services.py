@@ -22,6 +22,7 @@ from django.utils import timezone
 from rest_framework import status
 
 from apps.audit.services import record_audit
+from apps.cash.services import session_for_cash
 from apps.catalog.models import Product
 from apps.common.currency import minor_units
 from apps.common.errors import ApplicationError
@@ -101,6 +102,7 @@ class SaleRequest:
     customer: Any = None  # apps.customers.models.Customer (Phase 4.3)
     notes: str = ""
     origin: str = Sale.Origin.WEB
+    cash_session_id: uuid.UUID | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -150,6 +152,8 @@ def create_sale(ctx: RequestContext, store: Store, request: SaleRequest) -> Sale
         total = Decimal(priced.total)
         _check_credit(ctx, request, total)
         payments, change = _check_tenders(ctx, request, total, places, currency)
+        takes_cash = any(t.payment_method.kind == PaymentMethod.Kind.CASH for t in request.tenders)
+        session = session_for_cash(ctx, store, request.cash_session_id, takes_cash=takes_cash)
 
         sale = Sale.objects.create(
             organization=ctx.organization,
@@ -169,6 +173,7 @@ def create_sale(ctx: RequestContext, store: Store, request: SaleRequest) -> Sale
             change_given=change,
             origin=request.origin,
             notes=request.notes.strip(),
+            cash_session=session,
             occurred_at=occurred_at,
         )
         movements = []
@@ -211,6 +216,7 @@ def create_sale(ctx: RequestContext, store: Store, request: SaleRequest) -> Sale
         for payment in payments:
             payment.sale = sale
             payment.store = store
+            payment.cash_session = session
             payment.occurred_at = occurred_at
         try:
             with transaction.atomic():

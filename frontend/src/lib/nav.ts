@@ -12,6 +12,7 @@ import {
   Store,
   Truck,
   Users,
+  Vault,
 } from "lucide-react";
 
 import { can } from "./auth";
@@ -25,6 +26,7 @@ const ITEMS: NavItem[] = [
   { href: "/sell", label: "Sell", group: "Selling", icon: ScanBarcode, permission: "sales.create" },
   { href: "/sales", label: "Sales", group: "Selling", icon: ReceiptText, permission: "sales.view_own" },
   { href: "/customers", label: "Customers", group: "Selling", icon: Contact, permission: "customers.view" },
+  { href: "/cash", label: "Till sessions", group: "Selling", icon: Vault, permission: "cash.view_sessions" },
   { href: "/products", label: "Products", group: "Catalog", icon: Package, permission: "products.view" },
   { href: "/inventory", label: "Stock", group: "Catalog", icon: Boxes, permission: "inventory.view" },
   { href: "/settings/catalog", label: "Catalog setup", group: "Catalog", icon: Shapes, permission: "products.manage" },

@@ -163,6 +163,9 @@ class PaymentCreateSerializer(serializers.Serializer[Any]):
     tendered = _money(required=False, allow_null=True)
     reference = serializers.CharField(max_length=64, required=False, allow_blank=True, default="")
     occurred_at = serializers.DateTimeField(required=False)
+    cash_session_id = serializers.UUIDField(
+        required=False, allow_null=True, default=None, help_text="Default: your open till session."
+    )
 
     def validate_store_id(self, store: Store) -> Store:
         ctx = _ctx(self)

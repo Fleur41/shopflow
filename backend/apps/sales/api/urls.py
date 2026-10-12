@@ -8,4 +8,6 @@ urlpatterns = [
     path(f"{S}sales/", views.SaleListView.as_view(), name="sale-list"),
     path(f"{S}sales/<uuid:sale_id>/", views.SaleDetailView.as_view(), name="sale-detail"),
     path(f"{S}sales/<uuid:sale_id>/receipt/", views.ReceiptView.as_view(), name="sale-receipt"),
+    path(f"{S}sales/<uuid:sale_id>/void/", views.VoidView.as_view(), name="sale-void"),
+    path(f"{S}sales/<uuid:sale_id>/returns/", views.ReturnsView.as_view(), name="sale-returns"),
 ]

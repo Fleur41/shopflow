@@ -52,8 +52,16 @@ class Sale(TenantModel):
     change_given = MoneyField(default=0)
     origin = models.CharField(max_length=20, choices=Origin.choices, default=Origin.WEB)
     notes = models.CharField(max_length=500, blank=True)
+    cash_session = models.ForeignKey(
+        "cash.CashSession", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
     occurred_at = models.DateTimeField(help_text="When the sale happened at the till.")
     recorded_at = models.DateTimeField(auto_now_add=True, help_text="When the server saved it.")
+    voided_at = models.DateTimeField(null=True, blank=True)
+    voided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    void_reason = models.CharField(max_length=300, blank=True)
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [
@@ -83,6 +91,16 @@ class Sale(TenantModel):
             models.CheckConstraint(
                 condition=models.Q(amount_on_credit=0) | models.Q(customer__isnull=False),
                 name="sales_sale_credit_has_customer",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status="COMPLETED", voided_at__isnull=True)
+                | models.Q(
+                    status="VOIDED",
+                    voided_at__isnull=False,
+                    voided_by__isnull=False,
+                )
+                & ~models.Q(void_reason=""),
+                name="sales_sale_void_consistent",
             ),
         ]
         indexes: ClassVar[list[models.Index]] = [
@@ -134,3 +152,74 @@ class SaleItem(TenantModel):
 
     def __str__(self) -> str:
         return f"{self.line_no}. {self.product_name}"
+
+
+class SaleReturn(TenantModel):
+    """Items brought back after a sale: a refund, and optionally the stock put back."""
+
+    class RefundTo(models.TextChoices):
+        PAYMENT = "PAYMENT", "Paid back (cash, M-Pesa...)"
+        ACCOUNT = "ACCOUNT", "Taken off the customer's account"
+
+    objects: ClassVar[TenantManager["SaleReturn"]]
+
+    store = models.ForeignKey("organizations.Store", on_delete=models.PROTECT, related_name="+")
+    sale = models.ForeignKey(Sale, on_delete=models.PROTECT, related_name="returns")
+    return_number = models.CharField(max_length=40)
+    client_txn_id = models.UUIDField()
+    refund_to = models.CharField(max_length=10, choices=RefundTo.choices)
+    currency = CurrencyField()
+    total = MoneyField()
+    reason = models.CharField(max_length=300)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    cash_session = models.ForeignKey(
+        "cash.CashSession", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
+    occurred_at = models.DateTimeField()
+    recorded_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["store", "return_number"], name="sales_return_number_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["organization", "client_txn_id"], name="sales_return_txn_unique"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(total__gte=0), name="sales_return_total_valid"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(refund_to__in=["PAYMENT", "ACCOUNT"]),
+                name="sales_return_refund_to_valid",
+            ),
+            models.CheckConstraint(condition=~models.Q(reason=""), name="sales_return_has_reason"),
+        ]
+
+    def __str__(self) -> str:
+        return self.return_number
+
+
+class SaleReturnItem(TenantModel):
+    objects: ClassVar[TenantManager["SaleReturnItem"]]
+
+    sale_return = models.ForeignKey(SaleReturn, on_delete=models.PROTECT, related_name="items")
+    sale_item = models.ForeignKey(SaleItem, on_delete=models.PROTECT, related_name="returned")
+    quantity = QuantityField()
+    amount = MoneyField(help_text="Refund for this line: its share of what was paid.")
+    restock = models.BooleanField(help_text="Put back on the shelf (not damaged).")
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0, amount__gte=0), name="sales_return_item_valid"
+            ),
+            models.UniqueConstraint(
+                fields=["sale_return", "sale_item"], name="sales_return_item_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.quantity} x {self.sale_item.product_name}"

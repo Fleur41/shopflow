@@ -120,6 +120,9 @@ class CustomerLedgerEntry(TenantModel):
     payment = models.ForeignKey(
         "payments.Payment", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
     )
+    sale_return = models.ForeignKey(
+        "sales.SaleReturn", on_delete=models.PROTECT, null=True, blank=True, related_name="+"
+    )
     reverses = models.OneToOneField(
         "self", on_delete=models.PROTECT, null=True, blank=True, related_name="reversed_by"
     )
@@ -147,7 +150,10 @@ class CustomerLedgerEntry(TenantModel):
                 condition=models.Q(entry_type="CREDIT_SALE", sale__isnull=False, amount__gt=0)
                 | models.Q(entry_type="PAYMENT", payment__isnull=False, amount__lt=0)
                 | models.Q(entry_type="REVERSAL", reverses__isnull=False)
-                | models.Q(entry_type__in=["OPENING_BALANCE", "SALE_RETURN", "ADJUSTMENT"]),
+                # A void (sale) or a return (sale_return) takes the credit back off.
+                | models.Q(entry_type="SALE_RETURN", sale__isnull=False, amount__lt=0)
+                | models.Q(entry_type="SALE_RETURN", sale_return__isnull=False, amount__lt=0)
+                | models.Q(entry_type__in=["OPENING_BALANCE", "ADJUSTMENT"]),
                 name="customers_entry_source",
             ),
         ]

@@ -14,6 +14,7 @@ from django.utils import timezone
 from rest_framework import status
 
 from apps.audit.services import record_audit
+from apps.cash.services import session_for_cash
 from apps.common.currency import minor_units
 from apps.common.errors import ApplicationError, StaleVersion
 from apps.organizations import master_data
@@ -227,6 +228,45 @@ def charge_credit_sale(
 sales_services.register_credit_charger(charge_credit_sale)
 
 
+def credit_back(
+    ctx: RequestContext,
+    store: Store,
+    customer: Customer,
+    amount: Decimal,
+    *,
+    description: str,
+    **source: Any,
+) -> CustomerLedgerEntry:
+    """Take ``amount`` off what a customer owes, for a voided sale (``sale=``) or a
+    return (``sale_return=``). Never below zero (Q-6): a customer who has already
+    paid gets money back instead."""
+    account = account_of(ctx, customer, lock=True)
+    if amount > account.balance:
+        raise LedgerRuleViolation(
+            f"{customer.name} only owes {_money(account.balance, account.currency)}, so "
+            f"{_money(amount, account.currency)} can't come off their account. "
+            "Pay the difference back instead.",
+            code="REFUND_EXCEEDS_BALANCE",
+            errors=[
+                {
+                    "pointer": "/refund_to",
+                    "code": "REFUND_EXCEEDS_BALANCE",
+                    "meta": {"balance": f"{account.balance:.{minor_units(account.currency)}f}"},
+                }
+            ],
+        )
+    return _post(
+        ctx,
+        account,
+        entry_type=CustomerLedgerEntry.Type.SALE_RETURN,
+        amount=-amount,
+        store=store,
+        occurred_at=timezone.now(),
+        description=description,
+        **source,
+    )
+
+
 def receive_payment(
     ctx: RequestContext,
     customer: Customer,
@@ -238,6 +278,7 @@ def receive_payment(
     reference: str = "",
     tendered: Decimal | None = None,
     occurred_at: datetime | None = None,
+    cash_session_id: uuid.UUID | None = None,
 ) -> tuple[CustomerLedgerEntry, bool]:
     """Record money a customer paid towards their balance. Returns the ledger
     entry and whether it was created now (``False`` for a resent request)."""
@@ -278,11 +319,14 @@ def receive_payment(
                 code="VALIDATION_ERROR",
                 errors=[{"pointer": "/tendered", "code": "TOO_LITTLE"}],
             )
+        is_cash = payment_method.kind == PaymentMethod.Kind.CASH
+        session = session_for_cash(ctx, store, cash_session_id, takes_cash=is_cash)
         try:
             with transaction.atomic():
                 payment = Payment.objects.create(
                     organization=ctx.organization,
                     store=store,
+                    cash_session=session,
                     payment_method=payment_method,
                     purpose=Payment.Purpose.ACCOUNT_SETTLEMENT,
                     amount=amount,

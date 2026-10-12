@@ -16,6 +16,8 @@ from django.utils import timezone
 
 from apps.accounts.models import AuthSession
 from apps.audit.models import AuditLog
+from apps.cash import services as cash_services
+from apps.cash.models import CashMovement, CashSession, Till
 from apps.catalog.models import (
     Brand,
     Category,
@@ -110,6 +112,27 @@ TARGETS = {
         "entry_id": a.ledger_entry.pk,
     },
     "api/v1/customers/<uuid:customer_id>/payments/": lambda a: {"customer_id": a.customer.pk},
+    "api/v1/stores/<uuid:store_id>/sales/<uuid:sale_id>/void/": lambda a: {
+        "store_id": a.store.pk,
+        "sale_id": a.sale.pk,
+    },
+    "api/v1/stores/<uuid:store_id>/sales/<uuid:sale_id>/returns/": lambda a: {
+        "store_id": a.store.pk,
+        "sale_id": a.sale.pk,
+    },
+    "api/v1/stores/<uuid:store_id>/tills/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/tills/<uuid:till_id>/": lambda a: {
+        "store_id": a.store.pk,
+        "till_id": a.till.pk,
+    },
+    "api/v1/stores/<uuid:store_id>/cash-sessions/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/cash-sessions/current/": lambda a: {"store_id": a.store.pk},
+    **{
+        f"api/v1/stores/<uuid:store_id>/cash-sessions/<uuid:session_id>/{suffix}": (
+            lambda a: {"store_id": a.store.pk, "session_id": a.cash_session.pk}
+        )
+        for suffix in ("", "movements/", "close/", "corrections/")
+    },
 }
 
 # Catalog lookups of business A, compared before and after the attack.
@@ -165,6 +188,10 @@ def world():
             inventory_services.AdjustmentLineInput(product=product, counted_quantity=Decimal(5))
         ],
     )
+    till = Till.objects.create(organization=org, store=store, name="Till 1")
+    cash_session = cash_services.open_session(
+        owner_ctx, store, till=till, opening_float=Decimal(500), client_txn_id=uuid.uuid4()
+    )
     customer = customer_services.create_customer(
         owner_ctx, name="Mama Mboga", credit_limit=Decimal(1000)
     )
@@ -216,6 +243,8 @@ def world():
             sale=sale,
             customer=customer,
             ledger_entry=CustomerLedgerEntry.objects.for_org(org).get(sale=sale),
+            till=till,
+            cash_session=cash_session,
         ),
         b_client=client_for(b.user, b.organization),
     )
@@ -269,6 +298,12 @@ def _snapshot(organization):
             )
         ),
         "ledger": CustomerLedgerEntry.objects.for_org(organization).count(),
+        "tills": sorted(Till.objects.for_org(organization).values_list("pk", "name", "version")),
+        "cash_sessions": sorted(
+            CashSession.objects.for_org(organization).values_list("pk", "status", "counted_cash")
+        ),
+        "cash_movements": CashMovement.objects.for_org(organization).count(),
+        "sale_statuses": sorted(Sale.objects.for_org(organization).values_list("pk", "status")),
     }
 
 

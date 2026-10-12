@@ -117,6 +117,7 @@ function PrintedReceipt({ receipt, width, timeZone }: { receipt: Receipt; width:
         {business.address && <p>{business.address}</p>}
         {business.phone && <p>Tel {business.phone}</p>}
         {receipt.reprint && <p className="mt-1 font-bold">*** COPY ***</p>}
+        {sale.status === "VOIDED" && <p className="mt-1 font-bold">*** VOID ***</p>}
       </header>
       <Rule />
       <p>Receipt {sale.receipt_number}</p>
@@ -140,7 +141,7 @@ function PrintedReceipt({ receipt, width, timeZone }: { receipt: Receipt; width:
       {Number(sale.discount_total) > 0 && <Line left="Discounts" right={`-${money(sale.discount_total)}`} />}
       <Line left={<strong className="text-[1.15em]">TOTAL {cur}</strong>} right={<strong className="text-[1.15em]">{money(sale.total)}</strong>} />
       <Rule />
-      {sale.payments.map((payment, index) => (
+      {sale.payments.filter((payment) => payment.direction === "IN").map((payment, index) => (
         <div key={index}>
           <Line left={payment.method_name} right={money(payment.tendered ?? payment.amount)} />
           {payment.reference && <p className="pl-2">Ref {payment.reference}</p>}

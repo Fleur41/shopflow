@@ -9,9 +9,12 @@ from .context import RequestContext
 from .models import DocumentSequence, Store
 
 
-def next_number(ctx: RequestContext, store: Store, doc_type: str, when: datetime) -> str:
+def next_number(
+    ctx: RequestContext, store: Store, doc_type: str, when: datetime, *, prefix: str = ""
+) -> str:
     """Issue the next number. Must run inside the transaction that uses it, so a
-    rollback gives the number back."""
+    rollback gives the number back. ``prefix`` tells document kinds apart
+    (``MAIN-R2026-000003`` for a return)."""
     if not transaction.get_connection().in_atomic_block:
         raise RuntimeError("next_number must run inside a transaction")
     year = when.astimezone(ZoneInfo(store.timezone)).year
@@ -30,4 +33,4 @@ def next_number(ctx: RequestContext, store: Store, doc_type: str, when: datetime
     )
     sequence.last_value += 1
     sequence.save(update_fields=["last_value", "updated_at"])
-    return f"{store.code}-{year}-{sequence.last_value:06d}"
+    return f"{store.code}-{prefix}{year}-{sequence.last_value:06d}"

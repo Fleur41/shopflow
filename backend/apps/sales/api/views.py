@@ -22,13 +22,16 @@ from apps.organizations.api.master_data import bool_param
 from apps.organizations.api.store_scope import StoreScopedView
 from apps.payments.models import Payment
 
-from .. import services
-from ..models import Sale, SaleItem
+from .. import reversals, services
+from ..models import Sale, SaleItem, SaleReturn, SaleReturnItem
 from .serializers import (
     ReceiptSerializer,
+    ReturnCreateSerializer,
     SaleCreateSerializer,
     SaleListSerializer,
+    SaleReturnSerializer,
     SaleSerializer,
+    VoidSerializer,
 )
 
 
@@ -44,13 +47,36 @@ def _sales(view: StoreScopedView) -> QuerySet[Sale]:
     return sales
 
 
+def _returns() -> QuerySet[SaleReturn]:
+    return (
+        SaleReturn.unscoped.select_related("created_by")
+        .prefetch_related(
+            Prefetch("items", queryset=SaleReturnItem.unscoped.select_related("sale_item")),
+            Prefetch(
+                "refunds",
+                queryset=Payment.unscoped.select_related("payment_method"),
+                to_attr="refunds_list",
+            ),
+        )
+        .order_by("occurred_at")
+    )
+
+
 def _full(sales: QuerySet[Sale]) -> QuerySet[Sale]:
-    return sales.select_related("store", "cashier", "customer").prefetch_related(
-        Prefetch("items", queryset=SaleItem.unscoped.order_by("line_no")),
+    return sales.select_related("store", "cashier", "customer", "voided_by").prefetch_related(
+        Prefetch(
+            "items",
+            queryset=SaleItem.unscoped.order_by("line_no").prefetch_related(
+                Prefetch("returned", queryset=SaleReturnItem.unscoped.all())
+            ),
+        ),
         Prefetch(
             "payments",
-            queryset=Payment.unscoped.select_related("payment_method").order_by("position"),
+            queryset=Payment.unscoped.select_related("payment_method").order_by(
+                "direction", "position"
+            ),
         ),
+        Prefetch("returns", queryset=_returns()),
     )
 
 
@@ -119,6 +145,7 @@ class SaleListView(mixins.ListModelMixin, StoreScopedView):
                 order_discount=data["order_discount"],
                 credit_amount=data["credit_amount"],
                 notes=data["notes"],
+                cash_session_id=data["cash_session_id"],
             ),
         )
         sale = _full(Sale.objects.for_org(self.ctx.organization)).get(pk=result.sale.pk)
@@ -204,3 +231,82 @@ def receipt_data(view: StoreScopedView, sale: Sale, *, reprint: bool) -> dict[st
         "account": account,
         "reprint": reprint,
     }
+
+
+class _SaleAction(StoreScopedView):
+    def get_sale(self, sale_id: uuid.UUID) -> Sale:
+        sale = _sales(self).filter(pk=sale_id).first()
+        if sale is None:
+            raise Http404
+        return sale
+
+    def full(self, sale: Sale) -> Response:
+        return Response(
+            SaleSerializer(_full(Sale.objects.for_org(self.ctx.organization)).get(pk=sale.pk)).data
+        )
+
+
+class VoidView(_SaleAction):
+    """Undo today's sale while its till is still open: stock, money and credit go back."""
+
+    required_permissions: ClassVar[dict[str, str]] = {"POST": "sales.void"}
+    serializer_class = VoidSerializer
+
+    @extend_schema(responses=SaleSerializer)
+    @idempotent(required=True)
+    def post(self, request: Request, store_id: uuid.UUID, sale_id: uuid.UUID) -> Response:
+        sale = self.get_sale(sale_id)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        reversals.void_sale(self.ctx, sale, reason=serializer.validated_data["reason"])
+        return self.full(sale)
+
+
+class ReturnsView(_SaleAction):
+    required_permissions: ClassVar[dict[str, str]] = {
+        "GET": "sales.view_own",
+        "POST": "sales.return",
+    }
+    serializer_class = ReturnCreateSerializer
+
+    @extend_schema(responses=SaleReturnSerializer(many=True))
+    def get(self, request: Request, store_id: uuid.UUID, sale_id: uuid.UUID) -> Response:
+        sale = self.get_sale(sale_id)
+        returns = _returns().filter(organization=self.ctx.organization, sale=sale)
+        return Response(SaleReturnSerializer(returns, many=True).data)
+
+    @extend_schema(responses={201: SaleSerializer, 200: SaleSerializer})
+    @idempotent(required=True)
+    def post(self, request: Request, store_id: uuid.UUID, sale_id: uuid.UUID) -> Response:
+        sale = self.get_sale(sale_id)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        items = {
+            item.line_no: item
+            for item in SaleItem.objects.for_org(self.ctx.organization)
+            .filter(sale=sale)
+            .select_related("product__unit")
+        }
+        lines = []
+        for index, line in enumerate(data["items"]):
+            item = items.get(line["line_no"])
+            if item is None:
+                raise serializers.ValidationError(
+                    {"items": {str(index): {"line_no": ["This sale has no such line."]}}}
+                )
+            lines.append(reversals.ReturnLine(item, line["quantity"], line["restock"]))
+        result = reversals.return_items(
+            self.ctx,
+            self.store,
+            sale,
+            client_txn_id=data["client_txn_id"],
+            reason=data["reason"],
+            lines=lines,
+            refund_to=data["refund_to"],
+            payment_method=data["payment_method"],
+            cash_session_id=data["cash_session_id"],
+        )
+        response = self.full(sale)
+        response.status_code = status.HTTP_201_CREATED if result.created else status.HTTP_200_OK
+        return response
