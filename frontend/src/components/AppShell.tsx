@@ -3,7 +3,7 @@
 import { ChevronsUpDown, LogOut, Menu, Repeat, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { type ReactNode, useEffect, useId, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 
 import { BrandMark } from "@/components/BrandMark";
 import { ErrorAlert, Loading } from "@/components/ui/Feedback";
@@ -23,8 +23,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [menuOpenOn, setMenuOpenOn] = useState<string | null>(null);
   const menuOpen = menuOpenOn === pathname;
 
+  // Signing out clears the session cache, which makes `me` fail as signed out; that
+  // must not race the sign-out's own redirect and send the next sign-in back here.
+  const signingOut = useRef(false);
   useEffect(() => {
-    if (isSignedOutError(me.error)) router.replace(`/login?next=${encodeURIComponent(pathname)}`);
+    if (isSignedOutError(me.error)) router.replace(signingOut.current ? "/login" : `/login?next=${encodeURIComponent(pathname)}`);
     else if (me.data && !me.data.organization) router.replace("/select-business");
   }, [me.error, me.data, pathname, router]);
 
@@ -48,6 +51,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     .join("");
 
   async function signOut(everywhere: boolean) {
+    signingOut.current = true;
     await logout.mutateAsync(everywhere).catch(() => undefined);
     router.replace("/login");
   }
