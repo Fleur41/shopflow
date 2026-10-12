@@ -73,14 +73,14 @@ export function AppShell({ children }: { children: ReactNode }) {
             onClick={() => setMenuOpenOn(menuOpen ? null : pathname)}
             aria-expanded={menuOpen}
             aria-controls={navId}
-            className="rounded-lg p-2 text-emerald-50 hover:bg-white/10 md:hidden"
+            className="flex size-11 items-center justify-center rounded-lg text-emerald-50 hover:bg-white/10 md:hidden"
           >
             {menuOpen ? <X aria-hidden="true" className="size-5" /> : <Menu aria-hidden="true" className="size-5" />}
             <span className="sr-only">Menu</span>
           </button>
         </div>
 
-        <div id={navId} className={`${menuOpen ? "flex" : "hidden"} flex-1 flex-col md:flex`}>
+        <div id={navId} className={`${menuOpen ? "flex" : "hidden"} min-h-0 flex-1 flex-col md:flex`}>
           {stores.length > 0 && (
             <div className="px-4 pb-2 md:px-5">
               <label htmlFor={storeSelectId} className="mb-1 block text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-emerald-100/80">
@@ -91,7 +91,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   id={storeSelectId}
                   value={store?.id ?? ""}
                   onChange={(e) => selectStore(e.target.value)}
-                  className="min-h-11 w-full appearance-none rounded-lg bg-white/10 py-2 pl-3 pr-9 text-sm font-medium text-white ring-1 ring-inset ring-white/15 hover:bg-white/15 [&>option]:text-slate-900"
+                  className="min-h-11 w-full appearance-none rounded-lg bg-white/10 py-2 pl-3 pr-9 text-base font-medium text-white ring-1 ring-inset ring-white/15 hover:bg-white/15 [&>option]:text-slate-900"
                 >
                   {stores.map((s) => (
                     <option key={s.id} value={s.id}>
@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          <nav aria-label="Main" className="flex-1 overflow-y-auto px-3 py-3">
+          <nav aria-label="Main" className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
             {navGroupsFor(data).map(({ group, items }) => (
               <div key={group} className="mb-4">
                 <p className="px-2 pb-1 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-emerald-100/70" aria-hidden="true">
@@ -119,7 +119,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                         <Link
                           href={item.href}
                           aria-current={active ? "page" : undefined}
-                          className={`group relative flex min-h-10 items-center gap-3 rounded-lg px-2.5 text-sm font-medium transition-colors ${
+                          className={`group relative flex min-h-11 items-center gap-3 rounded-lg px-2.5 text-sm font-medium transition-colors ${
                             active ? "bg-white/12 text-white" : "text-emerald-50/90 hover:bg-white/7 hover:text-white"
                           }`}
                         >
@@ -148,19 +148,19 @@ export function AppShell({ children }: { children: ReactNode }) {
               <ChevronsUpDown aria-hidden="true" className="size-4 text-emerald-100/70" />
             </summary>
             <div className="absolute bottom-full left-3 right-3 z-30 mb-1 flex flex-col rounded-xl bg-white p-1.5 text-sm text-slate-800 shadow-raised ring-1 ring-slate-900/10">
-              <Link href="/account" className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-100">
+              <Link href="/account" className="flex items-center gap-2 rounded-lg min-h-11 px-3 py-2 hover:bg-slate-100">
                 <UserRound aria-hidden="true" className="size-4 text-slate-600" /> Your account
               </Link>
               {data.organizations.length > 1 && (
-                <Link href="/select-business" className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-slate-100">
+                <Link href="/select-business" className="flex items-center gap-2 rounded-lg min-h-11 px-3 py-2 hover:bg-slate-100">
                   <Repeat aria-hidden="true" className="size-4 text-slate-600" /> Switch business
                 </Link>
               )}
               <hr className="my-1 border-slate-100" />
-              <button type="button" onClick={() => signOut(false)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-slate-100">
+              <button type="button" onClick={() => signOut(false)} className="flex items-center gap-2 rounded-lg min-h-11 px-3 py-2 text-left hover:bg-slate-100">
                 <LogOut aria-hidden="true" className="size-4 text-slate-600" /> Sign out
               </button>
-              <button type="button" onClick={() => signOut(true)} className="flex items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-slate-100">
+              <button type="button" onClick={() => signOut(true)} className="flex items-center gap-2 rounded-lg min-h-11 px-3 py-2 text-left hover:bg-slate-100">
                 <LogOut aria-hidden="true" className="size-4 text-slate-600" /> Sign out everywhere
               </button>
             </div>

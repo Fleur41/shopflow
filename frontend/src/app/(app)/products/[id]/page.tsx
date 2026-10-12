@@ -44,7 +44,7 @@ export default function ProductPage() {
       {product.data && (
         <>
           <ProductHero product={product.data} currency={currency} />
-          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+          <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
             <Card title="Details" description={canManage ? "Changes are saved together and recorded in the audit log." : undefined}>
               <p role="status" className="sr-only">
                 {saved ? "Changes saved." : ""}

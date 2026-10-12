@@ -69,14 +69,14 @@ export default function DashboardPage() {
       {me && !me.user.email_verified && (
         <Notice>
           <p className="font-semibold">Confirm your email address</p>
-          <p className="mt-1">We sent a link to {me.user.email}. It lets you reset your password if you ever forget it.</p>
+          <p className="mt-1 break-words">We sent a link to {me.user.email}. It lets you reset your password if you ever forget it.</p>
           <Link href="/account" className="mt-2 inline-block font-semibold underline">
             Resend the link
           </Link>
         </Notice>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_20rem]">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         {sections.length > 0 && (
           <section aria-labelledby="manage-heading">
             <h2 id="manage-heading" className="mb-3 text-base font-semibold tracking-tight">

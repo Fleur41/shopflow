@@ -38,7 +38,7 @@ export default function SupplierPage() {
       {supplier.data && (
         <>
           <SupplierHero supplier={supplier.data} />
-          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
             <div className="flex flex-col gap-6">
               <SuppliedProductsCard supplierId={id} canManage={canManage} />
               {canManage && (
@@ -80,7 +80,7 @@ function SupplierHero({ supplier }: { supplier: Supplier }) {
               </a>
             )}
             {supplier.email && (
-              <a href={`mailto:${supplier.email}`} className="inline-flex items-center gap-1.5 text-emerald-800 hover:underline">
+              <a href={`mailto:${supplier.email}`} className="inline-flex min-w-0 items-center gap-1.5 break-all text-emerald-800 hover:underline">
                 <Mail aria-hidden="true" className="size-4" /> {supplier.email}
               </a>
             )}

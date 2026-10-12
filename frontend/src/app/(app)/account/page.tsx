@@ -161,7 +161,7 @@ function DisableTwoStep({ onDone }: { onDone: () => void }) {
   const errors = disable.error instanceof ApiError ? disable.error.fieldErrors() : {};
   return (
     <details>
-      <summary className="cursor-pointer text-sm font-medium text-red-800">Turn off two-step verification</summary>
+      <summary className="cursor-pointer py-3 text-sm font-medium text-red-800">Turn off two-step verification</summary>
       <form
         onSubmit={(event) => {
           event.preventDefault();

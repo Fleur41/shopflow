@@ -55,6 +55,7 @@
 
   /* Shared table look; pages add only what's specific to their columns. */
   .table-card {
+    position: relative; /* keeps sr-only header text inside the scroll area */
     overflow-x: auto;
     border-radius: var(--radius-xl);
     background: white;

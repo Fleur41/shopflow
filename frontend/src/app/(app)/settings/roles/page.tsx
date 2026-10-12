@@ -24,8 +24,8 @@ export default function RolesPage() {
               <span className="text-sm text-slate-600">{role.permissions.length} permissions</span>
             </div>
             {role.description && <p className="mt-1 text-slate-700">{role.description}</p>}
-            <details className="mt-3">
-              <summary className="cursor-pointer text-sm font-medium text-emerald-800">Show permissions</summary>
+            <details>
+              <summary className="cursor-pointer py-3 text-sm font-medium text-emerald-800">Show permissions</summary>
               <ul className="mt-2 grid gap-1 font-mono text-xs text-slate-700 sm:grid-cols-2 lg:grid-cols-3">
                 {role.permissions.map((code) => (
                   <li key={code}>{code}</li>

@@ -47,7 +47,7 @@ export function Dialog({
           </h2>
           {description && <p className="mt-0.5 text-sm text-slate-600">{description}</p>}
         </div>
-        <button type="button" onClick={onClose} className="-mr-2 rounded-lg p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900" aria-label="Close">
+        <button type="button" onClick={onClose} className="-mr-2 flex size-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900" aria-label="Close">
           <X aria-hidden="true" className="size-5" />
         </button>
       </div>
