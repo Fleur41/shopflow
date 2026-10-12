@@ -19,7 +19,7 @@ function me(permissions: string[]): Me {
 
 describe("navItemsFor", () => {
   it("shows a cashier only what they may open", () => {
-    expect(navItemsFor(me(["stores.view", "sales.create"])).map((i) => i.label)).toEqual(["Dashboard", "Stores"]);
+    expect(navItemsFor(me(["stores.view", "sales.create"])).map((i) => i.label)).toEqual(["Dashboard", "Sell", "Stores"]);
   });
 
   it("shows owners every section", () => {

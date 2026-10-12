@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from "react";
+import type { ComponentProps } from "react";
 
 const variants = {
   primary:
@@ -8,7 +8,7 @@ const variants = {
   ghost: "text-slate-700 hover:bg-slate-100 active:bg-slate-200",
 } as const;
 
-type Props = ButtonHTMLAttributes<HTMLButtonElement> & {
+type Props = ComponentProps<"button"> & {
   variant?: keyof typeof variants;
   loading?: boolean;
 };

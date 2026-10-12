@@ -607,7 +607,7 @@ Only non-obvious constraints are listed. Every tenant table also has `organizati
 |---|---|
 | `stock_level` | `UNIQUE(store_id, product_id)`. **`CHECK(allow_negative OR quantity_on_hand >= 0)`**. Only the inventory service writes it. |
 | `inventory_movement` | **Append-only.** `CHECK(quantity <> 0)`. **`CHECK(quantity_after = quantity_before + quantity)`**. `movement_type IN ('PURCHASE','SALE','SALE_RETURN','PURCHASE_RETURN','ADJUSTMENT','DAMAGED','EXPIRED','TRANSFER_IN','TRANSFER_OUT','OPENING')`. One nullable FK per source document (`sale_item_id`, `sale_return_item_id`, `goods_receipt_item_id`, `purchase_return_item_id`, `stock_adjustment_line_id`, `stock_transfer_line_id`). A `CHECK` requires exactly one of them to be non-null and to match `movement_type` (`OPENING` uses the adjustment FK). Indexes: `(store_id, product_id, seq)`, `(organization_id, recorded_at)`, plus each source FK. |
-| `stock_adjustment` | `UNIQUE(organization_id, client_txn_id)`. `reason_code IN ('DAMAGED','EXPIRED','COUNT_CORRECTION','THEFT_LOSS','FOUND','OTHER')`. `note` is required when the reason is `OTHER`. |
+| `stock_adjustment` | `UNIQUE(organization_id, client_txn_id)`. `reason_code IN ('OPENING_BALANCE','DAMAGED','EXPIRED','COUNT_CORRECTION','THEFT_LOSS','FOUND','OTHER')`. `note` is required when the reason is `OTHER`. |
 
 Real FK columns per source type were chosen over a generic `(reference_type, reference_id)` pair. The database can then guarantee that every movement points at a real document (spec rule 6).
 
@@ -619,7 +619,7 @@ Real FK columns per source type were chosen over a generic `(reference_type, ref
 | `sale_item` | `UNIQUE(sale_id, line_no)`. `CHECK(quantity > 0)`. `CHECK(unit_price >= 0)`. `CHECK(discount_amount >= 0)`. Snapshot columns are NOT NULL. `price_overridden bool` + `override_reason`. |
 | `sale_return_item` | `CHECK(quantity > 0)`. Service ensures `SUM(returned) <= sold` while holding a lock on the sale. |
 | `payment_method` | `UNIQUE(organization_id, code)`, `CHECK(code ~ '^[A-Z0-9_]{2,20}$')`. `UNIQUE(organization_id, lower(name))`. `kind IN ('CASH','CARD','MOBILE_MONEY','BANK_TRANSFER','OTHER')`; **partial `UNIQUE(organization_id) WHERE kind = 'CASH'`**. `etims_payment_type IN ('01','04','05','06','07')` (KRA codes; `02`/`03` describe credit sales, Q-29). `position` orders the till buttons. Customer credit is **not** a payment method (see below). |
-| `payment` | `CHECK(amount > 0)`. `direction IN ('IN','OUT')`. `purpose IN ('SALE','SALE_REFUND','ACCOUNT_SETTLEMENT','SUPPLIER_PAYMENT')`. `status IN ('PENDING','CONFIRMED','FAILED','REVERSED')`. A `CHECK` ties `purpose` to exactly one matching FK. `UNIQUE(organization_id, client_txn_id)`. |
+| `payment` | Partial `UNIQUE(payment_method_id, external_reference)` for confirmed or pending incoming payments with a reference (an M-Pesa code pays once). `position` keeps the tenders' order on a sale; `tendered` (cash handed over) `>= amount`. `CHECK(amount > 0)`. `direction IN ('IN','OUT')`. `purpose IN ('SALE','SALE_REFUND','ACCOUNT_SETTLEMENT','SUPPLIER_PAYMENT')`. `status IN ('PENDING','CONFIRMED','FAILED','REVERSED')`. A `CHECK` ties `purpose` to exactly one matching FK. `UNIQUE(organization_id, client_txn_id)`. |
 
 | `till` | `UNIQUE(store_id, name)`. `device_id` is set for mobile tills. |
 | `cash_session` | **Partial `UNIQUE(till_id) WHERE status = 'OPEN'`**. `status IN ('OPEN','CLOSED')`. `CHECK(opening_float >= 0)`. `CHECK(status = 'OPEN' OR (closed_by IS NOT NULL AND counted_cash IS NOT NULL AND variance = counted_cash - expected_cash))`. Immutable once `CLOSED` (trigger). `UNIQUE(organization_id, client_txn_id)`. |
@@ -659,7 +659,7 @@ Real FK columns per source type were chosen over a generic `(reference_type, ref
 | `sync_device` | `UNIQUE(store_id, device_code)` |
 | `sync_operation` | **`UNIQUE(device_id, client_op_id)`** |
 | `sync_conflict` | `status IN ('OPEN','ACCEPTED','REJECTED')`. Index `(store_id) WHERE status = 'OPEN'`. |
-| `document_sequence` | PK `(store_id, doc_type)`. Locked `FOR UPDATE` when issuing a number. |
+| `document_sequence` | `UNIQUE(store_id, doc_type, year)`: numbers restart each year (`MAIN-2026-000001`). Locked `FOR UPDATE` when issuing a number, in the transaction that uses it. |
 
 ---
 

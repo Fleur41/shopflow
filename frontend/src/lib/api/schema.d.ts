@@ -427,6 +427,125 @@ export interface paths {
         patch: operations["categories_partial_update"];
         trace?: never;
     };
+    "/api/v1/customers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["customers_list"];
+        put?: never;
+        post: operations["customers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{customer_id}/account/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["customers_account_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["customers_account_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/customers/{customer_id}/account/opening-balance/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["customers_account_opening_balance_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{customer_id}/ledger/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["customers_ledger_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{customer_id}/ledger/{entry_id}/reverse/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["customers_ledger_reverse_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{customer_id}/payments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        post: operations["customers_payments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{entry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["customers_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["customers_partial_update"];
+        trace?: never;
+    };
     "/api/v1/invitations/": {
         parameters: {
             query?: never;
@@ -806,6 +925,173 @@ export interface paths {
         patch: operations["stores_partial_update"];
         trace?: never;
     };
+    "/api/v1/stores/{store_id}/inventory/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stores_inventory_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/inventory/{product_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["stores_inventory_item_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Base for every organization-scoped endpoint. */
+        patch: operations["stores_inventory_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/inventory/adjustments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stores_inventory_adjustments_list"];
+        put?: never;
+        post: operations["stores_inventory_adjustments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/inventory/adjustments/{adjustment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["stores_inventory_adjustments_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/inventory/movements/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stores_inventory_movements_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/inventory/opening-balance/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Load a product's first stock in a store (``OPENING`` movements). */
+        post: operations["stores_inventory_opening_balance_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/products/lookup/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The till's scan endpoint: exact barcode, then SKU. */
+        get: operations["stores_products_lookup_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/sales/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["stores_sales_list"];
+        put?: never;
+        post: operations["stores_sales_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/sales/{sale_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Base for every organization-scoped endpoint. */
+        get: operations["stores_sales_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/stores/{store_id}/sales/{sale_id}/receipt/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The data a printed receipt shows. ``?reprint=true`` marks (and audits) a copy. */
+        get: operations["stores_sales_receipt_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/suppliers/": {
         parameters: {
             query?: never;
@@ -966,6 +1252,61 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Adjustment: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly client_txn_id: string;
+            readonly reason_code: components["schemas"]["AdjustmentReasonCodeEnum"];
+            readonly note: string;
+            created_by: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            lines: components["schemas"]["AdjustmentLine"][];
+        };
+        /**
+         * @description * `COUNT_CORRECTION` - Stock count
+         *     * `DAMAGED` - Damaged
+         *     * `EXPIRED` - Expired
+         *     * `THEFT_LOSS` - Theft or loss
+         *     * `FOUND` - Found
+         *     * `OTHER` - Other
+         * @enum {string}
+         */
+        AdjustmentCreateReasonCodeEnum: "COUNT_CORRECTION" | "DAMAGED" | "EXPIRED" | "THEFT_LOSS" | "FOUND" | "OTHER";
+        AdjustmentCreateRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            reason_code: components["schemas"]["AdjustmentCreateReasonCodeEnum"];
+            /** @default  */
+            note: string;
+            /** Format: date-time */
+            occurred_at?: string;
+            lines: components["schemas"]["_AdjustmentLineInputRequest"][];
+        };
+        AdjustmentLine: {
+            product: components["schemas"]["_ProductRef"];
+            /** Format: decimal */
+            readonly quantity_delta: string;
+            /**
+             * Format: decimal
+             * @description Set when the line came from a count.
+             */
+            readonly counted_quantity: string | null;
+        };
+        /**
+         * @description * `OPENING_BALANCE` - Opening stock
+         *     * `COUNT_CORRECTION` - Stock count
+         *     * `DAMAGED` - Damaged
+         *     * `EXPIRED` - Expired
+         *     * `THEFT_LOSS` - Theft or loss
+         *     * `FOUND` - Found
+         *     * `OTHER` - Other
+         * @enum {string}
+         */
+        AdjustmentReasonCodeEnum: "OPENING_BALANCE" | "COUNT_CORRECTION" | "DAMAGED" | "EXPIRED" | "THEFT_LOSS" | "FOUND" | "OTHER";
         AuthResponse: {
             user: components["schemas"]["User"];
             session: components["schemas"]["SessionInfo"];
@@ -1029,9 +1370,77 @@ export interface components {
             all_stores: boolean;
             stores: components["schemas"]["StoreSummary"][];
         };
+        Customer: {
+            /** Format: uuid */
+            readonly id: string;
+            name: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            notes?: string;
+            readonly account: components["schemas"]["CustomerAccountSummary"] | null;
+            is_active?: boolean;
+            readonly version: number;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        /**
+         * @description * `ACTIVE` - Active
+         *     * `FROZEN` - Frozen: no new credit
+         *     * `CLOSED` - Closed
+         * @enum {string}
+         */
+        CustomerAccountStatus: "ACTIVE" | "FROZEN" | "CLOSED";
+        CustomerAccountSummary: {
+            readonly currency: string;
+            /**
+             * Format: decimal
+             * @description Empty: no credit. 0 is also no credit.
+             */
+            readonly credit_limit: string | null;
+            /**
+             * Format: decimal
+             * @description What the customer owes.
+             */
+            readonly balance: string;
+            readonly available_credit: string;
+            readonly status: components["schemas"]["CustomerAccountStatus"];
+            readonly version: number;
+        };
+        CustomerOpeningBalanceRequest: {
+            /** Format: decimal */
+            amount: string;
+            /** @default  */
+            note: string;
+        };
+        CustomerRequest: {
+            name: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            notes?: string;
+            /**
+             * Format: decimal
+             * @description On create only; needs customers.set_credit_limit.
+             */
+            credit_limit?: string | null;
+            is_active?: boolean;
+        };
         EmailVerifyRequest: {
             token: string;
         };
+        /**
+         * @description * `OPENING_BALANCE` - Opening balance
+         *     * `CREDIT_SALE` - Credit sale
+         *     * `PAYMENT` - Payment
+         *     * `SALE_RETURN` - Return
+         *     * `ADJUSTMENT` - Adjustment
+         *     * `REVERSAL` - Reversal
+         * @enum {string}
+         */
+        EntryTypeEnum: "OPENING_BALANCE" | "CREDIT_SALE" | "PAYMENT" | "SALE_RETURN" | "ADJUSTMENT" | "REVERSAL";
         /**
          * @description * `AM` - Ampoule
          *     * `BA` - Barrel
@@ -1208,6 +1617,31 @@ export interface components {
         InvitationTokenRequest: {
             token: string;
         };
+        LedgerEntry: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly seq: number;
+            readonly entry_type: components["schemas"]["EntryTypeEnum"];
+            /** Format: decimal */
+            readonly amount: string;
+            /** Format: decimal */
+            readonly balance_after: string;
+            readonly description: string;
+            store?: string | null;
+            /** Format: uuid */
+            store_id: string | null;
+            /** Format: uuid */
+            sale_id: string | null;
+            receipt_number?: string;
+            /** Format: uuid */
+            reverses_id: string | null;
+            readonly reversed: boolean;
+            created_by: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+            /** Format: date-time */
+            readonly recorded_at: string;
+        };
         /** @description POST /products/{id}/suppliers/: the product comes from the URL. */
         LinkFromProductRequest: {
             /** Format: uuid */
@@ -1243,6 +1677,33 @@ export interface components {
              */
             organization_id?: string;
         };
+        Lookup: {
+            /** Format: uuid */
+            product_id: string;
+            name: string;
+            sku: string;
+            unit: components["schemas"]["_Unit"];
+            /** @description e.g. "0.1600" */
+            tax_rate: string;
+            /**
+             * Format: decimal
+             * @description What it sells for in this store.
+             */
+            price: string;
+            /**
+             * Format: decimal
+             * @description How many units the scanned code stands for.
+             */
+            pack_quantity: string;
+            track_inventory: boolean;
+            /**
+             * Format: decimal
+             * @description Empty for items without stock.
+             */
+            quantity_on_hand: string | null;
+            is_active: boolean;
+            thumbnail_url: string | null;
+        };
         MFAVerifyRequest: {
             mfa_token: string;
             /** @description Authenticator or recovery code. */
@@ -1266,7 +1727,7 @@ export interface components {
             readonly role: components["schemas"]["RoleSummary"];
             readonly all_stores: boolean;
             readonly stores: components["schemas"]["StoreSummary"][];
-            readonly status: components["schemas"]["StatusEnum"];
+            readonly status: components["schemas"]["MembershipStatus"];
             readonly version: number;
             /** Format: date-time */
             readonly created_at: string;
@@ -1290,6 +1751,12 @@ export interface components {
             readonly email: string;
             readonly full_name: string;
         };
+        /**
+         * @description * `ACTIVE` - Active
+         *     * `SUSPENDED` - Suspended
+         * @enum {string}
+         */
+        MembershipStatus: "ACTIVE" | "SUSPENDED";
         MembershipSummary: {
             /** Format: uuid */
             organization_id: string;
@@ -1299,6 +1766,50 @@ export interface components {
         MobileRefreshRequest: {
             refresh_token: string;
         };
+        Movement: {
+            /** Format: uuid */
+            readonly id: string;
+            product: components["schemas"]["_ProductRef"];
+            readonly movement_type: components["schemas"]["MovementTypeEnum"];
+            /** Format: decimal */
+            readonly quantity: string;
+            /** Format: decimal */
+            readonly quantity_before: string;
+            /** Format: decimal */
+            readonly quantity_after: string;
+            /** Format: decimal */
+            readonly unit_cost: string | null;
+            /** @description Position in this product's history in this store. */
+            readonly seq: number;
+            performed_by: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+            /** Format: date-time */
+            readonly recorded_at: string;
+            /** @description What caused the movement. */
+            readonly document: components["schemas"]["_Document"] | null;
+        };
+        /**
+         * @description * `PURCHASE` - Purchase
+         *     * `SALE` - Sale
+         *     * `SALE_RETURN` - Sale return
+         *     * `PURCHASE_RETURN` - Return to supplier
+         *     * `ADJUSTMENT` - Adjustment
+         *     * `DAMAGED` - Damaged
+         *     * `EXPIRED` - Expired
+         *     * `TRANSFER_IN` - Transfer in
+         *     * `TRANSFER_OUT` - Transfer out
+         *     * `OPENING` - Opening stock
+         * @enum {string}
+         */
+        MovementTypeEnum: "PURCHASE" | "SALE" | "SALE_RETURN" | "PURCHASE_RETURN" | "ADJUSTMENT" | "DAMAGED" | "EXPIRED" | "TRANSFER_IN" | "TRANSFER_OUT" | "OPENING";
+        OpeningBalanceRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            /** Format: date-time */
+            occurred_at?: string;
+            lines: components["schemas"]["_OpeningLineInputRequest"][];
+        };
         Organization: {
             /** Format: uuid */
             readonly id: string;
@@ -1307,9 +1818,36 @@ export interface components {
             readonly base_currency: string;
             timezone: string;
             locale?: string;
-            readonly status: components["schemas"]["StatusEnum"];
+            /**
+             * @description Whether selling prices include tax (Q-1: Kenyan shelf prices do).
+             *
+             *     * `INCLUSIVE` - Prices include tax
+             *     * `EXCLUSIVE` - Tax is added to prices
+             */
+            tax_mode?: components["schemas"]["TaxModeEnum"];
+            readonly status: components["schemas"]["MembershipStatus"];
             /** Format: date-time */
             readonly created_at: string;
+        };
+        /**
+         * @description * `WEB` - Web till
+         *     * `MOBILE_ONLINE` - Phone, online
+         *     * `MOBILE_OFFLINE` - Phone, synced later
+         * @enum {string}
+         */
+        OriginEnum: "WEB" | "MOBILE_ONLINE" | "MOBILE_OFFLINE";
+        PaginatedAdjustmentList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Adjustment"][];
         };
         PaginatedBrandList: {
             /**
@@ -1337,6 +1875,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Category"][];
         };
+        PaginatedCustomerList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Customer"][];
+        };
         PaginatedInvitationList: {
             /**
              * Format: uri
@@ -1350,6 +1901,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Invitation"][];
         };
+        PaginatedLedgerEntryList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["LedgerEntry"][];
+        };
         PaginatedMemberList: {
             /**
              * Format: uri
@@ -1362,6 +1926,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Member"][];
+        };
+        PaginatedMovementList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["Movement"][];
         };
         PaginatedPaymentMethodList: {
             /**
@@ -1428,6 +2005,19 @@ export interface components {
             previous?: string | null;
             results: components["schemas"]["Role"][];
         };
+        PaginatedSaleListList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["SaleList"][];
+        };
         PaginatedSessionList: {
             /**
              * Format: uri
@@ -1440,6 +2030,19 @@ export interface components {
              */
             previous?: string | null;
             results: components["schemas"]["Session"][];
+        };
+        PaginatedStockRowList: {
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cD00ODY%3D"
+             */
+            next?: string | null;
+            /**
+             * Format: uri
+             * @example http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+             */
+            previous?: string | null;
+            results: components["schemas"]["StockRow"][];
         };
         PaginatedStoreList: {
             /**
@@ -1505,6 +2108,12 @@ export interface components {
             /** Format: email */
             email: string;
         };
+        PatchedAccountUpdateRequest: {
+            version?: number;
+            /** Format: decimal */
+            credit_limit?: string | null;
+            status?: components["schemas"]["CustomerAccountStatus"];
+        };
         PatchedBrandUpdateRequest: {
             name?: string;
             is_active?: boolean;
@@ -1515,6 +2124,16 @@ export interface components {
             name?: string;
             /** Format: uuid */
             parent?: string | null;
+            is_active?: boolean;
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+        };
+        PatchedCustomerUpdateRequest: {
+            name?: string;
+            phone?: string;
+            email?: string;
+            address?: string;
+            notes?: string;
             is_active?: boolean;
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
@@ -1531,6 +2150,13 @@ export interface components {
             name?: string;
             timezone?: string;
             locale?: string;
+            /**
+             * @description Whether selling prices include tax (Q-1: Kenyan shelf prices do).
+             *
+             *     * `INCLUSIVE` - Prices include tax
+             *     * `EXCLUSIVE` - Tax is added to prices
+             */
+            tax_mode?: components["schemas"]["TaxModeEnum"];
         };
         PatchedPaymentMethodUpdateRequest: {
             name?: string;
@@ -1594,6 +2220,19 @@ export interface components {
             /** @default  */
             description: string;
             permissions?: components["schemas"]["PermissionsEnum"][];
+        };
+        PatchedStockSettingsUpdateRequest: {
+            /** @description The version you last read; the update is refused if someone changed it since. */
+            version?: number;
+            /** Format: decimal */
+            reorder_level?: string | null;
+            /** Format: decimal */
+            min_stock?: string | null;
+            /** Format: decimal */
+            max_stock?: string | null;
+            /** Format: decimal */
+            selling_price_override?: string | null;
+            allow_negative?: boolean;
         };
         PatchedStoreUpdateRequest: {
             name?: string;
@@ -1696,6 +2335,22 @@ export interface components {
             /** @description The version you last read; the update is refused if someone changed it since. */
             version?: number;
         };
+        PaymentCreateRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            /** Format: uuid */
+            store_id: string;
+            /** Format: uuid */
+            payment_method_id: string;
+            /** Format: decimal */
+            amount: string;
+            /** Format: decimal */
+            tendered?: string | null;
+            /** @default  */
+            reference: string;
+            /** Format: date-time */
+            occurred_at?: string;
+        };
         PaymentMethod: {
             /** Format: uuid */
             readonly id: string;
@@ -1777,6 +2432,14 @@ export interface components {
          * @enum {string}
          */
         PaymentProvider: "MANUAL";
+        /**
+         * @description * `PENDING` - Pending
+         *     * `CONFIRMED` - Confirmed
+         *     * `FAILED` - Failed
+         *     * `REVERSED` - Reversed
+         * @enum {string}
+         */
+        PaymentStatus: "PENDING" | "CONFIRMED" | "FAILED" | "REVERSED";
         Permission: {
             readonly code: string;
             readonly description: string;
@@ -1973,9 +2636,21 @@ export interface components {
              */
             readonly last_purchase_price: string | null;
         };
+        /** @description Everything a printed receipt shows, already formatted for the currency. */
+        Receipt: {
+            business: components["schemas"]["_ReceiptBusiness"];
+            sale: components["schemas"]["Sale"];
+            taxes: components["schemas"]["_ReceiptTax"][];
+            /** @description Credit sales: the customer's balance. */
+            account: components["schemas"]["_ReceiptAccount"] | null;
+            reprint: boolean;
+        };
         RecoveryCodes: {
             /** @description Shown once. Each works one time. */
             recovery_codes: string[];
+        };
+        ReverseRequest: {
+            reason: string;
         };
         Role: {
             /** Format: uuid */
@@ -2002,6 +2677,139 @@ export interface components {
             readonly name: string;
             readonly template: components["schemas"]["TemplateEnum"];
         };
+        Sale: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly receipt_number: string;
+            /** Format: uuid */
+            readonly client_txn_id: string;
+            readonly status: components["schemas"]["SaleStatus"];
+            store: string;
+            readonly currency: string;
+            readonly tax_mode: string;
+            /** Format: decimal */
+            readonly subtotal: string;
+            /** Format: decimal */
+            readonly discount_total: string;
+            /** Format: decimal */
+            readonly tax_total: string;
+            /** Format: decimal */
+            readonly total: string;
+            /** Format: decimal */
+            readonly amount_paid: string;
+            /** Format: decimal */
+            readonly amount_on_credit: string;
+            /** Format: decimal */
+            readonly change_given: string;
+            items: components["schemas"]["SaleItem"][];
+            payments: components["schemas"]["SalePayment"][];
+            readonly customer: components["schemas"]["_Person"] | null;
+            readonly cashier: components["schemas"]["_Person"];
+            readonly notes: string;
+            readonly origin: components["schemas"]["OriginEnum"];
+            /**
+             * Format: date-time
+             * @description When the sale happened at the till.
+             */
+            readonly occurred_at: string;
+            /**
+             * Format: date-time
+             * @description When the server saved it.
+             */
+            readonly recorded_at: string;
+        };
+        SaleCreateRequest: {
+            /** Format: uuid */
+            client_txn_id: string;
+            /** Format: date-time */
+            occurred_at?: string;
+            /** Format: uuid */
+            customer_id?: string | null;
+            items: components["schemas"]["_ItemInputRequest"][];
+            /**
+             * Format: decimal
+             * @default 0.0000
+             */
+            order_discount: string;
+            tenders?: components["schemas"]["_TenderInputRequest"][];
+            /**
+             * Format: decimal
+             * @default 0.0000
+             */
+            credit_amount: string;
+            /** @default  */
+            notes: string;
+        };
+        SaleItem: {
+            readonly line_no: number;
+            /** Format: uuid */
+            product_id: string;
+            readonly product_name: string;
+            readonly sku: string;
+            readonly unit_code: string;
+            /** Format: decimal */
+            readonly quantity: string;
+            /** Format: decimal */
+            readonly unit_price: string;
+            /**
+             * Format: decimal
+             * @description The store's price at the time, before any override.
+             */
+            readonly list_price: string;
+            readonly price_overridden: boolean;
+            readonly override_reason: string;
+            /** Format: decimal */
+            readonly discount_amount: string;
+            /** Format: decimal */
+            readonly order_discount_share: string;
+            /** Format: decimal */
+            readonly tax_rate: string;
+            readonly tax_name: string;
+            /** Format: decimal */
+            readonly tax_amount: string;
+            /** Format: decimal */
+            readonly line_total: string;
+        };
+        SaleList: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly receipt_number: string;
+            readonly status: components["schemas"]["SaleStatus"];
+            readonly currency: string;
+            /** Format: decimal */
+            readonly total: string;
+            /** Format: decimal */
+            readonly amount_on_credit: string;
+            item_count: number;
+            readonly methods: string[];
+            customer?: string | null;
+            cashier: string;
+            /**
+             * Format: date-time
+             * @description When the sale happened at the till.
+             */
+            readonly occurred_at: string;
+        };
+        SalePayment: {
+            method: string;
+            method_name: string;
+            kind: string;
+            /** Format: decimal */
+            amount: string;
+            /**
+             * Format: decimal
+             * @description Cash handed over; the change is tendered - amount.
+             */
+            tendered?: string | null;
+            reference: string;
+            status?: components["schemas"]["PaymentStatus"];
+        };
+        /**
+         * @description * `COMPLETED` - Completed
+         *     * `VOIDED` - Voided
+         * @enum {string}
+         */
+        SaleStatus: "COMPLETED" | "VOIDED";
         Session: {
             /** Format: uuid */
             readonly id: string;
@@ -2049,12 +2857,51 @@ export interface components {
             client: components["schemas"]["ClientEnum"];
             device_name?: string;
         };
+        /** @description A stocked product with its level and settings in one store. */
+        StockRow: {
+            /** Format: uuid */
+            product_id: string;
+            name: string;
+            sku: string;
+            unit: components["schemas"]["_Unit"];
+            category?: string | null;
+            readonly thumbnail_url: string | null;
+            is_active: boolean;
+            /** Format: decimal */
+            selling_price: string;
+            /** Format: decimal */
+            selling_price_override: string | null;
+            /** @description What it sells for in this store. */
+            readonly price: string;
+            /** Format: decimal */
+            quantity_on_hand: string;
+            /**
+             * Format: decimal
+             * @description This store's own level.
+             */
+            reorder_level: string | null;
+            /**
+             * Format: decimal
+             * @description The store's level, or the product's default.
+             */
+            effective_reorder_level: string | null;
+            /** Format: decimal */
+            min_stock: string | null;
+            /** Format: decimal */
+            max_stock: string | null;
+            /** Format: decimal */
+            average_cost: string | null;
+            allow_negative: boolean;
+            stock_status: components["schemas"]["StockStatusEnum"];
+            version: number;
+        };
         /**
-         * @description * `ACTIVE` - Active
-         *     * `SUSPENDED` - Suspended
+         * @description * `out` - out
+         *     * `low` - low
+         *     * `ok` - ok
          * @enum {string}
          */
-        StatusEnum: "ACTIVE" | "SUSPENDED";
+        StockStatusEnum: "out" | "low" | "ok";
         Store: {
             /** Format: uuid */
             readonly id: string;
@@ -2167,6 +3014,12 @@ export interface components {
             /** @description PNG QR code as a data: URI. */
             qr_code: string;
         };
+        /**
+         * @description * `INCLUSIVE` - Prices include tax
+         *     * `EXCLUSIVE` - Tax is added to prices
+         * @enum {string}
+         */
+        TaxModeEnum: "INCLUSIVE" | "EXCLUSIVE";
         TaxRate: {
             /** Format: uuid */
             readonly id: string;
@@ -2351,6 +3204,110 @@ export interface components {
             readonly phone: string;
             readonly email_verified: boolean;
             readonly mfa_enabled: boolean;
+        };
+        _AdjustmentLineInputRequest: {
+            /** Format: uuid */
+            product_id: string;
+            /** Format: decimal */
+            quantity_delta?: string | null;
+            /** Format: decimal */
+            counted_quantity?: string | null;
+        };
+        _Document: {
+            kind: components["schemas"]["_DocumentKindEnum"];
+            /** Format: uuid */
+            id: string;
+            reason_code?: string;
+            note?: string;
+            receipt_number?: string;
+        };
+        /**
+         * @description * `adjustment` - adjustment
+         *     * `sale` - sale
+         * @enum {string}
+         */
+        _DocumentKindEnum: "adjustment" | "sale";
+        _ItemInputRequest: {
+            /** Format: uuid */
+            product_id: string;
+            /** Format: decimal */
+            quantity: string;
+            /**
+             * Format: decimal
+             * @description The price the till showed.
+             */
+            unit_price: string;
+            /**
+             * Format: decimal
+             * @default 0.0000
+             */
+            discount_amount: string;
+            /**
+             * @description The cashier changed the price on purpose.
+             * @default false
+             */
+            price_override: boolean;
+            /** @default  */
+            override_reason: string;
+            /** @default  */
+            scanned_code: string;
+        };
+        _OpeningLineInputRequest: {
+            /** Format: uuid */
+            product_id: string;
+            /** Format: decimal */
+            quantity: string;
+            /** Format: decimal */
+            unit_cost?: string | null;
+        };
+        _Person: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+        };
+        _ProductRef: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            sku: string;
+        };
+        _ReceiptAccount: {
+            charged: string;
+            balance_after: string;
+        };
+        _ReceiptBusiness: {
+            name: string;
+            store_name: string;
+            address: string;
+            phone: string;
+            timezone: string;
+        };
+        _ReceiptTax: {
+            name: string;
+            rate: string;
+            taxable_amount: string;
+            tax_amount: string;
+        };
+        _TenderInputRequest: {
+            /** Format: uuid */
+            payment_method_id: string;
+            /** Format: decimal */
+            amount: string;
+            /**
+             * Format: decimal
+             * @description Cash handed over.
+             */
+            tendered?: string | null;
+            /**
+             * @description e.g. M-Pesa code
+             * @default
+             */
+            reference: string;
+        };
+        _Unit: {
+            code: string;
+            name: string;
+            allows_fraction: boolean;
         };
     };
     responses: never;
@@ -3016,6 +3973,265 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Category"];
+                };
+            };
+        };
+    };
+    customers_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Owes money */
+                has_balance?: boolean;
+                /** @description Only active, or only inactive */
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Part of the name (or code) */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedCustomerList"];
+                };
+            };
+        };
+    };
+    customers_create: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
+                };
+            };
+        };
+    };
+    customers_account_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAccountSummary"];
+                };
+            };
+        };
+    };
+    customers_account_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedAccountUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerAccountSummary"];
+                };
+            };
+        };
+    };
+    customers_account_opening_balance_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomerOpeningBalanceRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntry"];
+                };
+            };
+        };
+    };
+    customers_ledger_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedLedgerEntryList"];
+                };
+            };
+        };
+    };
+    customers_ledger_reverse_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                customer_id: string;
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReverseRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntry"];
+                };
+            };
+        };
+    };
+    customers_payments_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                customer_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LedgerEntry"];
+                };
+            };
+        };
+    };
+    customers_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
+                };
+            };
+        };
+    };
+    customers_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCustomerUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Customer"];
                 };
             };
         };
@@ -3925,6 +5141,361 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoreUpdate"];
+                };
+            };
+        };
+    };
+    stores_inventory_list: {
+        parameters: {
+            query?: {
+                category?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                is_active?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Name, SKU or exact barcode */
+                search?: string;
+                stock_status?: "low" | "ok" | "out";
+                supplier?: string;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedStockRowList"];
+                };
+            };
+        };
+    };
+    stores_inventory_item_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockRow"];
+                };
+            };
+        };
+    };
+    stores_inventory_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedStockSettingsUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StockRow"];
+                };
+            };
+        };
+    };
+    stores_inventory_adjustments_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedAdjustmentList"];
+                };
+            };
+        };
+    };
+    stores_inventory_adjustments_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdjustmentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Adjustment"];
+                };
+            };
+        };
+    };
+    stores_inventory_adjustments_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                adjustment_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Adjustment"];
+                };
+            };
+        };
+    };
+    stores_inventory_movements_list: {
+        parameters: {
+            query?: {
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                from?: string;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                product?: string;
+                /** @description Exclusive */
+                to?: string;
+                type?: "ADJUSTMENT" | "DAMAGED" | "EXPIRED" | "OPENING" | "PURCHASE" | "PURCHASE_RETURN" | "SALE" | "SALE_RETURN" | "TRANSFER_IN" | "TRANSFER_OUT";
+                user?: string;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedMovementList"];
+                };
+            };
+        };
+    };
+    stores_inventory_opening_balance_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpeningBalanceRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Adjustment"];
+                };
+            };
+        };
+    };
+    stores_products_lookup_retrieve: {
+        parameters: {
+            query: {
+                code: string;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Lookup"];
+                };
+            };
+        };
+    };
+    stores_sales_list: {
+        parameters: {
+            query?: {
+                cashier?: string;
+                /** @description The pagination cursor value. */
+                cursor?: string;
+                customer?: string;
+                from?: string;
+                on_credit?: boolean;
+                /** @description Number of results to return per page. */
+                page_size?: number;
+                /** @description Receipt number */
+                search?: string;
+                /** @description Exclusive */
+                to?: string;
+            };
+            header?: never;
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaginatedSaleListList"];
+                };
+            };
+        };
+    };
+    stores_sales_create: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Unique per operation (e.g. a UUID). Retries with the same key return the original response instead of repeating the operation. */
+                "Idempotency-Key": string;
+            };
+            path: {
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaleCreateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sale"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sale"];
+                };
+            };
+        };
+    };
+    stores_sales_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sale_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sale"];
+                };
+            };
+        };
+    };
+    stores_sales_receipt_retrieve: {
+        parameters: {
+            query?: {
+                reprint?: boolean;
+            };
+            header?: never;
+            path: {
+                sale_id: string;
+                store_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Receipt"];
                 };
             };
         };

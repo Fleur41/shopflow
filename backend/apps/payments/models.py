@@ -6,12 +6,14 @@ because no money moves.
 
 from typing import ClassVar
 
+from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models.functions import Lower
 
+from apps.common.fields import CurrencyField, MoneyField
 from apps.organizations.master_data import MasterData
-from apps.organizations.models import TenantManager
+from apps.organizations.models import TenantManager, TenantModel
 
 from .providers import PROVIDERS
 
@@ -119,3 +121,106 @@ DEFAULT_ETIMS_TYPES = {
     PaymentMethod.Kind.BANK_TRANSFER: PaymentMethod.EtimsPaymentType.OTHER,
     PaymentMethod.Kind.OTHER: PaymentMethod.EtimsPaymentType.OTHER,
 }
+
+
+class Payment(TenantModel):
+    """Money that moved: a tender on a sale, or a customer paying their account.
+
+    Never edited once confirmed; a refund is a new payment going ``OUT``. The
+    same reference (an M-Pesa code) can't confirm two payments of one method,
+    so a customer can't show the same M-Pesa message twice.
+    """
+
+    class Purpose(models.TextChoices):
+        SALE = "SALE", "Sale"
+        SALE_REFUND = "SALE_REFUND", "Sale refund"
+        ACCOUNT_SETTLEMENT = "ACCOUNT_SETTLEMENT", "Customer account payment"
+        SUPPLIER_PAYMENT = "SUPPLIER_PAYMENT", "Supplier payment"
+
+    class Direction(models.TextChoices):
+        IN = "IN", "In"
+        OUT = "OUT", "Out"
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        CONFIRMED = "CONFIRMED", "Confirmed"
+        FAILED = "FAILED", "Failed"
+        REVERSED = "REVERSED", "Reversed"
+
+    objects: ClassVar[TenantManager["Payment"]]
+
+    store = models.ForeignKey("organizations.Store", on_delete=models.PROTECT, related_name="+")
+    payment_method = models.ForeignKey(PaymentMethod, on_delete=models.PROTECT, related_name="+")
+    purpose = models.CharField(max_length=20, choices=Purpose.choices)
+    direction = models.CharField(max_length=3, choices=Direction.choices, default=Direction.IN)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.CONFIRMED)
+    amount = MoneyField()
+    currency = CurrencyField()
+    tendered = MoneyField(
+        null=True, blank=True, help_text="Cash handed over; the change is tendered - amount."
+    )
+    external_reference = models.CharField(max_length=64, blank=True)
+    position = models.PositiveSmallIntegerField(default=0, help_text="Order of tenders on a sale.")
+    client_txn_id = models.UUIDField(null=True, blank=True)
+    received_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    occurred_at = models.DateTimeField()
+    recorded_at = models.DateTimeField(auto_now_add=True)
+    sale = models.ForeignKey(
+        "sales.Sale", on_delete=models.PROTECT, null=True, blank=True, related_name="payments"
+    )
+    customer_account = models.ForeignKey(
+        "customers.CustomerAccount",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.CheckConstraint(condition=models.Q(amount__gt=0), name="payments_amount_valid"),
+            models.CheckConstraint(
+                condition=models.Q(tendered__isnull=True)
+                | models.Q(tendered__gte=models.F("amount")),
+                name="payments_tendered_covers_amount",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    purpose__in=["SALE", "SALE_REFUND", "ACCOUNT_SETTLEMENT", "SUPPLIER_PAYMENT"]
+                ),
+                name="payments_purpose_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(status__in=["PENDING", "CONFIRMED", "FAILED", "REVERSED"]),
+                name="payments_status_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(
+                    purpose="SALE", sale__isnull=False, customer_account__isnull=True
+                )
+                | models.Q(
+                    purpose="ACCOUNT_SETTLEMENT", customer_account__isnull=False, sale__isnull=True
+                )
+                | models.Q(purpose__in=["SALE_REFUND", "SUPPLIER_PAYMENT"]),
+                name="payments_purpose_source",
+            ),
+            models.UniqueConstraint(
+                fields=["organization", "client_txn_id"],
+                condition=models.Q(client_txn_id__isnull=False),
+                name="payments_txn_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["payment_method", "external_reference"],
+                condition=~models.Q(external_reference="")
+                & models.Q(direction="IN", status__in=["PENDING", "CONFIRMED"]),
+                name="payments_reference_used_once",
+            ),
+        ]
+        indexes: ClassVar[list[models.Index]] = [
+            models.Index(fields=["store", "occurred_at"], name="payments_store_time_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.amount} {self.currency}"

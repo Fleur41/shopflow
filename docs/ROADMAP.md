@@ -76,8 +76,10 @@ Deferred:
 | 2.1 ✅ | Catalog master data | Categories, brands, units (fraction flag), tax rates. CRUD + permissions + audit. |
 | 2.2 ✅ | Products | Product CRUD, multiple identifiers with uniqueness per org, image upload pipeline, price changes audited with price history, optimistic versioning, trigram search. **eTIMS groundwork:** KRA item classification, packaging and quantity unit codes on products and units, eTIMS tax type (A–E) on tax rates. |
 | 2.3 ✅ | Suppliers | Supplier, contacts, product–supplier links (preferred supplier, supplier SKU, MOQ, lead time) |
-| 2.4 | Inventory core | `stock_level`, `inventory_movement` (append-only + CHECKs), the single `apply_movements()` service with ordered locks, opening balances, stock adjustments with reasons, negative-stock policy (admin, audited) |
-| 2.5 | Inventory UI and search | Inventory list with filters (low/out/active/category/supplier), movement history, adjustment form. Barcode lookup endpoint meets p95 < 100 ms with 50k products (load test). |
+2.4 and 2.5 done (2026-10-12): `apps.inventory` with stock levels per store and product (negative only where allowed), append-only movements whose arithmetic and source document the database checks, and one write path (`apply_movements`) that locks levels in product order; a 10-thread test never oversells. Adjustments with reasons (count, damaged, expired, theft, found, other with a note) and opening stock (an `OPENING_BALANCE` adjustment, once per product and store), weighted-average cost. Per-store settings: reorder/min/max, a store price (kept in price history), and the negative-stock policy (owner only). Barcode/SKU lookup for the till. Web: *Stock* list (low/out filters, adjust) and a product's stock page (history, settings). Not yet: the 50k-product lookup load test (2.5) and 2.6.
+
+| 2.4 ✅ | Inventory core | `stock_level`, `inventory_movement` (append-only + CHECKs), the single `apply_movements()` service with ordered locks, opening balances, stock adjustments with reasons, negative-stock policy (admin, audited) |
+| 2.5 ✅ | Inventory UI and search | Inventory list with filters (low/out/active/category/supplier), movement history, adjustment form. Barcode lookup endpoint meets p95 < 100 ms with 50k products (load test). |
 | 2.6 | Integrity verifier | Celery + beat. Nightly stock verifier with alerting. Concurrency test: N threads adjusting the same product never yield a wrong final quantity. |
 
 ## Phase 3 — POS
@@ -90,9 +92,11 @@ Deferred:
 |---|---|---|
 | 3.1 ✅ | Pricing module | Server pricing engine (line discount, order discount, tax-inclusive/exclusive, rounding) + `shared/pricing-test-vectors`. TS implementation passes the same vectors. |
 | 3.2 ✅ | Payment methods | Configurable payment methods per org, each with its eTIMS payment type (`01`–`07`). Provider interface stub. |
-| 3.3 | Complete sale API | Atomic sale with idempotency, `client_txn_id`, receipt numbering, price check (409), stock locks (422 with friendly message), mixed tenders, audit. **Concurrency test:** two cashiers race for the last unit and exactly one succeeds. **Fault-injection test:** a failure at each step leaves no partial rows. |
-| 3.4 | POS screen (web) | Keyboard-wedge scanner detection, focused scan input, local product cache, quantity merge on rescan, keyboard shortcuts (F-keys for tenders), cart, tender dialog with change calculation, offline-tolerant error messages. Accessibility: fully keyboard-operable, screen-reader labels. E2E test with a simulated scanner. |
-| 3.5 | Receipts | Receipt JSON/HTML (printable 58/80 mm CSS), reprint, delivery interface stub |
+3.3–3.5 done (2026-10-12): `apps.sales` and `Payment`. One transaction prices the cart with the shared engine (org-level `tax_mode`, Q-1), checks the till's prices (409 `PRICE_CHANGED`, overrides need permission and a reason), takes mixed tenders (cash with change, M-Pesa with its code, card) and refuses a reused M-Pesa code, moves stock, and issues a gapless `STORE-YEAR-NNNNNN` number. Retries are safe twice over (Idempotency-Key and `client_txn_id`); a failure at any step leaves nothing behind; two cashiers racing for the last unit: one sells. Web: *Sell* (keyboard-wedge scanner anywhere on the page, phone camera via the Barcode Detection API, F2/F4/F8, cart priced like the server, kept across reloads), *Sales*, sale detail and a printable 58/80 mm receipt (reprints marked COPY and audited). Receipt HTML is rendered by the web app from the JSON receipt; PDF/ESC-POS later.
+
+| 3.3 ✅ | Complete sale API | Atomic sale with idempotency, `client_txn_id`, receipt numbering, price check (409), stock locks (422 with friendly message), mixed tenders, audit. **Concurrency test:** two cashiers race for the last unit and exactly one succeeds. **Fault-injection test:** a failure at each step leaves no partial rows. |
+| 3.4 ✅ | POS screen (web) | Keyboard-wedge scanner detection, focused scan input, local product cache, quantity merge on rescan, keyboard shortcuts (F-keys for tenders), cart, tender dialog with change calculation, offline-tolerant error messages. Accessibility: fully keyboard-operable, screen-reader labels. E2E test with a simulated scanner. |
+| 3.5 ✅ | Receipts | Receipt JSON/HTML (printable 58/80 mm CSS), reprint, delivery interface stub |
 | 3.6 | Voids and returns | Void (same day, permissioned, reason) and returns with restock option, all via reversal movements |
 | 3.7 | Cash sessions | Tills, open session with float, pay-in/pay-out/drop, blind close-out count, expected vs counted variance, X/Z reports, variance alerts, void allowed only while the session is open. Mobile: per-device till, synced as `cash_session.*` ops. |
 | 3.8 | eTIMS fiscal invoicing | Per [ETIMS.md](ETIMS.md). Org KRA PIN and store-to-branch mapping, device initialization per store. `FiscalProvider` interface with an eTIMS OSCU adapter (Q-26) and a no-op provider. Sales are signed synchronously before any receipt (`PENDING_FISCAL` until signed); credit notes for voids and returns; gapless `invcNo` per store; each sale records the solution and KRA invoice number that signed it. Pricing vectors v2 with the tax breakdown by tax type (A–E). Fiscal daily X/Z reports. Training mode. Item registration and stock movements reported. Receipts show the KRA invoice number, signature and QR, including reprints. "Unsigned invoices" queue with alerts (Q-28). Tests against recorded sandbox responses, plus a sandbox run before release. |
@@ -103,10 +107,12 @@ Deferred:
 
 | # | Milestone | Acceptance criteria |
 |---|---|---|
-| 4.1 | Customers | CRUD, search by name/phone, contact masking by permission, deactivate/pseudonymize |
-| 4.2 | Accounts and ledger | `customer_account` + append-only ledger, credit limits, freeze, opening balances, ledger/statement endpoints, nightly ledger verifier |
-| 4.3 | Credit sales | Credit and partial-credit tenders in the sale service, credit-limit enforcement and override permission, POS customer picker |
-| 4.4 | Customer payments | Receive payment (partial, overpayment rule per Q-6), receipts, entry reversal. Concurrency test on simultaneous payments. |
+4.1–4.4 done (2026-10-12): `apps.customers` with contact masking, one account per customer and currency, an append-only ledger (numbered entries with the balance after each, balance ≥ 0 per Q-6), credit limits and freezing, opening balances, credit and part-credit sales at the till (limit enforced unless `customers.exceed_credit_limit`), payments by any method (not more than owed; M-Pesa codes once), and reversal of mistaken payments. Web: *Customers* list and page (statement, receive payment, limit and status). Not yet: statements by date range, 4.5–4.6.
+
+| 4.1 ✅ | Customers | CRUD, search by name/phone, contact masking by permission, deactivate/pseudonymize |
+| 4.2 ✅ | Accounts and ledger | `customer_account` + append-only ledger, credit limits, freeze, opening balances, ledger/statement endpoints, nightly ledger verifier |
+| 4.3 ✅ | Credit sales | Credit and partial-credit tenders in the sale service, credit-limit enforcement and override permission, POS customer picker |
+| 4.4 ✅ | Customer payments | Receive payment (partial, overpayment rule per Q-6), receipts, entry reversal. Concurrency test on simultaneous payments. |
 | 4.5 | Reconciliation | Open/review/resolve workflow with snapshot, reason, permission, adjustment entry and audit; UI shows the transaction review |
 | 4.6 | Debt aging | Aging buckets (0–30/31–60/61–90/90+), overdue flag, customer balances list |
 

@@ -94,7 +94,10 @@ class SwitchOrganizationSerializer(serializers.Serializer[dict[str, Any]]):
 class OrganizationSerializer(serializers.ModelSerializer[Organization]):
     class Meta:
         model = Organization
-        fields = ("id", "name", "base_currency", "timezone", "locale", "status", "created_at")
+        fields = (
+            "id", "name", "base_currency", "timezone", "locale", "tax_mode", "status",
+            "created_at",
+        )  # fmt: skip
         read_only_fields = ("id", "base_currency", "status", "created_at")
 
 

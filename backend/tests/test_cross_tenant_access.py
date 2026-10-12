@@ -6,7 +6,9 @@ return 404, and nothing in A may change. New endpoints with path parameters
 fail here until they are registered in TARGETS.
 """
 
+import uuid
 from datetime import timedelta
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -22,9 +24,22 @@ from apps.catalog.models import (
     TaxRate,
     UnitOfMeasure,
 )
+from apps.customers import services as customer_services
+from apps.customers.models import Customer, CustomerAccount, CustomerLedgerEntry
+from apps.inventory import services as inventory_services
+from apps.inventory.models import InventoryMovement, StockAdjustment, StockLevel
 from apps.organizations.models import Invitation, Membership, Role, Store
-from apps.organizations.testing import add_staff, add_store, client_for, create_business, role
-from apps.payments.models import PaymentMethod
+from apps.organizations.testing import (
+    add_staff,
+    add_store,
+    client_for,
+    context_for,
+    create_business,
+    role,
+)
+from apps.payments.models import Payment, PaymentMethod
+from apps.sales import services as sale_services
+from apps.sales.models import Sale
 from apps.suppliers.models import ProductSupplier, Supplier, SupplierContact
 
 from .routes import api_routes
@@ -62,11 +77,44 @@ TARGETS = {
     "api/v1/suppliers/<uuid:supplier_id>/products/": lambda a: {"supplier_id": a.supplier.pk},
     "api/v1/products/<uuid:product_id>/suppliers/": lambda a: {"product_id": a.product.pk},
     "api/v1/product-suppliers/<uuid:link_id>/": lambda a: {"link_id": a.link.pk},
+    "api/v1/stores/<uuid:store_id>/products/lookup/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/inventory/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/inventory/movements/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/inventory/adjustments/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/inventory/adjustments/<uuid:adjustment_id>/": lambda a: {
+        "store_id": a.store.pk,
+        "adjustment_id": a.adjustment.pk,
+    },
+    "api/v1/stores/<uuid:store_id>/inventory/opening-balance/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/inventory/<uuid:product_id>/": lambda a: {
+        "store_id": a.store.pk,
+        "product_id": a.product.pk,
+    },
+    "api/v1/stores/<uuid:store_id>/sales/": lambda a: {"store_id": a.store.pk},
+    "api/v1/stores/<uuid:store_id>/sales/<uuid:sale_id>/": lambda a: {
+        "store_id": a.store.pk,
+        "sale_id": a.sale.pk,
+    },
+    "api/v1/stores/<uuid:store_id>/sales/<uuid:sale_id>/receipt/": lambda a: {
+        "store_id": a.store.pk,
+        "sale_id": a.sale.pk,
+    },
+    "api/v1/customers/<uuid:entry_id>/": lambda a: {"entry_id": a.customer.pk},
+    "api/v1/customers/<uuid:customer_id>/account/": lambda a: {"customer_id": a.customer.pk},
+    "api/v1/customers/<uuid:customer_id>/account/opening-balance/": lambda a: {
+        "customer_id": a.customer.pk
+    },
+    "api/v1/customers/<uuid:customer_id>/ledger/": lambda a: {"customer_id": a.customer.pk},
+    "api/v1/customers/<uuid:customer_id>/ledger/<uuid:entry_id>/reverse/": lambda a: {
+        "customer_id": a.customer.pk,
+        "entry_id": a.ledger_entry.pk,
+    },
+    "api/v1/customers/<uuid:customer_id>/payments/": lambda a: {"customer_id": a.customer.pk},
 }
 
 # Catalog lookups of business A, compared before and after the attack.
 CATALOG_MODELS = (Category, Brand, UnitOfMeasure, TaxRate)
-MASTER_DATA_MODELS = (*CATALOG_MODELS, Product, PaymentMethod, Supplier)
+MASTER_DATA_MODELS = (*CATALOG_MODELS, Product, PaymentMethod, Supplier, Customer)
 
 # A body that passes validation for any endpoint, so lookups (not validators) decide.
 BODY = {
@@ -107,6 +155,38 @@ def world():
         selling_price="60.00",
     )
     supplier = Supplier.objects.create(organization=org, code="S00001", name="Mumias Sugar")
+    owner_ctx = context_for(a.membership)
+    inventory_services.create_adjustment(
+        owner_ctx,
+        store,
+        client_txn_id=uuid.uuid4(),
+        reason_code="OPENING_BALANCE",
+        lines=[
+            inventory_services.AdjustmentLineInput(product=product, counted_quantity=Decimal(5))
+        ],
+    )
+    customer = customer_services.create_customer(
+        owner_ctx, name="Mama Mboga", credit_limit=Decimal(1000)
+    )
+    sale = sale_services.create_sale(
+        owner_ctx,
+        store,
+        sale_services.SaleRequest(
+            client_txn_id=uuid.uuid4(),
+            items=[sale_services.ItemInput(product, Decimal(1), Decimal(60))],
+            tenders=[],
+            customer=customer,
+            credit_amount=Decimal(60),
+        ),
+    ).sale
+    adjustment = StockAdjustment.objects.create(
+        organization=org,
+        store=store,
+        reason_code="FOUND",
+        client_txn_id=uuid.uuid4(),
+        created_by=a.user,
+        occurred_at=timezone.now(),
+    )
     return SimpleNamespace(
         a=SimpleNamespace(
             organization=a.organization,
@@ -132,6 +212,10 @@ def world():
                 organization=org, product=product, value="6161100000123", is_primary=True
             ),
             payment_method=PaymentMethod.objects.for_org(org).get(code="MPESA"),
+            adjustment=adjustment,
+            sale=sale,
+            customer=customer,
+            ledger_entry=CustomerLedgerEntry.objects.for_org(org).get(sale=sale),
         ),
         b_client=client_for(b.user, b.organization),
     )
@@ -170,6 +254,21 @@ def _snapshot(organization):
         "identifiers": sorted(
             ProductIdentifier.objects.for_org(organization).values_list("pk", "value", "is_primary")
         ),
+        "stock": sorted(
+            StockLevel.objects.for_org(organization).values_list(
+                "pk", "quantity_on_hand", "version"
+            )
+        ),
+        "movements": InventoryMovement.objects.for_org(organization).count(),
+        "adjustments": StockAdjustment.objects.for_org(organization).count(),
+        "sales": Sale.objects.for_org(organization).count(),
+        "payments": Payment.objects.for_org(organization).count(),
+        "accounts": sorted(
+            CustomerAccount.objects.for_org(organization).values_list(
+                "pk", "balance", "credit_limit", "status", "version"
+            )
+        ),
+        "ledger": CustomerLedgerEntry.objects.for_org(organization).count(),
     }
 
 

@@ -9,3 +9,6 @@ export const UNITS_KEY = ["units"] as const;
 export const TAX_RATES_KEY = ["tax-rates"] as const;
 export const PRODUCTS_KEY = ["products"] as const;
 export const SUPPLIERS_KEY = ["suppliers"] as const;
+export const INVENTORY_KEY = ["inventory"] as const;
+export const SALES_KEY = ["sales"] as const;
+export const CUSTOMERS_KEY = ["customers"] as const;

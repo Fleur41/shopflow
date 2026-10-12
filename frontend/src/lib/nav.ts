@@ -1,14 +1,32 @@
-import { CreditCard, LayoutDashboard, type LucideIcon, Package, Shapes, ShieldCheck, Store, Truck, Users } from "lucide-react";
+import {
+  Boxes,
+  Contact,
+  CreditCard,
+  LayoutDashboard,
+  type LucideIcon,
+  Package,
+  ReceiptText,
+  ScanBarcode,
+  Shapes,
+  ShieldCheck,
+  Store,
+  Truck,
+  Users,
+} from "lucide-react";
 
 import { can } from "./auth";
 import type { Me } from "./api/types";
 
-export type NavGroup = "Overview" | "Catalog" | "Buying" | "Business";
+export type NavGroup = "Overview" | "Selling" | "Catalog" | "Buying" | "Business";
 export type NavItem = { href: string; label: string; group: NavGroup; icon: LucideIcon; permission?: string };
 
 const ITEMS: NavItem[] = [
   { href: "/", label: "Dashboard", group: "Overview", icon: LayoutDashboard },
+  { href: "/sell", label: "Sell", group: "Selling", icon: ScanBarcode, permission: "sales.create" },
+  { href: "/sales", label: "Sales", group: "Selling", icon: ReceiptText, permission: "sales.view_own" },
+  { href: "/customers", label: "Customers", group: "Selling", icon: Contact, permission: "customers.view" },
   { href: "/products", label: "Products", group: "Catalog", icon: Package, permission: "products.view" },
+  { href: "/inventory", label: "Stock", group: "Catalog", icon: Boxes, permission: "inventory.view" },
   { href: "/settings/catalog", label: "Catalog setup", group: "Catalog", icon: Shapes, permission: "products.manage" },
   { href: "/suppliers", label: "Suppliers", group: "Buying", icon: Truck, permission: "suppliers.view" },
   { href: "/settings/stores", label: "Stores", group: "Business", icon: Store, permission: "stores.view" },

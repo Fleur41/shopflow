@@ -182,7 +182,7 @@ Managers have **view-only** access to staff and roles by default; only Owners (o
 - `Content-Security-Policy` (nonce-based; development additionally allows `eval`, inline styles and the HMR websocket)
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy: camera=(), microphone=(), geolocation=()`. Camera becomes `(self)` only if browser camera scanning is added later.
+- `Permissions-Policy: camera=(self), microphone=(), geolocation=()`. The camera is allowed for ShopFlow's own pages only, for barcode scanning at the till (3.4); no other origin or frame can use it.
 - `X-Frame-Options: DENY` / `frame-ancestors 'none'`
 - Cookies: `Secure`, `HttpOnly` (except `csrftoken`), and `SameSite`.
 

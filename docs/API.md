@@ -149,13 +149,13 @@ Implemented in Phase 1.6 unless marked otherwise. Every change is audited.
 
 | Method | Path | perm | Notes |
 |---|---|---|---|
-| GET | `/stores/{sid}/products/lookup/?code=…` | `sales.create` or `inventory.view` | **Hot path.** Exact match on identifier or SKU → product, effective price, stock, `pack_quantity`. 404 if unknown. |
+| GET | `/stores/{sid}/products/lookup/?code=…` | `inventory.view` (Cashier and Manager templates hold it) | **Hot path.** Exact match on identifier or SKU → product, effective price, stock, `pack_quantity`. 404 if unknown. |
 | GET | `/stores/{sid}/inventory/` | `inventory.view` | Stock levels. Filters: `search`, `category`, `supplier`, `stock_status=low\|out\|ok`, `is_active` |
 | PATCH | `/stores/{sid}/inventory/{product_id}/` | `inventory.manage_levels` | reorder/min/max, store price override (`products.change_price`) |
 | GET | `/stores/{sid}/inventory/movements/` | `inventory.view_movements` | Filters: product, type, date range, user |
 | POST 🔑 | `/stores/{sid}/inventory/adjustments/` | `inventory.adjust` | `{client_txn_id, reason_code, note, lines:[{product_id, counted_quantity \| quantity_delta}]}` |
 | GET | `/stores/{sid}/inventory/adjustments/` · `/{id}/` | `inventory.view_movements` | |
-| POST 🔑 | `/stores/{sid}/inventory/opening-balance/` | `inventory.adjust` | One-time initial stock load (`OPENING`) |
+| POST 🔑 | `/stores/{sid}/inventory/opening-balance/` | `inventory.adjust` | `{client_txn_id, lines:[{product_id, quantity, unit_cost?}]}`. Once per product and store, before any other movement (`OPENING_BALANCE_EXISTS`). Recorded as an adjustment with reason `OPENING_BALANCE`. |
 
 ### 4.5 Sales — `/stores/{store_id}/sales/`
 
@@ -196,6 +196,8 @@ Server-side rules:
 - `SUM(tenders.amount) + credit_amount` must equal the server-computed total.
 - `tendered` is only meaningful for cash. Change is `tendered − amount`.
 - `credit_amount > 0` needs `customer_id`, an active account, and a check against the credit limit.
+- A tender's `reference` (e.g. the M-Pesa code) is stored upper-case and can confirm only one incoming payment per method (`422 PAYMENT_REFERENCE_USED`).
+- Re-sending a sale with a `client_txn_id` already recorded returns that sale with `200`.
 
 **Create sale: response `201`**
 
@@ -245,7 +247,8 @@ Sales, customer payments and refunds with a cash tender accept an optional `cash
 | GET | `/customers/{id}/ledger/` | `customers.view_balance` | Entries with `balance_after`. Date filters. |
 | GET | `/customers/{id}/statement/?from=&to=` | `customers.view_balance` | Opening balance, entries, closing balance |
 | POST 🔑 | `/customers/{id}/payments/` | `customers.receive_payment` | `{client_txn_id, store_id, amount, payment_method_id, external_reference, occurred_at}`. `store_id` is validated against membership. |
-| POST 🔑 | `/customers/{id}/ledger/{entry_id}/reverse/` | `customers.reverse_entry` | `{reason}`. Creates a `REVERSAL` entry. |
+| POST 🔑 | `/customers/{id}/ledger/{entry_id}/reverse/` | `customers.reverse_entry` | `{reason}`. Creates a `REVERSAL` entry. Payments and opening balances only; credit sales are undone by voiding or returning the sale. |
+| POST 🔑 | `/customers/{id}/account/opening-balance/` | `customers.set_credit_limit` | `{amount, note}`: what they owed before ShopFlow. Only on an account with no entries. |
 
 ### 4.7 Reconciliation
 

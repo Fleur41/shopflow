@@ -10,7 +10,8 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // Camera only for our own pages: the till scans barcodes with the phone camera.
+  { key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" },
   // Content-Security-Policy (with a per-request nonce) is set in src/proxy.ts.
 ];
 

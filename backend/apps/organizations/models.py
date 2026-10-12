@@ -22,18 +22,32 @@ class Organization(BaseModel):
         ACTIVE = "ACTIVE", "Active"
         SUSPENDED = "SUSPENDED", "Suspended"
 
+    class TaxMode(models.TextChoices):
+        INCLUSIVE = "INCLUSIVE", "Prices include tax"
+        EXCLUSIVE = "EXCLUSIVE", "Tax is added to prices"
+
     name = models.CharField(max_length=150)
     slug = models.SlugField(max_length=60, unique=True)
     base_currency = CurrencyField(help_text="Default currency for new stores. Fixed once set.")
     timezone = models.CharField(max_length=64, validators=[validate_timezone])
     locale = models.CharField(max_length=16, default="en")
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    tax_mode = models.CharField(
+        max_length=10,
+        choices=TaxMode.choices,
+        default=TaxMode.INCLUSIVE,
+        help_text="Whether selling prices include tax (Q-1: Kenyan shelf prices do).",
+    )
 
     class Meta:
         constraints: ClassVar[list[models.BaseConstraint]] = [
             models.CheckConstraint(
                 condition=models.Q(status__in=["ACTIVE", "SUSPENDED"]),
                 name="organizations_org_status_valid",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(tax_mode__in=["INCLUSIVE", "EXCLUSIVE"]),
+                name="organizations_org_tax_mode_valid",
             ),
         ]
 
@@ -305,3 +319,31 @@ class Invitation(TenantModel):
         if self.expires_at <= timezone.now():
             return "EXPIRED"
         return "PENDING"
+
+
+# --- Document numbers ----------------------------------------------------------------------
+
+
+class DocumentSequence(TenantModel):
+    """The last number issued per store, document type and year (receipts, returns, ...).
+
+    Locked ``FOR UPDATE`` while a number is issued, so numbers are gapless within
+    a committed history and never repeat (docs/DATABASE.md §3).
+    """
+
+    objects: ClassVar[TenantManager["DocumentSequence"]]
+
+    store = models.ForeignKey(Store, on_delete=models.PROTECT, related_name="+")
+    doc_type = models.CharField(max_length=20)
+    year = models.PositiveSmallIntegerField()
+    last_value = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        constraints: ClassVar[list[models.BaseConstraint]] = [
+            models.UniqueConstraint(
+                fields=["store", "doc_type", "year"], name="organizations_doc_sequence_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.doc_type} {self.year}: {self.last_value}"

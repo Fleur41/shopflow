@@ -37,6 +37,9 @@ INSTALLED_APPS = [
     "apps.catalog",
     "apps.payments",
     "apps.suppliers",
+    "apps.inventory",
+    "apps.sales",
+    "apps.customers",
     "apps.audit",
     "apps.idempotency",
 ]
@@ -238,6 +241,10 @@ SPECTACULAR_SETTINGS = {
         "PaymentMethodKind": "apps.payments.models.PaymentMethod.Kind",
         "EtimsPaymentType": "apps.payments.models.PaymentMethod.EtimsPaymentType",
         "PaymentProvider": "apps.payments.models.PROVIDER_CHOICES",
+        "MembershipStatus": "apps.organizations.models.Membership.Status",
+        "PaymentStatus": "apps.payments.models.Payment.Status",
+        "SaleStatus": "apps.sales.models.Sale.Status",
+        "CustomerAccountStatus": "apps.customers.models.CustomerAccount.Status",
     },
 }
 

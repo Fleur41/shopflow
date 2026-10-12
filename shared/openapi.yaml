@@ -640,6 +640,324 @@ paths:
               schema:
                 $ref: '#/components/schemas/Category'
           description: ''
+  /api/v1/customers/:
+    get:
+      operationId: customers_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: has_balance
+        schema:
+          type: boolean
+        description: Owes money
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+        description: Only active, or only inactive
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Part of the name (or code)
+      tags:
+      - customers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCustomerList'
+          description: ''
+    post:
+      operationId: customers_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+      tags:
+      - customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+  /api/v1/customers/{customer_id}/account/:
+    get:
+      operationId: customers_account_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAccountSummary'
+          description: ''
+    patch:
+      operationId: customers_account_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedAccountUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerAccountSummary'
+          description: ''
+  /api/v1/customers/{customer_id}/account/opening-balance/:
+    post:
+      operationId: customers_account_opening_balance_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerOpeningBalanceRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerEntry'
+          description: ''
+  /api/v1/customers/{customer_id}/ledger/:
+    get:
+      operationId: customers_ledger_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - customers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedLedgerEntryList'
+          description: ''
+  /api/v1/customers/{customer_id}/ledger/{entry_id}/reverse/:
+    post:
+      operationId: customers_ledger_reverse_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerEntry'
+          description: ''
+  /api/v1/customers/{customer_id}/payments/:
+    post:
+      operationId: customers_payments_create
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: customer_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PaymentCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerEntry'
+          description: ''
+  /api/v1/customers/{entry_id}/:
+    get:
+      operationId: customers_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
+    patch:
+      operationId: customers_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: entry_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - customers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCustomerUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Customer'
+          description: ''
   /api/v1/invitations/:
     get:
       operationId: invitations_list
@@ -1664,6 +1982,527 @@ paths:
               schema:
                 $ref: '#/components/schemas/StoreUpdate'
           description: ''
+  /api/v1/stores/{store_id}/inventory/:
+    get:
+      operationId: stores_inventory_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: string
+          format: uuid
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Name, SKU or exact barcode
+      - in: query
+        name: stock_status
+        schema:
+          type: string
+          enum:
+          - low
+          - ok
+          - out
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: supplier
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStockRowList'
+          description: ''
+  /api/v1/stores/{store_id}/inventory/{product_id}/:
+    get:
+      operationId: stores_inventory_item_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockRow'
+          description: ''
+    patch:
+      operationId: stores_inventory_partial_update
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: product_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStockSettingsUpdateRequest'
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StockRow'
+          description: ''
+  /api/v1/stores/{store_id}/inventory/adjustments/:
+    get:
+      operationId: stores_inventory_adjustments_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedAdjustmentList'
+          description: ''
+    post:
+      operationId: stores_inventory_adjustments_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdjustmentCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Adjustment'
+          description: ''
+  /api/v1/stores/{store_id}/inventory/adjustments/{adjustment_id}/:
+    get:
+      operationId: stores_inventory_adjustments_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: adjustment_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Adjustment'
+          description: ''
+  /api/v1/stores/{store_id}/inventory/movements/:
+    get:
+      operationId: stores_inventory_movements_list
+      parameters:
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: from
+        schema:
+          type: string
+          format: date-time
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: product
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: to
+        schema:
+          type: string
+          format: date-time
+        description: Exclusive
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - ADJUSTMENT
+          - DAMAGED
+          - EXPIRED
+          - OPENING
+          - PURCHASE
+          - PURCHASE_RETURN
+          - SALE
+          - SALE_RETURN
+          - TRANSFER_IN
+          - TRANSFER_OUT
+      - in: query
+        name: user
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMovementList'
+          description: ''
+  /api/v1/stores/{store_id}/inventory/opening-balance/:
+    post:
+      operationId: stores_inventory_opening_balance_create
+      description: Load a product's first stock in a store (``OPENING`` movements).
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpeningBalanceRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Adjustment'
+          description: ''
+  /api/v1/stores/{store_id}/products/lookup/:
+    get:
+      operationId: stores_products_lookup_retrieve
+      description: 'The till''s scan endpoint: exact barcode, then SKU.'
+      parameters:
+      - in: query
+        name: code
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lookup'
+          description: ''
+  /api/v1/stores/{store_id}/sales/:
+    get:
+      operationId: stores_sales_list
+      parameters:
+      - in: query
+        name: cashier
+        schema:
+          type: string
+          format: uuid
+      - name: cursor
+        required: false
+        in: query
+        description: The pagination cursor value.
+        schema:
+          type: string
+      - in: query
+        name: customer
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: from
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: on_credit
+        schema:
+          type: boolean
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: search
+        schema:
+          type: string
+        description: Receipt number
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: query
+        name: to
+        schema:
+          type: string
+          format: date-time
+        description: Exclusive
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSaleListList'
+          description: ''
+    post:
+      operationId: stores_sales_create
+      parameters:
+      - in: header
+        name: Idempotency-Key
+        schema:
+          type: string
+        description: Unique per operation (e.g. a UUID). Retries with the same key
+          return the original response instead of repeating the operation.
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaleCreateRequest'
+        required: true
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/v1/stores/{store_id}/sales/{sale_id}/:
+    get:
+      operationId: stores_sales_retrieve
+      description: Base for every organization-scoped endpoint.
+      parameters:
+      - in: path
+        name: sale_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sale'
+          description: ''
+  /api/v1/stores/{store_id}/sales/{sale_id}/receipt/:
+    get:
+      operationId: stores_sales_receipt_retrieve
+      description: The data a printed receipt shows. ``?reprint=true`` marks (and
+        audits) a copy.
+      parameters:
+      - in: query
+        name: reprint
+        schema:
+          type: boolean
+      - in: path
+        name: sale_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: store_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - stores
+      security:
+      - bearerAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Receipt'
+          description: ''
   /api/v1/suppliers/:
     get:
       operationId: suppliers_list
@@ -2185,6 +3024,125 @@ paths:
           description: ''
 components:
   schemas:
+    Adjustment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        client_txn_id:
+          type: string
+          format: uuid
+          readOnly: true
+        reason_code:
+          allOf:
+          - $ref: '#/components/schemas/AdjustmentReasonCodeEnum'
+          readOnly: true
+        note:
+          type: string
+          readOnly: true
+        created_by:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/AdjustmentLine'
+      required:
+      - client_txn_id
+      - created_at
+      - created_by
+      - id
+      - lines
+      - note
+      - occurred_at
+      - reason_code
+    AdjustmentCreateReasonCodeEnum:
+      enum:
+      - COUNT_CORRECTION
+      - DAMAGED
+      - EXPIRED
+      - THEFT_LOSS
+      - FOUND
+      - OTHER
+      type: string
+      description: |-
+        * `COUNT_CORRECTION` - Stock count
+        * `DAMAGED` - Damaged
+        * `EXPIRED` - Expired
+        * `THEFT_LOSS` - Theft or loss
+        * `FOUND` - Found
+        * `OTHER` - Other
+    AdjustmentCreateRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        reason_code:
+          $ref: '#/components/schemas/AdjustmentCreateReasonCodeEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 500
+        occurred_at:
+          type: string
+          format: date-time
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/_AdjustmentLineInputRequest'
+      required:
+      - client_txn_id
+      - lines
+      - reason_code
+    AdjustmentLine:
+      type: object
+      properties:
+        product:
+          $ref: '#/components/schemas/_ProductRef'
+        quantity_delta:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        counted_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+          nullable: true
+          description: Set when the line came from a count.
+      required:
+      - counted_quantity
+      - product
+      - quantity_delta
+    AdjustmentReasonCodeEnum:
+      enum:
+      - OPENING_BALANCE
+      - COUNT_CORRECTION
+      - DAMAGED
+      - EXPIRED
+      - THEFT_LOSS
+      - FOUND
+      - OTHER
+      type: string
+      description: |-
+        * `OPENING_BALANCE` - Opening stock
+        * `COUNT_CORRECTION` - Stock count
+        * `DAMAGED` - Damaged
+        * `EXPIRED` - Expired
+        * `THEFT_LOSS` - Theft or loss
+        * `FOUND` - Found
+        * `OTHER` - Other
     AuthResponse:
       type: object
       properties:
@@ -2333,6 +3291,150 @@ components:
       - permissions
       - role
       - stores
+    Customer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          maxLength: 300
+        notes:
+          type: string
+          maxLength: 2000
+        account:
+          allOf:
+          - $ref: '#/components/schemas/CustomerAccountSummary'
+          nullable: true
+          readOnly: true
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - account
+      - created_at
+      - id
+      - name
+      - updated_at
+      - version
+    CustomerAccountStatus:
+      enum:
+      - ACTIVE
+      - FROZEN
+      - CLOSED
+      type: string
+      description: |-
+        * `ACTIVE` - Active
+        * `FROZEN` - Frozen: no new credit
+        * `CLOSED` - Closed
+    CustomerAccountSummary:
+      type: object
+      properties:
+        currency:
+          type: string
+          readOnly: true
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+          description: 'Empty: no credit. 0 is also no credit.'
+        balance:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          description: What the customer owes.
+        available_credit:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/CustomerAccountStatus'
+          readOnly: true
+        version:
+          type: integer
+          readOnly: true
+      required:
+      - available_credit
+      - balance
+      - credit_limit
+      - currency
+      - status
+      - version
+    CustomerOpeningBalanceRequest:
+      type: object
+      properties:
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        note:
+          type: string
+          default: ''
+          maxLength: 200
+      required:
+      - amount
+    CustomerRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          maxLength: 300
+        notes:
+          type: string
+          maxLength: 2000
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          writeOnly: true
+          nullable: true
+          description: On create only; needs customers.set_credit_limit.
+        is_active:
+          type: boolean
+      required:
+      - name
     EmailVerifyRequest:
       type: object
       properties:
@@ -2342,6 +3444,22 @@ components:
           maxLength: 128
       required:
       - token
+    EntryTypeEnum:
+      enum:
+      - OPENING_BALANCE
+      - CREDIT_SALE
+      - PAYMENT
+      - SALE_RETURN
+      - ADJUSTMENT
+      - REVERSAL
+      type: string
+      description: |-
+        * `OPENING_BALANCE` - Opening balance
+        * `CREDIT_SALE` - Credit sale
+        * `PAYMENT` - Payment
+        * `SALE_RETURN` - Return
+        * `ADJUSTMENT` - Adjustment
+        * `REVERSAL` - Reversal
     EtimsPackagingUnitEnum:
       enum:
       - AM
@@ -2704,6 +3822,77 @@ components:
           maxLength: 128
       required:
       - token
+    LedgerEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        seq:
+          type: integer
+          readOnly: true
+        entry_type:
+          allOf:
+          - $ref: '#/components/schemas/EntryTypeEnum'
+          readOnly: true
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        balance_after:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        description:
+          type: string
+          readOnly: true
+        store:
+          type: string
+          nullable: true
+        store_id:
+          type: string
+          format: uuid
+          nullable: true
+        sale_id:
+          type: string
+          format: uuid
+          nullable: true
+        receipt_number:
+          type: string
+        reverses_id:
+          type: string
+          format: uuid
+          nullable: true
+        reversed:
+          type: boolean
+          readOnly: true
+        created_by:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        recorded_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - amount
+      - balance_after
+      - created_by
+      - description
+      - entry_type
+      - id
+      - occurred_at
+      - recorded_at
+      - reversed
+      - reverses_id
+      - sale_id
+      - seq
+      - store_id
     LinkFromProductRequest:
       type: object
       description: 'POST /products/{id}/suppliers/: the product comes from the URL.'
@@ -2782,6 +3971,56 @@ components:
       required:
       - email
       - password
+    Lookup:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sku:
+          type: string
+        unit:
+          $ref: '#/components/schemas/_Unit'
+        tax_rate:
+          type: string
+          description: e.g. "0.1600"
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: What it sells for in this store.
+        pack_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          description: How many units the scanned code stands for.
+        track_inventory:
+          type: boolean
+        quantity_on_hand:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+          description: Empty for items without stock.
+        is_active:
+          type: boolean
+        thumbnail_url:
+          type: string
+          nullable: true
+      required:
+      - is_active
+      - name
+      - pack_quantity
+      - price
+      - product_id
+      - quantity_on_hand
+      - sku
+      - tax_rate
+      - thumbnail_url
+      - track_inventory
+      - unit
     MFAVerifyRequest:
       type: object
       properties:
@@ -2854,7 +4093,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/MembershipStatus'
           readOnly: true
         version:
           type: integer
@@ -2925,6 +4164,14 @@ components:
       - email
       - full_name
       - id
+    MembershipStatus:
+      enum:
+      - ACTIVE
+      - SUSPENDED
+      type: string
+      description: |-
+        * `ACTIVE` - Active
+        * `SUSPENDED` - Suspended
     MembershipSummary:
       type: object
       properties:
@@ -2949,6 +4196,113 @@ components:
           maxLength: 128
       required:
       - refresh_token
+    Movement:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        product:
+          $ref: '#/components/schemas/_ProductRef'
+        movement_type:
+          allOf:
+          - $ref: '#/components/schemas/MovementTypeEnum'
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        quantity_before:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        quantity_after:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          nullable: true
+        seq:
+          type: integer
+          readOnly: true
+          description: Position in this product's history in this store.
+        performed_by:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+        recorded_at:
+          type: string
+          format: date-time
+          readOnly: true
+        document:
+          allOf:
+          - $ref: '#/components/schemas/_Document'
+          nullable: true
+          readOnly: true
+          description: What caused the movement.
+      required:
+      - document
+      - id
+      - movement_type
+      - occurred_at
+      - performed_by
+      - product
+      - quantity
+      - quantity_after
+      - quantity_before
+      - recorded_at
+      - seq
+      - unit_cost
+    MovementTypeEnum:
+      enum:
+      - PURCHASE
+      - SALE
+      - SALE_RETURN
+      - PURCHASE_RETURN
+      - ADJUSTMENT
+      - DAMAGED
+      - EXPIRED
+      - TRANSFER_IN
+      - TRANSFER_OUT
+      - OPENING
+      type: string
+      description: |-
+        * `PURCHASE` - Purchase
+        * `SALE` - Sale
+        * `SALE_RETURN` - Sale return
+        * `PURCHASE_RETURN` - Return to supplier
+        * `ADJUSTMENT` - Adjustment
+        * `DAMAGED` - Damaged
+        * `EXPIRED` - Expired
+        * `TRANSFER_IN` - Transfer in
+        * `TRANSFER_OUT` - Transfer out
+        * `OPENING` - Opening stock
+    OpeningBalanceRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/_OpeningLineInputRequest'
+      required:
+      - client_txn_id
+      - lines
     Organization:
       type: object
       properties:
@@ -2969,9 +4323,17 @@ components:
         locale:
           type: string
           maxLength: 16
+        tax_mode:
+          allOf:
+          - $ref: '#/components/schemas/TaxModeEnum'
+          description: |-
+            Whether selling prices include tax (Q-1: Kenyan shelf prices do).
+
+            * `INCLUSIVE` - Prices include tax
+            * `EXCLUSIVE` - Tax is added to prices
         status:
           allOf:
-          - $ref: '#/components/schemas/StatusEnum'
+          - $ref: '#/components/schemas/MembershipStatus'
           readOnly: true
         created_at:
           type: string
@@ -2984,6 +4346,35 @@ components:
       - name
       - status
       - timezone
+    OriginEnum:
+      enum:
+      - WEB
+      - MOBILE_ONLINE
+      - MOBILE_OFFLINE
+      type: string
+      description: |-
+        * `WEB` - Web till
+        * `MOBILE_ONLINE` - Phone, online
+        * `MOBILE_OFFLINE` - Phone, synced later
+    PaginatedAdjustmentList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Adjustment'
     PaginatedBrandList:
       type: object
       required:
@@ -3022,6 +4413,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Category'
+    PaginatedCustomerList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Customer'
     PaginatedInvitationList:
       type: object
       required:
@@ -3041,6 +4451,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Invitation'
+    PaginatedLedgerEntryList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/LedgerEntry'
     PaginatedMemberList:
       type: object
       required:
@@ -3060,6 +4489,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Member'
+    PaginatedMovementList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Movement'
     PaginatedPaymentMethodList:
       type: object
       required:
@@ -3155,6 +4603,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Role'
+    PaginatedSaleListList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleList'
     PaginatedSessionList:
       type: object
       required:
@@ -3174,6 +4641,25 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Session'
+    PaginatedStockRowList:
+      type: object
+      required:
+      - results
+      properties:
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cD00ODY%3D"
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?cursor=cj0xJnA9NDg3
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StockRow'
     PaginatedStoreList:
       type: object
       required:
@@ -3291,6 +4777,18 @@ components:
           maxLength: 254
       required:
       - email
+    PatchedAccountUpdateRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+        credit_limit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        status:
+          $ref: '#/components/schemas/CustomerAccountStatus'
     PatchedBrandUpdateRequest:
       type: object
       properties:
@@ -3315,6 +4813,35 @@ components:
           type: string
           format: uuid
           nullable: true
+        is_active:
+          type: boolean
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
+    PatchedCustomerUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 150
+        phone:
+          type: string
+          maxLength: 16
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        address:
+          type: string
+          maxLength: 300
+        notes:
+          type: string
+          maxLength: 2000
         is_active:
           type: boolean
         version:
@@ -3353,6 +4880,14 @@ components:
           type: string
           minLength: 1
           maxLength: 16
+        tax_mode:
+          allOf:
+          - $ref: '#/components/schemas/TaxModeEnum'
+          description: |-
+            Whether selling prices include tax (Q-1: Kenyan shelf prices do).
+
+            * `INCLUSIVE` - Prices include tax
+            * `EXCLUSIVE` - Tax is added to prices
     PatchedPaymentMethodUpdateRequest:
       type: object
       properties:
@@ -3484,6 +5019,35 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PermissionsEnum'
+    PatchedStockSettingsUpdateRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          description: The version you last read; the update is refused if someone
+            changed it since.
+        reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        min_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        max_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        selling_price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        allow_negative:
+          type: boolean
     PatchedStoreUpdateRequest:
       type: object
       properties:
@@ -3657,6 +5221,39 @@ components:
           type: integer
           description: The version you last read; the update is refused if someone
             changed it since.
+    PaymentCreateRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        store_id:
+          type: string
+          format: uuid
+        payment_method_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        tendered:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        reference:
+          type: string
+          default: ''
+          maxLength: 64
+        occurred_at:
+          type: string
+          format: date-time
+      required:
+      - amount
+      - client_txn_id
+      - payment_method_id
+      - store_id
     PaymentMethod:
       type: object
       properties:
@@ -3791,6 +5388,18 @@ components:
       - MANUAL
       type: string
       description: '* `MANUAL` - Recorded by the cashier'
+    PaymentStatus:
+      enum:
+      - PENDING
+      - CONFIRMED
+      - FAILED
+      - REVERSED
+      type: string
+      description: |-
+        * `PENDING` - Pending
+        * `CONFIRMED` - Confirmed
+        * `FAILED` - Failed
+        * `REVERSED` - Reversed
     Permission:
       type: object
       properties:
@@ -4231,6 +5840,31 @@ components:
       - product_sku
       - supplier
       - supplier_name
+    Receipt:
+      type: object
+      description: Everything a printed receipt shows, already formatted for the currency.
+      properties:
+        business:
+          $ref: '#/components/schemas/_ReceiptBusiness'
+        sale:
+          $ref: '#/components/schemas/Sale'
+        taxes:
+          type: array
+          items:
+            $ref: '#/components/schemas/_ReceiptTax'
+        account:
+          allOf:
+          - $ref: '#/components/schemas/_ReceiptAccount'
+          nullable: true
+          description: 'Credit sales: the customer''s balance.'
+        reprint:
+          type: boolean
+      required:
+      - account
+      - business
+      - reprint
+      - sale
+      - taxes
     RecoveryCodes:
       type: object
       properties:
@@ -4241,6 +5875,15 @@ components:
           description: Shown once. Each works one time.
       required:
       - recovery_codes
+    ReverseRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+      - reason
     Role:
       type: object
       properties:
@@ -4314,6 +5957,339 @@ components:
       - id
       - name
       - template
+    Sale:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        receipt_number:
+          type: string
+          readOnly: true
+        client_txn_id:
+          type: string
+          format: uuid
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatus'
+          readOnly: true
+        store:
+          type: string
+        currency:
+          type: string
+          readOnly: true
+        tax_mode:
+          type: string
+          readOnly: true
+        subtotal:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        discount_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        tax_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        amount_paid:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        amount_on_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        change_given:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SaleItem'
+        payments:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalePayment'
+        customer:
+          allOf:
+          - $ref: '#/components/schemas/_Person'
+          nullable: true
+          readOnly: true
+        cashier:
+          allOf:
+          - $ref: '#/components/schemas/_Person'
+          readOnly: true
+        notes:
+          type: string
+          readOnly: true
+        origin:
+          allOf:
+          - $ref: '#/components/schemas/OriginEnum'
+          readOnly: true
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the sale happened at the till.
+        recorded_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the server saved it.
+      required:
+      - amount_on_credit
+      - amount_paid
+      - cashier
+      - change_given
+      - client_txn_id
+      - currency
+      - customer
+      - discount_total
+      - id
+      - items
+      - notes
+      - occurred_at
+      - origin
+      - payments
+      - receipt_number
+      - recorded_at
+      - status
+      - store
+      - subtotal
+      - tax_mode
+      - tax_total
+      - total
+    SaleCreateRequest:
+      type: object
+      properties:
+        client_txn_id:
+          type: string
+          format: uuid
+        occurred_at:
+          type: string
+          format: date-time
+        customer_id:
+          type: string
+          format: uuid
+          nullable: true
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/_ItemInputRequest'
+        order_discount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          default: '0.0000'
+        tenders:
+          type: array
+          items:
+            $ref: '#/components/schemas/_TenderInputRequest'
+        credit_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          default: '0.0000'
+        notes:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - client_txn_id
+      - items
+    SaleItem:
+      type: object
+      properties:
+        line_no:
+          type: integer
+          readOnly: true
+        product_id:
+          type: string
+          format: uuid
+        product_name:
+          type: string
+          readOnly: true
+        sku:
+          type: string
+          readOnly: true
+        unit_code:
+          type: string
+          readOnly: true
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          readOnly: true
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        list_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+          description: The store's price at the time, before any override.
+        price_overridden:
+          type: boolean
+          readOnly: true
+        override_reason:
+          type: string
+          readOnly: true
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        order_discount_share:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        tax_rate:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,1}(?:\.\d{0,4})?$
+          readOnly: true
+        tax_name:
+          type: string
+          readOnly: true
+        tax_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        line_total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+      required:
+      - discount_amount
+      - line_no
+      - line_total
+      - list_price
+      - order_discount_share
+      - override_reason
+      - price_overridden
+      - product_id
+      - product_name
+      - quantity
+      - sku
+      - tax_amount
+      - tax_name
+      - tax_rate
+      - unit_code
+      - unit_price
+    SaleList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        receipt_number:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/SaleStatus'
+          readOnly: true
+        currency:
+          type: string
+          readOnly: true
+        total:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        amount_on_credit:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          readOnly: true
+        item_count:
+          type: integer
+        methods:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        customer:
+          type: string
+          nullable: true
+        cashier:
+          type: string
+        occurred_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: When the sale happened at the till.
+      required:
+      - amount_on_credit
+      - cashier
+      - currency
+      - id
+      - item_count
+      - methods
+      - occurred_at
+      - receipt_number
+      - status
+      - total
+    SalePayment:
+      type: object
+      properties:
+        method:
+          type: string
+        method_name:
+          type: string
+        kind:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        tendered:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+          description: Cash handed over; the change is tendered - amount.
+        reference:
+          type: string
+        status:
+          $ref: '#/components/schemas/PaymentStatus'
+      required:
+      - amount
+      - kind
+      - method
+      - method_name
+      - reference
+    SaleStatus:
+      enum:
+      - COMPLETED
+      - VOIDED
+      type: string
+      description: |-
+        * `COMPLETED` - Completed
+        * `VOIDED` - Voided
     Session:
       type: object
       properties:
@@ -4430,14 +6406,107 @@ components:
       - full_name
       - organization_name
       - password
-    StatusEnum:
+    StockRow:
+      type: object
+      description: A stocked product with its level and settings in one store.
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sku:
+          type: string
+        unit:
+          $ref: '#/components/schemas/_Unit'
+        category:
+          type: string
+          nullable: true
+        thumbnail_url:
+          type: string
+          nullable: true
+          readOnly: true
+        is_active:
+          type: boolean
+        selling_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        selling_price_override:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        price:
+          type: string
+          readOnly: true
+          description: What it sells for in this store.
+        quantity_on_hand:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+          description: This store's own level.
+        effective_reorder_level:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+          description: The store's level, or the product's default.
+        min_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        max_stock:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        average_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+        allow_negative:
+          type: boolean
+        stock_status:
+          $ref: '#/components/schemas/StockStatusEnum'
+        version:
+          type: integer
+      required:
+      - allow_negative
+      - average_cost
+      - effective_reorder_level
+      - is_active
+      - max_stock
+      - min_stock
+      - name
+      - price
+      - product_id
+      - quantity_on_hand
+      - reorder_level
+      - selling_price
+      - selling_price_override
+      - sku
+      - stock_status
+      - thumbnail_url
+      - unit
+      - version
+    StockStatusEnum:
       enum:
-      - ACTIVE
-      - SUSPENDED
+      - out
+      - low
+      - ok
       type: string
       description: |-
-        * `ACTIVE` - Active
-        * `SUSPENDED` - Suspended
+        * `out` - out
+        * `low` - low
+        * `ok` - ok
     Store:
       type: object
       properties:
@@ -4760,6 +6829,14 @@ components:
       - otpauth_uri
       - qr_code
       - secret
+    TaxModeEnum:
+      enum:
+      - INCLUSIVE
+      - EXCLUSIVE
+      type: string
+      description: |-
+        * `INCLUSIVE` - Prices include tax
+        * `EXCLUSIVE` - Tax is added to prices
     TaxRate:
       type: object
       properties:
@@ -5046,6 +7123,210 @@ components:
       - id
       - mfa_enabled
       - phone
+    _AdjustmentLineInputRequest:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity_delta:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+        counted_quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+          nullable: true
+      required:
+      - product_id
+    _Document:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/_DocumentKindEnum'
+        id:
+          type: string
+          format: uuid
+        reason_code:
+          type: string
+        note:
+          type: string
+        receipt_number:
+          type: string
+      required:
+      - id
+      - kind
+    _DocumentKindEnum:
+      enum:
+      - adjustment
+      - sale
+      type: string
+      description: |-
+        * `adjustment` - adjustment
+        * `sale` - sale
+    _ItemInputRequest:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        unit_price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          description: The price the till showed.
+        discount_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          default: '0.0000'
+        price_override:
+          type: boolean
+          default: false
+          description: The cashier changed the price on purpose.
+        override_reason:
+          type: string
+          default: ''
+          maxLength: 200
+        scanned_code:
+          type: string
+          default: ''
+          maxLength: 64
+      required:
+      - product_id
+      - quantity
+      - unit_price
+    _OpeningLineInputRequest:
+      type: object
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        quantity:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,11}(?:\.\d{0,3})?$
+        unit_cost:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+      required:
+      - product_id
+      - quantity
+    _Person:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+      - id
+      - name
+    _ProductRef:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        sku:
+          type: string
+      required:
+      - id
+      - name
+      - sku
+    _ReceiptAccount:
+      type: object
+      properties:
+        charged:
+          type: string
+        balance_after:
+          type: string
+      required:
+      - balance_after
+      - charged
+    _ReceiptBusiness:
+      type: object
+      properties:
+        name:
+          type: string
+        store_name:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        timezone:
+          type: string
+      required:
+      - address
+      - name
+      - phone
+      - store_name
+      - timezone
+    _ReceiptTax:
+      type: object
+      properties:
+        name:
+          type: string
+        rate:
+          type: string
+        taxable_amount:
+          type: string
+        tax_amount:
+          type: string
+      required:
+      - name
+      - rate
+      - tax_amount
+      - taxable_amount
+    _TenderInputRequest:
+      type: object
+      properties:
+        payment_method_id:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+        tendered:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,15}(?:\.\d{0,4})?$
+          nullable: true
+          description: Cash handed over.
+        reference:
+          type: string
+          default: ''
+          description: e.g. M-Pesa code
+          maxLength: 64
+      required:
+      - amount
+      - payment_method_id
+    _Unit:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        allows_fraction:
+          type: boolean
+      required:
+      - allows_fraction
+      - code
+      - name
   securitySchemes:
     bearerAuth:
       type: http
