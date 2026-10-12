@@ -12,6 +12,7 @@ Requirements: Docker (with Compose v2) and `make`. Node 24 and Python 3.13 are o
 ```bash
 cp .env.example .env      # optional; defaults work for local development
 make up                   # build and start db, redis, backend, frontend
+make seed                 # demo business (owner/manager/cashier@demo.example, password shopflow-demo)
 make test                 # backend + frontend tests
 make lint                 # ruff, mypy, migration check, eslint, tsc
 ```

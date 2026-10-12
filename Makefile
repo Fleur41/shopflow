@@ -6,7 +6,7 @@ BACKEND := $(COMPOSE) run --rm backend
 BACKEND_OWNER := $(COMPOSE) run --rm backend env DATABASE_URL=postgres://shopflow:shopflow@db:5432/shopflow
 FRONTEND := $(COMPOSE) run --rm --no-deps frontend
 
-.PHONY: help up down logs ps migrate makemigrations superuser shell db-roles api e2e \
+.PHONY: help up down logs ps migrate makemigrations superuser seed shell db-roles api e2e \
         test test-backend test-frontend lint lint-backend lint-frontend fmt check clean
 
 help: ## Show available commands
@@ -45,6 +45,9 @@ e2e: ## Run Playwright end-to-end + accessibility tests against the running stac
 
 superuser: ## Create a platform admin user
 	$(BACKEND) python manage.py createsuperuser
+
+seed: ## Create a demo business to sign in to (owner@demo.example / shopflow-demo)
+	$(BACKEND) python manage.py seed_demo
 
 shell: ## Open a Django shell
 	$(BACKEND) python manage.py shell

@@ -23,6 +23,7 @@ Requires Docker and `make`.
 
 ```bash
 make up      # http://localhost:3000 (web), http://localhost:8000/api/v1/docs/ (API docs)
+make seed    # demo business: sign in as owner@demo.example / shopflow-demo
 make test    # backend + frontend tests
 make lint    # linters and type checks
 make e2e     # browser end-to-end + accessibility tests (needs `make up`)
